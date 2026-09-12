@@ -1,0 +1,322 @@
+using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.Linq;
+using System.ServiceProcess;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using SecureServerBackup.Services;
+using SecureServerBackupCommon;
+
+namespace SecureServerBackup.WinForms
+{
+	internal sealed class ScheduleManagementForm : Form
+	{
+		private readonly JobManager jobManager = new();
+		private readonly DataGridView jobsGrid;
+
+		public ScheduleManagementForm()
+		{
+			Text = "Schedule Management";
+			StartPosition = FormStartPosition.CenterParent;
+			MinimumSize = new Size(980, 560);
+			ClientSize = new Size(980, 560);
+			BackColor = Color.White;
+
+			var titleLabel = new Label
+			{
+				Text = "Manage Scheduled Backup Jobs",
+				Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
+				AutoSize = true,
+				Location = new Point(16, 16)
+			};
+
+			var actionsPanel = new FlowLayoutPanel
+			{
+				Location = new Point(16, 48),
+				Size = new Size(940, 36),
+				WrapContents = true
+			};
+			actionsPanel.Controls.Add(CreateButton("Refresh", (_, _) => LoadJobs()));
+			actionsPanel.Controls.Add(CreateButton("Edit Next Run", (_, _) => EditNextRun()));
+			actionsPanel.Controls.Add(CreateButton("Edit Job", (_, _) => EditJob()));
+			actionsPanel.Controls.Add(CreateButton("Delete Job", (_, _) => DeleteJob()));
+			actionsPanel.Controls.Add(CreateButton("Run Now", async (_, _) => await RunNowAsync()));
+
+			jobsGrid = new DataGridView
+			{
+				Location = new Point(16, 96),
+				Size = new Size(940, 420),
+				ReadOnly = true,
+				AllowUserToAddRows = false,
+				AllowUserToDeleteRows = false,
+				SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+				MultiSelect = false,
+				AutoGenerateColumns = false,
+				AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+			};
+			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.Name), HeaderText = "Job Name", FillWeight = 180 });
+			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.Type), HeaderText = "Type", FillWeight = 80 });
+			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.DestinationPath), HeaderText = "Destination", FillWeight = 220 });
+			jobsGrid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(BackupJob.IsCurrentlyRunning), HeaderText = "Running", FillWeight = 60 });
+			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.LastRunTime), HeaderText = "Last Run", FillWeight = 110 });
+			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.NextScheduledRun), HeaderText = "Next Run", FillWeight = 110 });
+			jobsGrid.DoubleClick += (_, _) => EditJob();
+
+			var closeButton = new Button
+			{
+				Text = "Close",
+				Size = new Size(100, 32),
+				Location = new Point(856, 524),
+				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+				DialogResult = DialogResult.OK
+			};
+
+			Controls.Add(titleLabel);
+			Controls.Add(actionsPanel);
+			Controls.Add(jobsGrid);
+			Controls.Add(closeButton);
+
+			Load += (_, _) => LoadJobs();
+		}
+
+		private static Button CreateButton(string text, EventHandler onClick)
+		{
+			var button = new Button
+			{
+				Text = text,
+				AutoSize = true,
+				MinimumSize = new Size(100, 30),
+				Margin = new Padding(0, 0, 8, 0)
+			};
+			button.Click += onClick;
+			return button;
+		}
+
+		private void LoadJobs()
+		{
+			jobsGrid.DataSource = jobManager.GetScheduledJobs().ToList();
+		}
+
+		private BackupJob? GetSelectedJob()
+		{
+			return jobsGrid.CurrentRow?.DataBoundItem as BackupJob;
+		}
+
+		private void EditNextRun()
+		{
+			BackupJob? job = GetSelectedJob();
+			if (job == null)
+			{
+				CustomDialogService.ShowWarning(this, "Please select a valid scheduled job.", "No Selection");
+				return;
+			}
+
+			if (job.Schedule == null || !job.Schedule.Enabled || !job.NextScheduledRun.HasValue)
+			{
+				CustomDialogService.ShowWarning(this, "This job does not have an editable next run time.", "Edit Next Run");
+				return;
+			}
+
+			DateTime currentNextRun = job.NextScheduledRun.Value;
+			DateTime? latestAllowedRun = GetLatestAllowedNextRun(job.Schedule, currentNextRun);
+			if (!latestAllowedRun.HasValue || latestAllowedRun.Value < currentNextRun)
+			{
+				CustomDialogService.ShowWarning(this, "Unable to determine the valid edit range for this schedule.", "Edit Next Run");
+				return;
+			}
+
+			CustomDialogService.ShowInfo(this,
+				$"You can edit the next run for '{job.Name}'.{Environment.NewLine}{Environment.NewLine}This is a one time change only. After this edited next run is used, the job will return to its normal schedule.{Environment.NewLine}{Environment.NewLine}Current next run: {currentNextRun:yyyy-MM-dd hh:mm tt}{Environment.NewLine}Latest allowed value: {latestAllowedRun.Value:yyyy-MM-dd hh:mm tt}",
+				"Edit Next Run");
+
+			using var form = new NextRunTimeEditForm(job, currentNextRun, latestAllowedRun.Value);
+			if (form.ShowDialog(this) != DialogResult.OK)
+			{
+				return;
+			}
+
+			job.NextScheduledRun = form.SelectedNextRun;
+			jobManager.UpdateJob(job);
+			BackupLogger.LogInfo(job.Name, $"Next scheduled run manually edited to {form.SelectedNextRun:yyyy-MM-dd HH:mm:ss}");
+			LoadJobs();
+			CustomDialogService.ShowSuccess(this, $"Next run updated to {form.SelectedNextRun:yyyy-MM-dd hh:mm tt}.", "Next Run Updated");
+		}
+
+		private static DateTime? GetLatestAllowedNextRun(BackupSchedule schedule, DateTime currentNextRun)
+		{
+			return schedule.Frequency switch
+			{
+				ScheduleFrequency.Daily => currentNextRun.Date.Add(schedule.Time).AddDays(1),
+				ScheduleFrequency.Weekly => GetNextWeeklyOccurrence(schedule, currentNextRun),
+				ScheduleFrequency.Monthly => GetNextMonthlyOccurrence(schedule, currentNextRun),
+				ScheduleFrequency.Once => currentNextRun,
+				_ => null
+			};
+		}
+
+		private static DateTime? GetNextWeeklyOccurrence(BackupSchedule schedule, DateTime currentNextRun)
+		{
+			if (schedule.DaysOfWeek.Count == 0)
+			{
+				return null;
+			}
+
+			DateTime candidate = currentNextRun.Date.AddDays(1).Add(schedule.Time);
+			while (!schedule.DaysOfWeek.Contains(candidate.DayOfWeek))
+			{
+				candidate = candidate.AddDays(1);
+			}
+
+			return candidate;
+		}
+
+		private static DateTime GetNextMonthlyOccurrence(BackupSchedule schedule, DateTime currentNextRun)
+		{
+			DateTime nextMonth = new(currentNextRun.Year, currentNextRun.Month, 1);
+			nextMonth = nextMonth.AddMonths(1);
+			int day = Math.Max(1, Math.Min(schedule.DayOfMonth, DateTime.DaysInMonth(nextMonth.Year, nextMonth.Month)));
+			return new DateTime(nextMonth.Year, nextMonth.Month, day, schedule.Time.Hours, schedule.Time.Minutes, 0);
+		}
+
+		private void EditJob()
+		{
+			BackupJob? job = GetSelectedJob();
+			if (job == null)
+			{
+				CustomDialogService.ShowWarning(this, "Please select a job to edit.", "No Selection");
+				return;
+			}
+
+			using var form = new BackupWindowNewForm(job);
+			if (form.ShowDialog(this) == DialogResult.OK)
+			{
+				LoadJobs();
+			}
+		}
+
+		private void DeleteJob()
+		{
+			BackupJob? job = GetSelectedJob();
+			if (job == null)
+			{
+				CustomDialogService.ShowWarning(this, "Please select a job to delete.", "No Selection");
+				return;
+			}
+
+			CustomDialogResult result = CustomDialogService.ShowQuestion(this, $"Are you sure you want to delete the job '{job.Name}'?", "Confirm Delete");
+			if (result != CustomDialogResult.Yes)
+			{
+				return;
+			}
+
+			jobManager.DeleteJob(job.Id);
+			LoadJobs();
+			CustomDialogService.ShowSuccess(this, "Job deleted successfully.", "Success");
+		}
+
+		private async Task RunNowAsync()
+		{
+			BackupJob? job = GetSelectedJob();
+			if (job == null)
+			{
+				CustomDialogService.ShowWarning(this, "Please select a job to run.", "No Selection");
+				return;
+			}
+
+			if (!CheckBackupService())
+			{
+				return;
+			}
+
+			CustomDialogResult result = CustomDialogService.ShowQuestion(this,
+				$"Run backup job '{job.Name}' now?{Environment.NewLine}{Environment.NewLine}The backup will run in the background service and continue even if you close this window.",
+				"Run Backup");
+			if (result != CustomDialogResult.Yes)
+			{
+				return;
+			}
+
+			BackupLogger.LogInfo(job.Name, "User initiated manual backup from Schedule Management (Run Now clicked)");
+			var serviceClient = new BackupServiceClient();
+			bool success = await serviceClient.RunBackupNowAsync(job.Id);
+			if (!success)
+			{
+				BackupLogger.LogError(job.Name, "Failed to communicate with Secure Server Backup Service - backup was not started");
+				CustomDialogService.ShowError(this,
+					"Failed to start backup. The service may be busy or not responding.\n\nTry again in a few moments, or restart the Secure Server Backup Service from Windows Services.",
+					"Service Error");
+				return;
+			}
+
+			BackupLogger.LogInfo(job.Name, "Service accepted backup request - backup is starting");
+			var progressForm = new BackupProgressForm(job.Id, job.Name);
+			progressForm.Show(this);
+		}
+
+		private bool CheckBackupService()
+		{
+			try
+			{
+				using var service = new ServiceController("SecureServerBackupService");
+				if (service.Status == ServiceControllerStatus.Running)
+				{
+					return true;
+				}
+
+				BackupLogger.LogWarning("System", $"Secure Server Backup Service is not running (Status: {service.Status})");
+				CustomDialogResult result = CustomDialogService.ShowQuestion(this,
+					$"The Secure Server Backup Service is not running (Status: {service.Status}).{Environment.NewLine}{Environment.NewLine}Would you like to start it now?{Environment.NewLine}{Environment.NewLine}Note: You may need to run this application as Administrator to start the service.",
+					"Service Not Running");
+				if (result != CustomDialogResult.Yes)
+				{
+					return false;
+				}
+
+				try
+				{
+					BackupLogger.LogInfo("System", "Attempting to start Secure Server Backup Service...");
+					service.Start();
+					service.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(10));
+					BackupLogger.LogInfo("System", "Secure Server Backup Service started successfully");
+					CustomDialogService.ShowSuccess(this, "Secure Server Backup Service started successfully.", "Service Started");
+					return true;
+				}
+				catch (Exception ex)
+				{
+					BackupLogger.LogError("System", $"Failed to start Secure Server Backup Service: {ex.Message}");
+					CustomDialogService.ShowError(this,
+						$"Failed to start service: {ex.Message}{Environment.NewLine}{Environment.NewLine}Please start the service manually from Windows Services (services.msc) or run this application as Administrator.",
+						"Service Start Failed");
+					return false;
+				}
+			}
+			catch (InvalidOperationException)
+			{
+				BackupLogger.LogError("System", "Secure Server Backup Service is not installed on this system");
+				CustomDialogResult result = CustomDialogService.ShowQuestion(this,
+					"The Secure Server Backup Service is not installed on this system.\n\nThe service must be installed before backups can run.\n\nTo install the service:\n1. Open PowerShell as Administrator\n2. Navigate to the solution folder\n3. Run: .\\Install-BackupService.ps1\n\nWould you like to open the solution folder now?",
+					"Service Not Installed");
+				if (result == CustomDialogResult.Yes)
+				{
+					try
+					{
+						string solutionDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? string.Empty;
+						solutionDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(solutionDir, "..", "..", ".."));
+						Process.Start("explorer.exe", solutionDir);
+					}
+					catch
+					{
+					}
+				}
+				return false;
+			}
+			catch (Exception ex)
+			{
+				BackupLogger.LogError("System", $"Error checking Secure Server Backup Service status: {ex.Message}");
+				CustomDialogService.ShowError(this, $"Error checking service status: {ex.Message}", "Service Check Error");
+				return false;
+			}
+		}
+	}
+}

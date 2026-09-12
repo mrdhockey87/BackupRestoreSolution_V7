@@ -1,0 +1,2088 @@
+// LinuxRestore/restore_engine.cpp
+// Cross-platform restore engine for Linux-based bootable USB
+// Version 6.2.5.31 - Updated LinuxRestore messaging for encrypted SSB and Hyper-V recovery flows
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <fstream>
+#include <cstring>
+#include <ctime>
+#include <algorithm>
+#include <functional>
+#include <array>
+#include <iomanip>
+#include <numeric>
+#include <unordered_set>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+namespace fs = std::filesystem;
+
+// Progress callback type
+typedef void (*ProgressCallback)(int percentage, const char* message);
+
+class RestoreEngine {
+private:
+    struct RestoreVolumePlan {
+        int imageIndex = 0;
+        int sourceDiskNumber = -1;
+        unsigned long long sourceDiskSizeBytes = 0;
+        unsigned long long sourceUsedSpaceBytes = 0;
+        std::string sourceVolumeGuidPath;
+        std::string sourceVolumeMountPath;
+        std::string sourceVolumeLabel;
+        std::string sourceFileSystem;
+        std::string partitionStyle;
+        unsigned long partitionNumber = 0;
+        unsigned long long partitionOffsetBytes = 0;
+        unsigned long long partitionLengthBytes = 0;
+        std::string partitionType;
+        bool isBootVolume = false;
+        bool isSystemVolume = false;
+        bool isHiddenPartition = false;
+    };
+
+    struct RestoreItem {
+        std::string name;
+        std::string path;
+        std::string type;
+        bool checked;
+        std::vector<RestoreItem> children;
+
+        RestoreItem() : checked(false) {}
+    };
+
+    ProgressCallback progressCallback;
+    std::string lastError;
+    std::string backupPassword;
+    bool backupPasswordVerified = false;
+    std::string logFilePath;
+    std::string logOperationName = "Restore";
+    int lastLoggedProgressBucket = -1;
+    std::string lastLoggedProgressMessage;
+
+    static constexpr const char* EncryptedHeader = "SSBAES1";
+
+    static std::string EscapeLogField(const std::string& value) {
+        std::string escaped = value;
+        std::replace(escaped.begin(), escaped.end(), '\r', ' ');
+        std::replace(escaped.begin(), escaped.end(), '\n', ' ');
+        return escaped;
+    }
+
+    static std::string CurrentTimestamp() {
+        std::time_t now = std::time(nullptr);
+        std::tm timeInfo{};
+        localtime_r(&now, &timeInfo);
+
+        std::ostringstream stream;
+        stream << std::put_time(&timeInfo, "%Y-%m-%d %H:%M:%S");
+        return stream.str();
+    }
+
+    void WriteLogEntry(const std::string& level, const std::string& message, const std::string& details = std::string()) {
+        if (logFilePath.empty()) {
+            return;
+        }
+
+        try {
+            fs::path targetPath(logFilePath);
+            if (targetPath.has_parent_path()) {
+                fs::create_directories(targetPath.parent_path());
+            }
+
+            std::ofstream logFile(logFilePath, std::ios::app);
+            if (!logFile.is_open()) {
+                return;
+            }
+
+            logFile << CurrentTimestamp()
+                    << " | " << EscapeLogField(level)
+                    << " | " << EscapeLogField(logOperationName)
+                    << " | " << EscapeLogField(message);
+
+            if (!details.empty()) {
+                logFile << " | " << EscapeLogField(details);
+            }
+
+            logFile << std::endl;
+        }
+        catch (...) {
+        }
+    }
+
+    void LogInfo(const std::string& message, const std::string& details = std::string()) {
+        WriteLogEntry("Info", message, details);
+    }
+
+    void LogWarning(const std::string& message, const std::string& details = std::string()) {
+        WriteLogEntry("Warning", message, details);
+    }
+
+    void LogSuccess(const std::string& message, const std::string& details = std::string()) {
+        WriteLogEntry("Success", message, details);
+    }
+
+    void LogErrorEntry(const std::string& message, const std::string& details = std::string()) {
+        WriteLogEntry("Error", message, details);
+    }
+
+    static bool IsDetailedUiProgressMessage(const std::string& message) {
+        return message.rfind("Restoring:", 0) == 0 ||
+               message.rfind("Processing:", 0) == 0;
+    }
+
+    void ResetProgressLoggingState() {
+        lastLoggedProgressBucket = -1;
+        lastLoggedProgressMessage.clear();
+    }
+
+    void SetError(const std::string& error) {
+        lastError = error;
+        std::cerr << "ERROR: " << error << std::endl;
+        LogErrorEntry(error);
+    }
+
+    void ReportProgress(int percentage, const std::string& message) {
+        if (progressCallback) {
+            progressCallback(percentage, message.c_str());
+        }
+        std::cout << "[" << percentage << "%] " << message << std::endl;
+
+        if (logFilePath.empty() || IsDetailedUiProgressMessage(message)) {
+            return;
+        }
+
+        int progressBucket = percentage < 0 ? -1 : (percentage / 10);
+        bool bucketChanged = progressBucket != lastLoggedProgressBucket;
+        bool messageChanged = message != lastLoggedProgressMessage;
+        if (bucketChanged || messageChanged) {
+            lastLoggedProgressBucket = progressBucket;
+            lastLoggedProgressMessage = message;
+            LogInfo(message, percentage >= 0 ? "Progress=" + std::to_string(percentage) : std::string());
+        }
+    }
+
+    void ReportRestoreItem(int percentage, const std::string& itemPath) {
+        if (itemPath.empty()) {
+            return;
+        }
+
+        std::string message = "Restoring: " + itemPath;
+        if (progressCallback) {
+            progressCallback(percentage, message.c_str());
+        }
+        std::cout << "[" << percentage << "%] " << message << std::endl;
+    }
+
+    static std::string Trim(const std::string& value) {
+        size_t start = value.find_first_not_of(" \t\r\n");
+        size_t end = value.find_last_not_of(" \t\r\n");
+        if (start == std::string::npos || end == std::string::npos || end < start) {
+            return {};
+        }
+        return value.substr(start, end - start + 1);
+    }
+
+    static bool EqualsIgnoreCase(const std::string& left, const std::string& right) {
+        return left.size() == right.size() &&
+            std::equal(left.begin(), left.end(), right.begin(), [](char a, char b) {
+                return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
+            });
+    }
+
+    static bool LooksLikeBlockDevice(const std::string& path) {
+        return path.rfind("/dev/", 0) == 0;
+    }
+
+    static std::string CaptureCommandOutput(const std::string& cmd) {
+        std::array<char, 1024> buffer{};
+        std::string output;
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) {
+            return output;
+        }
+        while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+            output += buffer.data();
+        }
+        pclose(pipe);
+        return output;
+    }
+
+    bool ParseRestoreMetadataBlob(const std::string& blob, RestoreVolumePlan& plan) {
+        auto readTag = [&](const std::string& tag) -> std::string {
+            const std::string open = "<" + tag + ">";
+            const std::string close = "</" + tag + ">";
+            size_t start = blob.find(open);
+            if (start == std::string::npos) return {};
+            start += open.size();
+            size_t end = blob.find(close, start);
+            if (end == std::string::npos || end < start) return {};
+            return Trim(blob.substr(start, end - start));
+        };
+
+        std::string diskNumber = readTag("SOURCE_DISK_NUMBER");
+        if (diskNumber.empty()) {
+            return false;
+        }
+
+        try {
+            plan.sourceDiskNumber = std::stoi(diskNumber);
+            plan.sourceDiskSizeBytes = std::stoull(readTag("SOURCE_DISK_SIZE_BYTES"));
+            std::string usedSpaceBytes = readTag("SOURCE_USED_SPACE_BYTES");
+            plan.sourceUsedSpaceBytes = usedSpaceBytes.empty() ? 0 : std::stoull(usedSpaceBytes);
+            plan.sourceVolumeGuidPath = readTag("SOURCE_VOLUME_GUID_PATH");
+            plan.sourceVolumeMountPath = readTag("SOURCE_VOLUME_MOUNT_PATH");
+            plan.sourceVolumeLabel = readTag("SOURCE_VOLUME_LABEL");
+            plan.sourceFileSystem = readTag("SOURCE_FILESYSTEM");
+            plan.partitionStyle = readTag("PARTITION_STYLE");
+            plan.partitionNumber = static_cast<unsigned long>(std::stoul(readTag("PARTITION_NUMBER").empty() ? "0" : readTag("PARTITION_NUMBER")));
+            plan.partitionOffsetBytes = std::stoull(readTag("PARTITION_OFFSET_BYTES"));
+            plan.partitionLengthBytes = std::stoull(readTag("PARTITION_LENGTH_BYTES"));
+            plan.partitionType = readTag("PARTITION_TYPE");
+            std::string isBoot = readTag("IS_BOOT_VOLUME");
+            std::string isSystem = readTag("IS_SYSTEM_VOLUME");
+            plan.isBootVolume = (isBoot == "true" || isBoot == "1");
+            plan.isSystemVolume = (isSystem == "true" || isSystem == "1");
+            std::string isHidden = readTag("IS_HIDDEN_PARTITION");
+            plan.isHiddenPartition = (isHidden == "true" || isHidden == "1");
+            std::string imageIndex = readTag("VOLUME_INDEX");
+            plan.imageIndex = imageIndex.empty() ? 0 : std::stoi(imageIndex);
+            return true;
+        }
+        catch (...) {
+            return false;
+        }
+    }
+
+    bool IsMetadataAwareSsbBackup(const std::string& path) {
+        if (!IsSsbBackup(path)) {
+            return false;
+        }
+
+        std::string info = CaptureCommandOutput("wimlib-imagex info '" + path + "' --detailed 2>/dev/null");
+        return info.find("BACKUPRESTOREMETADATA") != std::string::npos;
+    }
+
+    bool IsHyperVBackupPointDirectory(const std::string& path) {
+        std::error_code ec;
+        fs::path directory(path);
+        return fs::is_directory(directory, ec) &&
+               (fs::exists(directory / "hyperv_backup_info.txt", ec) ||
+                fs::is_directory(directory / "Export", ec));
+    }
+
+    static bool IsPathRooted(const std::string& path) {
+        return !path.empty() && (path[0] == '/' || path[0] == '\\');
+    }
+
+    static std::string NormalizeArchiveItemPath(const std::string& path) {
+        std::string normalized = Trim(path);
+        std::replace(normalized.begin(), normalized.end(), '\\', '/');
+        while (!normalized.empty() && normalized.front() == '/') {
+            normalized.erase(normalized.begin());
+        }
+        while (normalized.size() > 1 && normalized.back() == '/') {
+            normalized.pop_back();
+        }
+        return normalized;
+    }
+
+    static std::string GetPathFileName(const std::string& path) {
+        std::string normalized = NormalizeArchiveItemPath(path);
+        size_t separator = normalized.find_last_of('/');
+        return separator == std::string::npos ? normalized : normalized.substr(separator + 1);
+    }
+
+    static std::string GetPathParent(const std::string& path) {
+        std::string normalized = NormalizeArchiveItemPath(path);
+        size_t separator = normalized.find_last_of('/');
+        return separator == std::string::npos ? std::string() : normalized.substr(0, separator);
+    }
+
+    static std::vector<std::string> SplitPathSegments(const std::string& path) {
+        std::vector<std::string> segments;
+        std::string normalized = NormalizeArchiveItemPath(path);
+        std::stringstream stream(normalized);
+        std::string segment;
+        while (std::getline(stream, segment, '/')) {
+            segment = Trim(segment);
+            if (!segment.empty()) {
+                segments.push_back(segment);
+            }
+        }
+        return segments;
+    }
+
+    static RestoreItem* FindChildByName(std::vector<RestoreItem>& items, const std::string& name) {
+        for (auto& item : items) {
+            if (item.name == name) {
+                return &item;
+            }
+        }
+
+        return nullptr;
+    }
+
+    static void AddArchiveEntryToTree(std::vector<RestoreItem>& tree, const std::string& path, bool isDirectory) {
+        std::vector<std::string> segments = SplitPathSegments(path);
+        if (segments.empty()) {
+            return;
+        }
+
+        std::vector<RestoreItem>* currentLevel = &tree;
+        std::string currentPath;
+
+        for (size_t i = 0; i < segments.size(); ++i) {
+            const std::string& segment = segments[i];
+            currentPath = currentPath.empty() ? segment : (currentPath + "/" + segment);
+            bool nodeIsDirectory = (i + 1 < segments.size()) || isDirectory;
+
+            RestoreItem* existing = FindChildByName(*currentLevel, segment);
+            if (existing == nullptr) {
+                RestoreItem item;
+                item.name = segment;
+                item.path = currentPath;
+                item.type = nodeIsDirectory ? "Folder" : "File";
+                currentLevel->push_back(item);
+                existing = &currentLevel->back();
+            } else if (nodeIsDirectory && existing->type != "Folder") {
+                existing->type = "Folder";
+            }
+
+            currentLevel = &existing->children;
+        }
+    }
+
+    static bool SeemsLikeArchiveDirectoryLine(const std::string& line) {
+        std::string trimmed = Trim(line);
+        if (trimmed.empty()) {
+            return false;
+        }
+
+        if (trimmed.back() == '/') {
+            return true;
+        }
+
+        std::string lower = trimmed;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        return lower.find("<dir>") != std::string::npos ||
+               lower.rfind("dir ", 0) == 0 ||
+               lower.find(" directory ") != std::string::npos;
+    }
+
+    static bool ShouldSkipArchiveListingLine(const std::string& line) {
+        std::string trimmed = Trim(line);
+        return trimmed.empty() ||
+               trimmed.find("Directory listing of image") != std::string::npos ||
+               trimmed.find("listing path") != std::string::npos ||
+               trimmed.find("Total bytes") != std::string::npos ||
+               trimmed.find("Total directories") != std::string::npos ||
+               trimmed.find("Total files") != std::string::npos ||
+               trimmed.find("---") != std::string::npos;
+    }
+
+    std::vector<std::pair<std::string, bool>> ListArchiveEntries(const std::string& backupPath, int imageIndex = 1) {
+        std::vector<std::pair<std::string, bool>> entries;
+
+        std::string command = "wimlib-imagex dir '" + backupPath + "' " + std::to_string(imageIndex) + " 2>/dev/null";
+        FILE* pipe = popen(command.c_str(), "r");
+        if (!pipe) {
+            SetError("Failed to read archive contents.");
+            return entries;
+        }
+
+        char buffer[1024];
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            std::string line(buffer);
+            line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+            line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+            if (ShouldSkipArchiveListingLine(line)) {
+                continue;
+            }
+
+            std::string trimmed = Trim(line);
+            size_t slashPos = trimmed.find('/');
+            if (slashPos == std::string::npos) {
+                continue;
+            }
+
+            std::string path = NormalizeArchiveItemPath(trimmed.substr(slashPos));
+            if (path.empty()) {
+                continue;
+            }
+
+            entries.push_back({ path, SeemsLikeArchiveDirectoryLine(trimmed) });
+        }
+
+        pclose(pipe);
+        return entries;
+    }
+
+    std::vector<RestoreItem> BuildArchiveRestoreTree(const std::string& backupPath, int imageIndex = 1) {
+        std::vector<RestoreItem> tree;
+        std::vector<std::pair<std::string, bool>> entries = ListArchiveEntries(backupPath, imageIndex);
+        if (entries.empty()) {
+            return tree;
+        }
+
+        for (const auto& [path, isDirectory] : entries) {
+            AddArchiveEntryToTree(tree, path, isDirectory);
+        }
+
+        return tree;
+    }
+
+    bool ExtractSelectedArchiveItem(const std::string& backupPath,
+                                    const std::string& destPath,
+                                    const std::string& itemPath,
+                                    int imageIndex,
+                                    bool overwriteExisting) {
+        fs::create_directories(destPath);
+
+        std::string normalizedItem = NormalizeArchiveItemPath(itemPath);
+        if (normalizedItem.empty()) {
+            SetError("Selected archive item path is empty.");
+            return false;
+        }
+
+        std::string command = "wimlib-imagex extract '" + backupPath + "' " + std::to_string(imageIndex) +
+            " '" + destPath + "' '" + normalizedItem + "' --preserve-modes --preserve-timestamps";
+
+        if (overwriteExisting) {
+            command += " --overwrite";
+        }
+
+        command += " 2>/dev/null";
+        int result = system(command.c_str());
+        if (result != 0) {
+            SetError("Failed to extract archive item: " + normalizedItem);
+            return false;
+        }
+
+        return true;
+    }
+
+    std::string ResolveHyperVExportPath(const std::string& backupPath) {
+        std::error_code ec;
+        fs::path candidate(backupPath);
+        if (!fs::exists(candidate, ec) || !fs::is_directory(candidate, ec)) {
+            return {};
+        }
+
+        fs::path exportPath = candidate / "Export";
+        if (fs::exists(exportPath, ec) && fs::is_directory(exportPath, ec)) {
+            return exportPath.string();
+        }
+
+        fs::path metadataPath = candidate / "hyperv_backup_info.txt";
+        if (!fs::exists(metadataPath, ec)) {
+            return {};
+        }
+
+        std::ifstream metadata(metadataPath);
+        std::string line;
+        while (std::getline(metadata, line)) {
+            size_t separator = line.find('=');
+            if (separator == std::string::npos) {
+                continue;
+            }
+
+            std::string key = Trim(line.substr(0, separator));
+            if (!EqualsIgnoreCase(key, "ExportPath")) {
+                continue;
+            }
+
+            std::string value = Trim(line.substr(separator + 1));
+            return fs::exists(value, ec) ? value : std::string();
+        }
+
+        return {};
+    }
+
+    std::string ResolveSelectedItemSourcePath(const std::string& backupPath, const std::string& item) {
+        if (item.empty()) {
+            return backupPath;
+        }
+
+        if (IsHyperVBackupPointDirectory(backupPath)) {
+            std::string exportPath = ResolveHyperVExportPath(backupPath);
+            if (!exportPath.empty()) {
+                fs::path exportRoot(exportPath);
+                fs::path itemPath(item);
+
+                if (itemPath.is_absolute()) {
+                    std::error_code ec;
+                    fs::path normalizedItem = fs::weakly_canonical(itemPath, ec);
+                    fs::path normalizedExport = fs::weakly_canonical(exportRoot, ec);
+
+                    if (!ec) {
+                        std::string normalizedItemText = normalizedItem.generic_string();
+                        std::string normalizedExportText = normalizedExport.generic_string();
+                        if (normalizedItemText == normalizedExportText ||
+                            normalizedItemText.rfind(normalizedExportText + "/", 0) == 0)
+                        {
+                            return normalizedItem.string();
+                        }
+                    }
+
+                    return itemPath.string();
+                }
+
+                return (exportRoot / itemPath).string();
+            }
+        }
+
+        if (IsPathRooted(item)) {
+            return item;
+        }
+
+        if (fs::is_regular_file(backupPath) && IsSsbBackup(backupPath)) {
+            return NormalizeArchiveItemPath(item);
+        }
+
+        return (fs::path(backupPath) / fs::path(item)).string();
+    }
+
+    int RestoreDisk(const std::string& backupPath,
+                    const std::string& targetDisk,
+                    ProgressCallback callback,
+                    bool showHidden = true) {
+        try {
+            return WithPreparedBackup(backupPath, [&](const std::string& workingPath) {
+                if (!fs::exists(workingPath)) {
+                    SetError("Backup path does not exist: " + workingPath);
+                    return -1;
+                }
+
+                if (fs::is_regular_file(workingPath) && IsMetadataAwareSsbBackup(workingPath)) {
+                    return RestoreDiskFromMetadata(workingPath, targetDisk, callback, showHidden);
+                }
+
+                if (fs::is_regular_file(workingPath) && IsSsbBackup(workingPath)) {
+                    int imageCount = GetSsbImageCount(workingPath);
+                    if (ShouldTreatLegacySingleImageAsVolumeRestore(workingPath, imageCount)) {
+                        if (!LooksLikeBlockDevice(targetDisk)) {
+                            SetError("Target disk must be a block device path like /dev/sdX");
+                            return -2;
+                        }
+
+                        std::vector<RestoreVolumePlan> singlePlan;
+                        RestoreVolumePlan fallbackPlan;
+                        fallbackPlan.imageIndex = 1;
+                        fallbackPlan.partitionNumber = 1;
+                        fallbackPlan.partitionLengthBytes = GetDeviceSizeBytes(targetDisk);
+                        fallbackPlan.sourceFileSystem = "NTFS";
+                        singlePlan.push_back(fallbackPlan);
+
+                        if (callback) {
+                            callback(5, "Single-volume SSB backup detected without reconstruction metadata. Reusing the target disk as a single restored volume.");
+                        }
+
+                        std::vector<std::string> partitions;
+                        if (!FormatTargetDisk(targetDisk, singlePlan, partitions) || partitions.size() != 1) {
+                            SetError("Failed to prepare a single target partition for legacy disk restore.");
+                            return -3;
+                        }
+
+                        if (!MountAndRestorePartition(partitions[0], "/mnt/backup_restore_partition_1", singlePlan[0], workingPath)) {
+                            return -5;
+                        }
+
+                        if (callback) {
+                            callback(100, "Single-volume disk restore completed successfully");
+                        }
+
+                        return 0;
+                    }
+
+                    SetError("Legacy SSB backups without reconstruction metadata are not supported for multi-volume disk restore.");
+                    return -2;
+                }
+
+                SetError("Disk restore requires metadata-aware SSB backups.");
+                return -3;
+            });
+        } catch (const std::exception& e) {
+            SetError(std::string("Exception during disk restore: ") + e.what());
+            return -99;
+        }
+    }
+
+    bool ShouldTreatLegacySingleImageAsVolumeRestore(const std::string& backupPath, int imageCount) {
+        return imageCount == 1 && IsSsbBackup(backupPath) && !IsMetadataAwareSsbBackup(backupPath);
+    }
+
+    std::vector<RestoreVolumePlan> GetSsbRestorePlan(const std::string& ssbPath) {
+        std::vector<RestoreVolumePlan> plans;
+
+        std::string info = CaptureCommandOutput("wimlib-imagex info '" + ssbPath + "' --detailed 2>/dev/null");
+        if (info.empty()) {
+            return plans;
+        }
+
+        const std::string marker = "BACKUPRESTOREMETADATA";
+        size_t searchPos = 0;
+        while (true) {
+            size_t markerPos = info.find(marker, searchPos);
+            if (markerPos == std::string::npos) {
+                break;
+            }
+
+            size_t imageStart = info.rfind("Image ", markerPos);
+            int imageIndex = 0;
+            if (imageStart != std::string::npos) {
+                size_t numStart = imageStart + 6;
+                size_t numEnd = info.find_first_not_of("0123456789", numStart);
+                try {
+                    imageIndex = std::stoi(info.substr(numStart, numEnd - numStart));
+                }
+                catch (...) {
+                    imageIndex = static_cast<int>(plans.size()) + 1;
+                }
+            }
+
+            size_t blobStart = info.rfind("<BACKUPRESTOREMETADATA>", markerPos);
+            size_t blobEnd = info.find("</BACKUPRESTOREMETADATA>", markerPos);
+            if (blobStart == std::string::npos || blobEnd == std::string::npos) {
+                searchPos = markerPos + marker.size();
+                continue;
+            }
+
+            blobEnd += std::string("</BACKUPRESTOREMETADATA>").size();
+            std::string blob = info.substr(blobStart, blobEnd - blobStart);
+            RestoreVolumePlan plan;
+            if (ParseRestoreMetadataBlob(blob, plan)) {
+                if (imageIndex > 0) {
+                    plan.imageIndex = imageIndex;
+                }
+                plans.push_back(plan);
+            }
+
+            searchPos = blobEnd;
+        }
+
+        std::sort(plans.begin(), plans.end(), [](const RestoreVolumePlan& a, const RestoreVolumePlan& b) {
+            return a.partitionNumber < b.partitionNumber;
+        });
+
+        return plans;
+    }
+
+    unsigned long long GetDeviceSizeBytes(const std::string& device) {
+        std::string cmd = "blockdev --getsize64 '" + device + "' 2>/dev/null";
+        std::string output = Trim(CaptureCommandOutput(cmd));
+        if (output.empty()) {
+            return 0;
+        }
+
+        try {
+            return std::stoull(output);
+        }
+        catch (...) {
+            return 0;
+        }
+    }
+
+    int RestoreDiskFromMetadata(const std::string& ssbPath,
+                                const std::string& targetDisk,
+                                ProgressCallback callback,
+                                bool showHidden = true) {
+        auto allPlans = GetSsbRestorePlan(ssbPath);
+        std::vector<RestoreVolumePlan> plans;
+        for (const auto& p : allPlans) {
+            if (!p.isHiddenPartition || showHidden) {
+                plans.push_back(p);
+            }
+        }
+        if (plans.empty()) {
+            if (!allPlans.empty() && !showHidden) {
+                SetError("All partitions in this backup are hidden (EFI/MSR/Recovery). Use --show-hidden to restore them.");
+                return -6;
+            }
+            SetError("No reconstruction metadata found in SSB backup.");
+            return -1;
+        }
+
+        if (!LooksLikeBlockDevice(targetDisk)) {
+            SetError("Target disk must be a block device path like /dev/sdX");
+            return -2;
+        }
+
+        if (callback) {
+            callback(0, "Starting metadata-driven disk reconstruction...");
+        }
+
+        std::vector<std::string> partitions;
+        if (!FormatTargetDisk(targetDisk, plans, partitions)) {
+            return -3;
+        }
+
+        if (partitions.size() != plans.size()) {
+            SetError("Partition creation mismatch during disk reconstruction.");
+            return -4;
+        }
+
+        for (size_t i = 0; i < plans.size(); ++i) {
+            const auto& plan = plans[i];
+            const auto& partitionDevice = partitions[i];
+            std::string mountPoint = "/mnt/backup_restore_partition_" + std::to_string(i + 1);
+
+            if (callback) {
+                std::string restoreMessage = "Restoring partition " + std::to_string(plan.partitionNumber == 0 ? i + 1 : plan.partitionNumber);
+                callback(10 + static_cast<int>((i * 80) / plans.size()), restoreMessage.c_str());
+            }
+
+            if (!MountAndRestorePartition(partitionDevice, mountPoint, plan, ssbPath)) {
+                return -5;
+            }
+
+            if (callback) {
+                std::string restoredMessage = "Restored partition " + std::to_string(plan.partitionNumber == 0 ? i + 1 : plan.partitionNumber);
+                callback(10 + static_cast<int>(((i + 1) * 80) / plans.size()), restoredMessage.c_str());
+            }
+        }
+
+        if (callback) {
+            callback(100, "Disk reconstruction restore completed successfully");
+        }
+
+        return 0;
+    }
+
+    bool RunCommand(const std::string& cmd, std::string* output = nullptr) {
+        std::string fullCmd = cmd + " 2>&1";
+        std::string result = CaptureCommandOutput(fullCmd);
+        if (output) {
+            *output = result;
+        }
+        return true;
+    }
+
+    bool FormatTargetDisk(const std::string& device, const std::vector<RestoreVolumePlan>& plans, std::vector<std::string>& partitions) {
+        if (device.empty() || plans.empty()) {
+            SetError("Invalid disk formatting request");
+            return false;
+        }
+
+        unsigned long long targetSize = GetDeviceSizeBytes(device);
+        unsigned long long sourceTotal = 0;
+        for (const auto& p : plans) {
+            sourceTotal += p.partitionLengthBytes > 0 ? p.partitionLengthBytes : 0;
+        }
+
+        if (sourceTotal == 0) {
+            sourceTotal = 1;
+        }
+
+        std::string partitionTable = plans.front().partitionStyle == "MBR" ? "msdos" : "gpt";
+        RunCommand("parted -s '" + device + "' mklabel " + partitionTable);
+
+        std::vector<unsigned long long> plannedBytes(plans.size(), 0);
+        std::vector<unsigned long long> minimumBytes(plans.size(), 0);
+        std::vector<size_t> dataPartitionIndexes;
+        dataPartitionIndexes.reserve(plans.size());
+
+        auto isGrowableDataPartition = [](const RestoreVolumePlan& plan) {
+            std::string fsType = plan.sourceFileSystem;
+            std::transform(fsType.begin(), fsType.end(), fsType.begin(), ::tolower);
+            bool isDataFileSystem = fsType.find("ntfs") != std::string::npos ||
+                                    fsType.find("ext") != std::string::npos ||
+                                    fsType.find("xfs") != std::string::npos ||
+                                    fsType.find("btrfs") != std::string::npos ||
+                                    fsType.find("refs") != std::string::npos;
+
+            return isDataFileSystem && !plan.isHiddenPartition;
+        };
+
+        for (size_t i = 0; i < plans.size(); ++i) {
+            plannedBytes[i] = plans[i].partitionLengthBytes > 0 ? plans[i].partitionLengthBytes : 0;
+            minimumBytes[i] = plannedBytes[i];
+            if (isGrowableDataPartition(plans[i])) {
+                if (plans[i].sourceUsedSpaceBytes > 0) {
+                    unsigned long long usedSpaceWithOverhead = plans[i].sourceUsedSpaceBytes + (plans[i].sourceUsedSpaceBytes / 10ULL);
+                    minimumBytes[i] = std::min(plannedBytes[i], std::max(usedSpaceWithOverhead, 1ULL));
+                }
+
+                plannedBytes[i] = minimumBytes[i];
+                dataPartitionIndexes.push_back(i);
+            }
+        }
+
+        if (targetSize > 0 && !dataPartitionIndexes.empty()) {
+            unsigned long long fixedBytes = 0;
+            for (size_t i = 0; i < plans.size(); ++i) {
+                if (std::find(dataPartitionIndexes.begin(), dataPartitionIndexes.end(), i) == dataPartitionIndexes.end()) {
+                    fixedBytes += plannedBytes[i];
+                }
+            }
+
+            unsigned long long minimumDataBytes = 0;
+            for (size_t index : dataPartitionIndexes) {
+                minimumDataBytes += minimumBytes[index];
+            }
+
+            if (fixedBytes < targetSize) {
+                unsigned long long availableDataBytes = targetSize - fixedBytes;
+                unsigned long long baselineDataBytes = std::min(minimumDataBytes, availableDataBytes);
+                unsigned long long extraDataBytes = availableDataBytes > baselineDataBytes
+                    ? availableDataBytes - baselineDataBytes
+                    : 0;
+
+                size_t preferredIndex = dataPartitionIndexes.front();
+                for (size_t index : dataPartitionIndexes) {
+                    const RestoreVolumePlan& plan = plans[index];
+                    const RestoreVolumePlan& preferredPlan = plans[preferredIndex];
+                    bool isPreferredBootOrSystem = plan.isBootVolume || plan.isSystemVolume;
+                    bool currentPreferredBootOrSystem = preferredPlan.isBootVolume || preferredPlan.isSystemVolume;
+
+                    if ((isPreferredBootOrSystem && !currentPreferredBootOrSystem) ||
+                        (isPreferredBootOrSystem == currentPreferredBootOrSystem && plan.partitionLengthBytes > preferredPlan.partitionLengthBytes)) {
+                        preferredIndex = index;
+                    }
+                }
+
+                for (size_t index : dataPartitionIndexes) {
+                    plannedBytes[index] = minimumBytes[index];
+                }
+
+                plannedBytes[preferredIndex] += extraDataBytes;
+            }
+        }
+
+        unsigned long long startMiB = 1;
+        const unsigned long long minMiB = 1;
+        for (size_t i = 0; i < plans.size(); ++i) {
+            auto& plan = plans[i];
+            unsigned long long scaledBytes = plannedBytes[i] > 0 ? plannedBytes[i] : plan.partitionLengthBytes;
+
+            unsigned long long lengthMiB = std::max<unsigned long long>(minMiB, scaledBytes / (1024ULL * 1024ULL));
+            unsigned long long endMiB = startMiB + lengthMiB;
+            if (i == plans.size() - 1 && targetSize > 0) {
+                unsigned long long diskMiB = targetSize / (1024ULL * 1024ULL);
+                if (diskMiB > startMiB) {
+                    endMiB = diskMiB - 1;
+                }
+            }
+
+            std::string partName = plan.sourceFileSystem.empty() ? "part" : plan.sourceFileSystem;
+            std::string mkpart = "parted -s '" + device + "' mkpart " + partName + " " + std::to_string(startMiB) + "MiB " + std::to_string(endMiB) + "MiB";
+            RunCommand(mkpart);
+
+            if (plans.front().partitionStyle == "GPT") {
+                if (plan.isBootVolume) {
+                    RunCommand("parted -s '" + device + "' set " + std::to_string(i + 1) + " esp on");
+                }
+                if (plan.isSystemVolume) {
+                    RunCommand("parted -s '" + device + "' set " + std::to_string(i + 1) + " boot on");
+                }
+            }
+
+            std::string partitionPath = device + std::to_string(i + 1);
+            if (device.find("nvme") != std::string::npos || device.find("mmcblk") != std::string::npos) {
+                partitionPath = device + "p" + std::to_string(i + 1);
+            }
+            partitions.push_back(partitionPath);
+            startMiB = endMiB + 1;
+        }
+
+        return true;
+    }
+
+    bool MountAndRestorePartition(const std::string& partitionDevice, const std::string& mountPoint, const RestoreVolumePlan& plan, const std::string& ssbPath) {
+        fs::create_directories(mountPoint);
+
+        std::string fsType = plan.sourceFileSystem;
+        std::transform(fsType.begin(), fsType.end(), fsType.begin(), ::tolower);
+
+        if (fsType.find("fat") != std::string::npos) {
+            RunCommand("mkfs.vfat -F 32 '" + partitionDevice + "'");
+        } else if (fsType.find("ext") != std::string::npos) {
+            RunCommand("mkfs.ext4 -F '" + partitionDevice + "'");
+        } else {
+            RunCommand("mkfs.ntfs -f '" + partitionDevice + "'");
+        }
+
+        std::string mountCmd = "mount '" + partitionDevice + "' '" + mountPoint + "'";
+        if (system(mountCmd.c_str()) != 0) {
+            SetError("Failed to mount partition for restore: " + partitionDevice);
+            return false;
+        }
+
+        std::string listCmd = "wimlib-imagex dir '" + ssbPath + "' " + std::to_string(plan.imageIndex) + " 2>/dev/null";
+        std::string listing = CaptureCommandOutput(listCmd);
+        std::vector<std::string> restoreItems;
+        std::istringstream listingStream(listing);
+        std::string listingLine;
+        while (std::getline(listingStream, listingLine)) {
+            std::string trimmed = Trim(listingLine);
+            if (trimmed.empty() ||
+                trimmed.find("Directory listing of image") != std::string::npos ||
+                trimmed.find("---") != std::string::npos)
+            {
+                continue;
+            }
+
+            restoreItems.push_back(trimmed);
+        }
+
+        std::string extractCmd = "wimlib-imagex extract '" + ssbPath + "' " + std::to_string(plan.imageIndex) + " '" + mountPoint + "' --preserve-modes --preserve-timestamps";
+        FILE* pipe = popen((extractCmd + " 2>&1").c_str(), "r");
+        if (!pipe) {
+            std::string umountCmd = "umount '" + mountPoint + "'";
+            system(umountCmd.c_str());
+            SetError("Failed to launch SSB extract command for partition restore: " + mountPoint);
+            return false;
+        }
+
+        std::array<char, 1024> buffer{};
+        std::string commandOutput;
+        size_t currentItemIndex = 0;
+        while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+            commandOutput += buffer.data();
+
+            if (currentItemIndex < restoreItems.size()) {
+                int itemPercent = 15;
+                if (!restoreItems.empty()) {
+                    itemPercent = 15 + static_cast<int>((currentItemIndex * 75) / restoreItems.size());
+                }
+
+                ReportRestoreItem(itemPercent, restoreItems[currentItemIndex]);
+                currentItemIndex++;
+            }
+        }
+
+        if (pclose(pipe) != 0) {
+            std::string umountCmd = "umount '" + mountPoint + "'";
+            system(umountCmd.c_str());
+            SetError("Failed to extract SSB image to partition: " + mountPoint + " Output: " + Trim(commandOutput));
+            return false;
+        }
+
+        if (!restoreItems.empty()) {
+            ReportRestoreItem(90, restoreItems.back());
+        }
+
+        system(("sync '" + mountPoint + "'").c_str());
+        system(("umount '" + mountPoint + "'").c_str());
+        return true;
+    }
+
+    bool IsEncryptedBackup(const std::string& path) {
+        std::ifstream file(path, std::ios::binary);
+        if (!file) {
+            return false;
+        }
+
+        std::array<char, 7> header{};
+        file.read(header.data(), header.size());
+        return file.gcount() == static_cast<std::streamsize>(header.size()) &&
+               std::memcmp(header.data(), EncryptedHeader, header.size()) == 0;
+    }
+
+    bool EnsurePasswordAvailable() {
+        if (!backupPassword.empty()) {
+            return true;
+        }
+
+        if (progressCallback) {
+            progressCallback(0, "Encrypted backup detected - password required.");
+        }
+
+        std::cout << "Encrypted backup detected. Enter password: ";
+        std::getline(std::cin, backupPassword);
+
+        if (backupPassword.empty()) {
+            SetError("Encryption password is required for this backup.");
+            return false;
+        }
+
+        return true;
+    }
+
+    std::string CreateTempPath(const std::string& originalPath) {
+        char tmpl[] = "/tmp/backup_restore_XXXXXX";
+        int fd = mkstemp(tmpl);
+        if (fd < 0) {
+            throw std::runtime_error("Failed to create temporary file for encrypted backup.");
+        }
+        close(fd);
+
+        std::string tempPath = std::string(tmpl) + ".ssb";
+        rename(tmpl, tempPath.c_str());
+        return tempPath;
+    }
+
+    bool DecryptEncryptedBackup(const std::string& encryptedPath, const std::string& outputPath) {
+        if (!EnsurePasswordAvailable()) {
+            return false;
+        }
+
+        std::string command = "python3 -c \"from pathlib import Path; import hashlib, sys; from Crypto.Cipher import AES; from Crypto.Util.Padding import unpad; "
+            "password=sys.argv[1].encode('utf-8'); src=Path(sys.argv[2]); dst=Path(sys.argv[3]); data=src.read_bytes(); "
+            "assert data[:7]==b'SSBAES1'; salt=data[7:23]; iv=data[23:39]; enc=data[39:]; "
+            "key=hashlib.pbkdf2_hmac('sha256', password, salt, 100000, 16); "
+            "cipher=AES.new(key, AES.MODE_CBC, iv); dst.write_bytes(unpad(cipher.decrypt(enc), AES.block_size))\" '" +
+            backupPassword + "' '" + encryptedPath + "' '" + outputPath + "' 2>/tmp/backup_restore_decrypt.log";
+
+        int result = system(command.c_str());
+        if (result != 0) {
+            backupPassword.clear();
+            backupPasswordVerified = false;
+            SetError("Failed to decrypt encrypted backup. The password may be incorrect.");
+            return false;
+        }
+
+        backupPasswordVerified = true;
+        return true;
+    }
+
+    template<typename Func>
+    auto WithPreparedBackup(const std::string& backupPath, Func func) -> decltype(func(backupPath)) {
+        if (!fs::is_regular_file(backupPath) || !IsEncryptedBackup(backupPath)) {
+            return func(backupPath);
+        }
+
+        ReportProgress(2, "Decrypting encrypted backup to temporary working file...");
+        std::string tempPath = CreateTempPath(backupPath);
+
+        try {
+            if (!DecryptEncryptedBackup(backupPath, tempPath)) {
+                BackupCleanup(tempPath);
+                return decltype(func(backupPath))();
+            }
+
+            auto result = func(tempPath);
+            BackupCleanup(tempPath);
+            return result;
+        }
+        catch (...) {
+            BackupCleanup(tempPath);
+            throw;
+        }
+    }
+
+    void BackupCleanup(const std::string& path) {
+        try {
+            if (!path.empty() && fs::exists(path)) {
+                fs::remove(path);
+            }
+        }
+        catch (...) {
+        }
+    }
+
+    // NEW: Check if file is SSB archive format (.ssb or legacy .wim)
+    bool IsSsbBackup(const std::string& path) {
+        // Check file extension
+        std::string ext = fs::path(path).extension().string();
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+        if (ext == ".ssb" || ext == ".wim") {
+            return true;
+        }
+
+        // Check magic number for SSB/WIM archives (MSWIM)
+        std::ifstream file(path, std::ios::binary);
+        if (file) {
+            char magic[8] = {0};
+            file.read(magic, 8);
+            if (strncmp(magic, "MSWIM", 5) == 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // NEW: Get number of images in an SSB archive
+    int GetSsbImageCount(const std::string& ssbPath) {
+        // Use wimlib-imagex info to get image count
+        std::string cmd = "wimlib-imagex info '" + ssbPath + "' 2>/dev/null | grep -c '^Image Count:'";
+
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) {
+            return -1;
+        }
+
+        char buffer[128];
+        std::string result;
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            result += buffer;
+        }
+        pclose(pipe);
+
+        // Parse the count from output
+        try {
+            return std::stoi(result);
+        }
+        catch (...) {
+            return -1;
+        }
+    }
+
+    // NEW: List all images in an SSB archive with their info
+    bool ListSsbImages(const std::string& ssbPath) {
+        std::cout << "\n========================================" << std::endl;
+        std::cout << "Available Backup Images" << std::endl;
+        std::cout << "========================================" << std::endl;
+
+        // Use wimlib-imagex info to list all images
+        std::string cmd = "wimlib-imagex info '" + ssbPath + "' --detailed 2>&1";
+        int result = system(cmd.c_str());
+
+        if (result != 0) {
+            SetError("Failed to read SSB archive information");
+            return false;
+        }
+
+        std::cout << "\n========================================" << std::endl;
+        return true;
+    }
+
+    // NEW: Get image information
+    bool GetSsbImageInfo(const std::string& ssbPath, int imageIndex, 
+                        std::string& name, std::string& description) {
+        // Use wimlib-imagex info to get specific image details
+        std::string cmd = "wimlib-imagex info '" + ssbPath + "' " + std::to_string(imageIndex) + " 2>&1";
+
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) {
+            return false;
+        }
+
+        char buffer[1024];
+        std::string output;
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            output += buffer;
+        }
+        pclose(pipe);
+
+        // Parse name and description from output
+        // Look for "Name:" and "Description:" lines
+        size_t namePos = output.find("Name:");
+        if (namePos != std::string::npos) {
+            size_t nameEnd = output.find('\n', namePos);
+            name = output.substr(namePos + 5, nameEnd - namePos - 5);
+            // Trim whitespace
+            name.erase(0, name.find_first_not_of(" \t"));
+            name.erase(name.find_last_not_of(" \t\r\n") + 1);
+        }
+
+        size_t descPos = output.find("Description:");
+        if (descPos != std::string::npos) {
+            size_t descEnd = output.find('\n', descPos);
+            description = output.substr(descPos + 12, descEnd - descPos - 12);
+            // Trim whitespace
+            description.erase(0, description.find_first_not_of(" \t"));
+            description.erase(description.find_last_not_of(" \t\r\n") + 1);
+        }
+
+        return true;
+    }
+
+    // NEW: Extract SSB backup using wimlib
+    int ExtractSsbBackup(const std::string& ssbPath, 
+                        const std::string& destPath,
+                        int imageIndex = 1) {
+        ReportProgress(10, "Detected SSB archive backup (.ssb file)");
+
+        // Check if wimlib-imagex is available
+        int result = system("which wimlib-imagex > /dev/null 2>&1");
+        if (result != 0) {
+            SetError("SSB extraction tool not found. Install wimlib: sudo apt-get install wimtools");
+            std::cerr << "\nTo extract SSB backups, install the SSB extraction tool (wimlib):" << std::endl;
+            std::cerr << "  Debian/Ubuntu: sudo apt-get install wimtools" << std::endl;
+            std::cerr << "  Fedora/RHEL:   sudo dnf install wimlib-utils" << std::endl;
+            std::cerr << "  Arch Linux:    sudo pacman -S wimlib" << std::endl;
+            return -1;
+        }
+
+        ReportProgress(20, "Using the SSB extraction tool to extract the SSB backup...");
+
+        // First, get information about the SSB archive
+        std::string infoCmd = "wimlib-imagex info '" + ssbPath + "' 2>&1";
+        ReportProgress(25, "Reading SSB metadata...");
+        system(infoCmd.c_str());
+
+        // Extract the SSB image
+        ReportProgress(30, "Extracting SSB image " + std::to_string(imageIndex) + "...");
+
+        std::string extractCmd = "wimlib-imagex extract '" + ssbPath + "' " + 
+                                std::to_string(imageIndex) + " '" + destPath + 
+                                "' --preserve-modes --preserve-timestamps 2>&1";
+
+        std::cout << "\nExecuting: " << extractCmd << std::endl;
+        result = system(extractCmd.c_str());
+
+        if (result != 0) {
+            SetError("SSB extraction failed with code " + std::to_string(result));
+            return -2;
+        }
+
+        ReportProgress(90, "SSB extraction complete");
+        return 0;
+    }
+
+public:
+    RestoreEngine(ProgressCallback callback = nullptr) 
+        : progressCallback(callback) {}
+
+    std::string GetLastError() const { return lastError; }
+
+    void SetBackupPassword(const std::string& password) {
+        backupPassword = password;
+        backupPasswordVerified = !password.empty();
+    }
+
+    void SetLogFilePath(const std::string& path) {
+        logFilePath = Trim(path);
+        ResetProgressLoggingState();
+    }
+
+    void SetLogOperationName(const std::string& operationName) {
+        std::string trimmed = Trim(operationName);
+        logOperationName = trimmed.empty() ? "Restore" : trimmed;
+    }
+
+    // Returns the root block device that backs the currently mounted '/' filesystem.
+    // e.g. "sda" (without /dev/ prefix). Returns empty string if it cannot be determined.
+    std::string GetBootDiskDevice() {
+        // findmnt gives us the source device for /; strip partition suffix to get the disk.
+        std::string out = Trim(CaptureCommandOutput("findmnt -no SOURCE / 2>/dev/null"));
+        if (out.empty()) return {};
+
+        // Strip /dev/ prefix so we have e.g. "sda2"
+        if (out.rfind("/dev/", 0) == 0) out = out.substr(5);
+
+        // Remove trailing digits to get the disk name (sda2 -> sda, nvme0n1p2 -> nvme0n1)
+        // Handle nvmeXnYpZ naming as well as sdXN naming.
+        std::string disk = out;
+        // For NVMe: strip trailing pN suffix
+        auto nvmeP = disk.rfind('p');
+        if (nvmeP != std::string::npos && nvmeP > 0 && std::isdigit(disk.back())) {
+            std::string suffix = disk.substr(nvmeP + 1);
+            bool allDigits = !suffix.empty() && std::all_of(suffix.begin(), suffix.end(), ::isdigit);
+            if (allDigits) { disk = disk.substr(0, nvmeP); }
+        } else {
+            // For sdX: strip trailing digits
+            while (!disk.empty() && std::isdigit(disk.back())) {
+                disk.pop_back();
+            }
+        }
+        return disk;
+    }
+
+    // Structured disk/partition info for the restore target tree.
+    struct DiskInfo {
+        std::string device;    // e.g. "sda"
+        std::string size;      // human-readable size
+        bool isBootDisk = false;
+
+        struct PartitionInfo {
+            std::string device;   // e.g. "sda1"
+            std::string size;
+            std::string fsType;
+            std::string mountPoint;
+            bool isBootDisk = false;
+            // Partitions with no mount point and no common fs (EFI, swap, etc.)
+            // are treated as hidden by default, matching Windows behavior.
+            bool isHiddenPartition = false;
+        };
+        std::vector<PartitionInfo> partitions;
+    };
+
+    // Returns a structured list of block disks and their partitions.
+    // The boot disk is flagged so UIs can show it greyed-out.
+    std::vector<DiskInfo> ListTargetDisks() {
+        std::vector<DiskInfo> result;
+        std::string bootDisk = GetBootDiskDevice();
+
+        // lsblk -Jpno to get JSON, but for broadest compatibility use paired output.
+        // Columns: NAME, SIZE, TYPE, FSTYPE, MOUNTPOINT
+        std::string raw = CaptureCommandOutput("lsblk -nlo NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT 2>/dev/null");
+
+        DiskInfo* current = nullptr;
+        std::istringstream ss(raw);
+        std::string line;
+        while (std::getline(ss, line)) {
+            if (line.empty()) continue;
+
+            // Split on whitespace
+            std::istringstream ls(line);
+            std::string name, size, type, fstype, mount;
+            ls >> name >> size >> type;
+            std::getline(ls, fstype);
+            // fstype and mount are together; re-split
+            std::istringstream ls2(fstype);
+            fstype.clear();
+            ls2 >> fstype >> mount;
+
+            name = Trim(name);
+            size = Trim(size);
+            type = Trim(type);
+            fstype = Trim(fstype);
+            mount = Trim(mount);
+
+            if (type == "disk") {
+                result.push_back({});
+                current = &result.back();
+                current->device = name;
+                current->size = size;
+                current->isBootDisk = (!bootDisk.empty() && name == bootDisk);
+            } else if (type == "part" && current != nullptr) {
+                DiskInfo::PartitionInfo p;
+                p.device = name;
+                p.size = size;
+                p.fsType = fstype;
+                p.mountPoint = mount;
+                p.isBootDisk = current->isBootDisk;
+                // Flag partitions that have no mount point and no user-visible filesystem
+                // (EFI System Partition, Microsoft Reserved, swap without mount, etc.)
+                // so the UI can hide them by default, mirroring Windows behavior.
+                bool hasMount = !p.mountPoint.empty();
+                bool isCommonFs = (!p.fsType.empty() &&
+                    p.fsType != "swap" &&
+                    p.fsType != "vfat" &&
+                    p.fsType.find("fat") == std::string::npos &&
+                    p.fsType != "unknown");
+                p.isHiddenPartition = (!hasMount && !isCommonFs);
+                current->partitions.push_back(p);
+            }
+        }
+        return result;
+    }
+
+    // Restore files from backup to destination
+    // Now supports both folder-based backups and SSB (.ssb) backups
+    int RestoreFiles(const std::string& backupPath, 
+                     const std::string& destPath, 
+                     bool overwriteExisting,
+                     bool logLifecycle = true) {
+        try {
+            return WithPreparedBackup(backupPath, [&](const std::string& workingPath) {
+                if (logLifecycle) {
+                    ResetProgressLoggingState();
+                    LogInfo("Restore started", "BackupPath=" + backupPath + " | Destination=" + destPath + " | Overwrite=" + std::string(overwriteExisting ? "true" : "false"));
+                }
+                ReportProgress(0, "Starting file restore...");
+
+                if (!fs::exists(workingPath)) {
+                    SetError("Backup path does not exist: " + workingPath);
+                    return -1;
+                }
+
+                if (fs::is_regular_file(workingPath) && IsMetadataAwareSsbBackup(workingPath)) {
+                    ReportProgress(4, "Detected metadata-aware SSB backup");
+                    int result = ExtractSsbBackup(workingPath, destPath);
+                    if (result != 0) {
+                        return result;
+                    }
+                    ReportProgress(100, "SSB restore complete!");
+                    return 0;
+                }
+
+                if (fs::is_regular_file(workingPath) && IsSsbBackup(workingPath)) {
+                    ReportProgress(5, "Detected SSB backup format");
+
+                    try {
+                        fs::create_directories(destPath);
+                    } catch (const std::exception& e) {
+                        SetError(std::string("Failed to create destination: ") + e.what());
+                        return -1;
+                    }
+
+                    int result = ExtractSsbBackup(workingPath, destPath);
+                    if (result != 0) {
+                        return result;
+                    }
+
+                    ReportProgress(100, "SSB restore complete!");
+                    return 0;
+                }
+
+                if (IsHyperVBackupPointDirectory(workingPath)) {
+                    std::string exportPath = ResolveHyperVExportPath(workingPath);
+                    if (exportPath.empty()) {
+                        SetError("Hyper-V backup metadata was found, but the exported VM files could not be located.");
+                        return -3;
+                    }
+
+                    ReportProgress(5, "Detected Hyper-V backup point directory");
+                    try {
+                        fs::create_directories(destPath);
+                    } catch (const std::exception& e) {
+                        SetError(std::string("Failed to create destination: ") + e.what());
+                        return -1;
+                    }
+
+                    for (const auto& entry : fs::recursive_directory_iterator(exportPath)) {
+                        if (!entry.is_regular_file()) {
+                            continue;
+                        }
+
+                        fs::path relativePath = fs::relative(entry.path(), exportPath);
+                        fs::path targetPath = fs::path(destPath) / relativePath;
+                        fs::create_directories(targetPath.parent_path());
+                        fs::copy_file(entry.path(), targetPath, overwriteExisting ? fs::copy_options::overwrite_existing : fs::copy_options::skip_existing);
+                    }
+
+                    ReportProgress(100, "Hyper-V export restore complete!");
+                    return 0;
+                }
+
+                ReportProgress(5, "Detected folder-based backup (legacy format)");
+
+                try {
+                    fs::create_directories(destPath);
+                } catch (const std::exception& e) {
+                    SetError(std::string("Failed to create destination: ") + e.what());
+                    return -1;
+                }
+
+                ReportProgress(10, "Scanning backup files...");
+
+                std::vector<fs::path> filesToRestore;
+                uintmax_t totalSize = 0;
+
+                if (fs::is_directory(workingPath)) {
+                    for (const auto& entry : fs::recursive_directory_iterator(workingPath)) {
+                        if (entry.is_regular_file()) {
+                            filesToRestore.push_back(entry.path());
+                            totalSize += entry.file_size();
+                        }
+                    }
+                } else if (fs::is_regular_file(workingPath)) {
+                    filesToRestore.push_back(workingPath);
+                    totalSize = fs::file_size(workingPath);
+                }
+
+                if (filesToRestore.empty()) {
+                    SetError("No files found in backup");
+                    return -1;
+                }
+
+                ReportProgress(20, "Found " + std::to_string(filesToRestore.size()) + " files to restore");
+
+                uintmax_t copiedSize = 0;
+                int filesRestored = 0;
+
+                for (const auto& sourceFile : filesToRestore) {
+                    try {
+                        fs::path relativePath = fs::relative(sourceFile, workingPath);
+                        fs::path destFile = fs::path(destPath) / relativePath;
+
+                        fs::create_directories(destFile.parent_path());
+
+                        if (fs::exists(destFile) && !overwriteExisting) {
+                            continue;
+                        }
+
+                        fs::copy(sourceFile, destFile,
+                            overwriteExisting ? fs::copy_options::overwrite_existing
+                                             : fs::copy_options::skip_existing);
+
+                        try {
+                            struct stat sourceStat;
+                            if (stat(sourceFile.c_str(), &sourceStat) == 0) {
+                                chmod(destFile.c_str(), sourceStat.st_mode);
+
+                                struct timespec times[2];
+                                times[0].tv_sec = sourceStat.st_atime;
+                                times[0].tv_nsec = 0;
+                                times[1].tv_sec = sourceStat.st_mtime;
+                                times[1].tv_nsec = 0;
+                                utimensat(AT_FDCWD, destFile.c_str(), times, 0);
+                            }
+                        } catch (...) {
+                        }
+
+                        filesRestored++;
+                        copiedSize += fs::file_size(sourceFile);
+
+                        int progress = 20 + (int)((copiedSize * 70) / totalSize);
+                        ReportRestoreItem(progress, relativePath.string());
+
+                    } catch (const std::exception& e) {
+                        std::cerr << "Warning: Failed to restore " << sourceFile << ": " << e.what() << std::endl;
+                        continue;
+                    }
+                }
+
+                ReportProgress(90, "Verifying restore...");
+
+                int verifiedFiles = 0;
+                for (const auto& sourceFile : filesToRestore) {
+                    fs::path relativePath = fs::relative(sourceFile, workingPath);
+                    fs::path destFile = fs::path(destPath) / relativePath;
+
+                    if (fs::exists(destFile)) {
+                        verifiedFiles++;
+                    }
+                }
+
+                ReportProgress(100, "Restore completed! Restored " + std::to_string(filesRestored) + " files");
+                if (logLifecycle) {
+                    LogSuccess("Restore completed", "FilesRestored=" + std::to_string(filesRestored) + " | Destination=" + destPath);
+                }
+                return 0;
+            });
+
+        } catch (const std::exception& e) {
+            SetError(std::string("Exception during restore: ") + e.what());
+            return -1;
+        }
+    }
+
+    // Mount NTFS partition for Windows restore
+    int MountNTFSPartition(const std::string& device, const std::string& mountPoint) {
+        ReportProgress(0, "Mounting NTFS partition...");
+
+        // Create mount point
+        fs::create_directories(mountPoint);
+
+        // Mount using ntfs-3g
+        std::string cmd = "ntfs-3g " + device + " " + mountPoint + " -o rw,force 2>&1";
+        FILE* pipe = popen(cmd.c_str(), "r");
+        
+        if (!pipe) {
+            SetError("Failed to execute mount command");
+            return -1;
+        }
+
+        char buffer[256];
+        std::string result;
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            result += buffer;
+        }
+
+        int returnCode = pclose(pipe);
+
+        if (returnCode != 0) {
+            SetError("Mount failed: " + result);
+            return -1;
+        }
+
+        ReportProgress(100, "Partition mounted successfully");
+        return 0;
+    }
+
+    // Unmount partition
+    int UnmountPartition(const std::string& mountPoint) {
+        std::string cmd = "umount " + mountPoint + " 2>&1";
+        system(cmd.c_str());
+        return 0;
+    }
+
+    // List available disks and partitions
+    std::vector<std::string> ListDisks() {
+        std::vector<std::string> disks;
+
+        FILE* pipe = popen("lsblk -nlo NAME,SIZE,TYPE,FSTYPE 2>&1", "r");
+        if (!pipe) return disks;
+
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            disks.push_back(std::string(buffer));
+        }
+
+        pclose(pipe);
+        return disks;
+    }
+
+    // Volume summary returned by ListVolumesInBackup
+    struct VolumeSummary {
+        int imageIndex = 0;
+        unsigned long partitionNumber = 0;
+        std::string volumeLabel;
+        std::string mountPath;
+        std::string fileSystem;
+        std::string partitionType;
+        bool isBootVolume = false;
+        bool isSystemVolume = false;
+        bool isHiddenPartition = false;
+    };
+
+    // List volumes captured in an SSB backup.
+    // When showHidden is false, EFI/MSR/Recovery and no-drive-letter partitions are omitted.
+    std::vector<VolumeSummary> ListVolumesInBackup(const std::string& backupPath, bool showHidden = false) {
+        std::vector<VolumeSummary> result;
+        auto plans = GetSsbRestorePlan(backupPath);
+        for (const auto& p : plans) {
+            if (p.isHiddenPartition && !showHidden) {
+                continue;
+            }
+            VolumeSummary vs;
+            vs.imageIndex = p.imageIndex;
+            vs.partitionNumber = p.partitionNumber;
+            vs.volumeLabel = p.sourceVolumeLabel;
+            vs.mountPath = p.sourceVolumeMountPath;
+            vs.fileSystem = p.sourceFileSystem;
+            vs.partitionType = p.partitionType;
+            vs.isBootVolume = p.isBootVolume;
+            vs.isSystemVolume = p.isSystemVolume;
+            vs.isHiddenPartition = p.isHiddenPartition;
+            result.push_back(vs);
+        }
+        return result;
+    }
+
+    // Scan for backup files
+    std::vector<std::string> ScanForBackups(const std::string& searchPath) {
+        std::vector<std::string> backups;
+
+        try {
+            for (const auto& entry : fs::recursive_directory_iterator(searchPath)) {
+                if (entry.is_regular_file()) {
+                    std::string filename = entry.path().filename().string();
+                    if (filename.find("backup") != std::string::npos ||
+                        filename.find(".bak") != std::string::npos ||
+                        filename.find(".backup") != std::string::npos) {
+                        backups.push_back(entry.path().string());
+                    }
+                }
+            }
+        } catch (...) {
+            // Ignore errors
+        }
+
+        return backups;
+    }
+
+    // NEW: Enumerate backup dates in a folder
+    struct BackupDate {
+        std::string date;
+        std::string type;
+        std::string size;
+        std::string path;
+    };
+
+    std::vector<BackupDate> EnumerateBackupDates(const std::string& backupPath) {
+        std::vector<BackupDate> dates;
+
+        try {
+            if (!fs::exists(backupPath)) {
+                SetError("Backup path does not exist.");
+                return dates;
+            }
+
+            if (fs::is_regular_file(backupPath)) {
+                BackupDate date;
+                auto fileName = fs::path(backupPath).filename().string();
+                std::string lowerFileName = fileName;
+                std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), ::tolower);
+
+                if (lowerFileName.find("incremental") != std::string::npos) {
+                    date.type = "Incremental";
+                } else if (lowerFileName.find("differential") != std::string::npos) {
+                    date.type = "Differential";
+                } else {
+                    date.type = "Full";
+                }
+
+                uintmax_t totalSize = fs::file_size(backupPath);
+                if (totalSize < 1024) {
+                    date.size = std::to_string(totalSize) + " B";
+                } else if (totalSize < 1024 * 1024) {
+                    date.size = std::to_string(totalSize / 1024) + " KB";
+                } else if (totalSize < 1024 * 1024 * 1024) {
+                    date.size = std::to_string(totalSize / (1024 * 1024)) + " MB";
+                } else {
+                    double gb = static_cast<double>(totalSize) / (1024.0 * 1024.0 * 1024.0);
+                    char buf[32];
+                    snprintf(buf, sizeof(buf), "%.2f GB", gb);
+                    date.size = buf;
+                }
+
+                auto ftime = fs::last_write_time(backupPath);
+                auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                    ftime - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
+                time_t cftime = std::chrono::system_clock::to_time_t(sctp);
+                struct tm timeinfo;
+                localtime_r(&cftime, &timeinfo);
+
+                char dateStr[128];
+                strftime(dateStr, sizeof(dateStr), "%Y-%m-%d %H:%M:%S", &timeinfo);
+                date.date = dateStr;
+                date.path = backupPath;
+                dates.push_back(date);
+                return dates;
+            }
+
+            if (!fs::is_directory(backupPath)) {
+                SetError("Backup path is not a directory or backup file.");
+                return dates;
+            }
+
+            for (const auto& entry : fs::directory_iterator(backupPath)) {
+                if (!entry.is_directory() && !entry.is_regular_file()) {
+                    continue;
+                }
+
+                std::string folderName = entry.path().filename().string();
+                std::string type = "Full";
+
+                if (folderName.find("Full") != std::string::npos) {
+                    type = "Full";
+                } else if (folderName.find("Incremental") != std::string::npos || folderName.find("incremental") != std::string::npos) {
+                    type = "Incremental";
+                } else if (folderName.find("Differential") != std::string::npos || folderName.find("differential") != std::string::npos) {
+                    type = "Differential";
+                } else if (entry.is_directory() && IsHyperVBackupPointDirectory(entry.path().string())) {
+                    type = "Hyper-V";
+                } else if (entry.is_regular_file() && (entry.path().extension() == ".ssb" || entry.path().extension() == ".wim")) {
+                    type = "Full";
+                } else {
+                    continue;
+                }
+
+                uintmax_t totalSize = 0;
+                try {
+                    if (entry.is_directory()) {
+                        for (const auto& file : fs::recursive_directory_iterator(entry.path())) {
+                            if (fs::is_regular_file(file)) {
+                                totalSize += fs::file_size(file);
+                            }
+                        }
+                    } else {
+                        totalSize = fs::file_size(entry.path());
+                    }
+                } catch (...) {}
+
+                std::string sizeStr;
+                if (totalSize < 1024) {
+                    sizeStr = std::to_string(totalSize) + " B";
+                } else if (totalSize < 1024 * 1024) {
+                    sizeStr = std::to_string(totalSize / 1024) + " KB";
+                } else if (totalSize < 1024 * 1024 * 1024) {
+                    sizeStr = std::to_string(totalSize / (1024 * 1024)) + " MB";
+                } else {
+                    double gb = static_cast<double>(totalSize) / (1024.0 * 1024.0 * 1024.0);
+                    char buf[32];
+                    snprintf(buf, sizeof(buf), "%.2f GB", gb);
+                    sizeStr = buf;
+                }
+
+                auto ftime = fs::last_write_time(entry.path());
+                auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                    ftime - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
+                time_t cftime = std::chrono::system_clock::to_time_t(sctp);
+                struct tm timeinfo;
+                localtime_r(&cftime, &timeinfo);
+
+                char dateStr[128];
+                strftime(dateStr, sizeof(dateStr), "%Y-%m-%d %H:%M:%S", &timeinfo);
+
+                BackupDate date;
+                date.date = dateStr;
+                date.type = type;
+                date.size = sizeStr;
+                date.path = entry.path().string();
+                dates.push_back(date);
+            }
+
+            // Sort by date (newest first)
+            std::sort(dates.begin(), dates.end(), 
+                [](const BackupDate& a, const BackupDate& b) {
+                    return a.date > b.date;
+                });
+
+        } catch (const std::exception& e) {
+            SetError(std::string("Failed to enumerate backup dates: ") + e.what());
+        }
+
+        return dates;
+    }
+
+    // NEW: Build hierarchical tree of backup contents
+    std::vector<RestoreItem> BuildRestoreTree(const std::string& backupPath) {
+        std::vector<RestoreItem> tree;
+
+        try {
+            WithPreparedBackup(backupPath, [&](const std::string& workingPath) {
+                if (!fs::exists(workingPath)) {
+                    SetError("Backup path does not exist");
+                    return 0;
+                }
+
+                if (fs::is_regular_file(workingPath) && IsSsbBackup(workingPath)) {
+                    tree = BuildArchiveRestoreTree(workingPath);
+                    return 0;
+                }
+
+                if (IsHyperVBackupPointDirectory(workingPath)) {
+                    std::string exportPath = ResolveHyperVExportPath(workingPath);
+                    if (exportPath.empty()) {
+                        SetError("Hyper-V backup metadata was found, but the exported VM files could not be located.");
+                        return 0;
+                    }
+
+                    for (const auto& entry : fs::directory_iterator(exportPath)) {
+                        RestoreItem item;
+                        item.name = entry.path().filename().string();
+                        item.path = entry.path().string();
+                        item.type = entry.is_directory() ? "HyperVFolder" : "HyperVFile";
+                        item.checked = false;
+
+                        if (entry.is_directory()) {
+                            item.children = BuildTreeRecursive(entry.path().string(), 1);
+                        }
+
+                        tree.push_back(item);
+                    }
+
+                    return 0;
+                }
+
+                if (fs::is_directory(workingPath)) {
+                    for (const auto& entry : fs::directory_iterator(workingPath)) {
+                        RestoreItem item;
+                        item.name = entry.path().filename().string();
+                        item.path = entry.path().string();
+                        item.type = entry.is_directory() ? "Folder" : "File";
+                        item.checked = false;
+
+                        if (entry.is_directory()) {
+                            item.children = BuildTreeRecursive(entry.path().string(), 1);
+                        }
+
+                        tree.push_back(item);
+                    }
+                }
+
+                return 0;
+            });
+
+        } catch (const std::exception& e) {
+            SetError(std::string("Failed to build restore tree: ") + e.what());
+        }
+
+        return tree;
+    }
+
+private:
+    std::vector<RestoreItem> BuildTreeRecursive(const std::string& path, int depth) {
+        std::vector<RestoreItem> items;
+        
+        // Limit recursion depth to avoid performance issues
+        if (depth > 3) return items;
+
+        try {
+            for (const auto& entry : fs::directory_iterator(path)) {
+                RestoreItem item;
+                item.name = entry.path().filename().string();
+                item.path = entry.path().string();
+                item.type = entry.is_directory() ? "Folder" : "File";
+                item.checked = false;
+
+                if (entry.is_directory()) {
+                    item.children = BuildTreeRecursive(entry.path().string(), depth + 1);
+                }
+
+                items.push_back(item);
+            }
+        } catch (...) {
+            // Ignore errors (access denied, etc.)
+        }
+
+        return items;
+    }
+
+public:
+    // Enhanced: Restore selected items from manifest with intelligent type detection (v5.11.0.7)
+    bool RestoreWithManifest(
+        const std::string& backupPath,
+        const std::string& destPath,
+        const std::vector<std::string>& items,
+        bool overwrite,
+        std::function<void(int, const std::string&)> callback) {
+        
+        try {
+            ResetProgressLoggingState();
+            LogInfo("Restore started", "BackupPath=" + backupPath + " | Destination=" + (destPath.empty() ? std::string("Original locations") : destPath) + " | ItemCount=" + std::to_string(items.size()) + " | Overwrite=" + std::string(overwrite ? "true" : "false"));
+            int totalItems = items.size();
+            int currentItem = 0;
+
+            for (const auto& item : items) {
+                // Calculate progress percentage
+                int percentage = (currentItem * 100) / totalItems;
+                
+                if (callback) {
+                    callback(percentage, "Restoring: " + item);
+                }
+
+                // Determine paths
+                std::string sourcePath = ResolveSelectedItemSourcePath(backupPath, item);
+                bool archiveSelectedItem = fs::is_regular_file(backupPath) && IsSsbBackup(backupPath);
+
+                std::string targetPath;
+                if (destPath.empty()) {
+                    targetPath = item;
+                } else {
+                    targetPath = destPath + "/" + item;
+                }
+
+                // Intelligent type detection and restore
+                if (archiveSelectedItem) {
+                    if (destPath.empty()) {
+                        if (callback) {
+                            callback(percentage, "Warning: Archive item restore on Linux requires a destination path: " + item);
+                        }
+                        LogWarning("Skipped archive item restore", "Item=" + item + " | Reason=DestinationRequired");
+                    } else {
+                        ReportRestoreItem(percentage, item);
+                        fs::path destinationRoot = fs::path(destPath);
+                        fs::path requestedItem = fs::path(NormalizeArchiveItemPath(item));
+                        fs::path extractionRoot = requestedItem.has_parent_path()
+                            ? (destinationRoot / requestedItem.parent_path())
+                            : destinationRoot;
+
+                        if (ExtractSelectedArchiveItem(backupPath, extractionRoot.string(), item, 1, overwrite)) {
+                            if (callback) {
+                                callback(std::min(99, percentage + 1), "Restored archive item: " + item);
+                            }
+                        } else if (callback) {
+                            callback(percentage, "Warning: Failed to restore archive item: " + item);
+                        }
+                    }
+                }
+                else if (fs::exists(sourcePath)) {
+                    if (fs::is_directory(sourcePath)) {
+                        // Check if it's a disk backup (contains .img files)
+                        bool hasDiskImage = false;
+                        bool hasSystemState = false;
+                        
+                        try {
+                            // Check for disk images
+                            for (const auto& entry : fs::directory_iterator(sourcePath)) {
+                                if (entry.path().extension() == ".img") {
+                                    hasDiskImage = true;
+                                    break;
+                                }
+                            }
+                            
+                            // Check for SystemState directory (Windows backup)
+                            hasSystemState = fs::exists(sourcePath + "/SystemState");
+                        } catch (...) {}
+
+                        if (hasDiskImage) {
+                            if (callback) {
+                                callback(percentage, "Disk image detected: " + item);
+                            }
+
+                            if (IsMetadataAwareSsbBackup(sourcePath)) {
+                                if (callback) {
+                                    callback(percentage, "Metadata-aware disk restore available");
+                                }
+
+                                ProgressCallback diskCallback = nullptr;
+                                if (callback) {
+                                    diskCallback = [](int progress, const char* message) {
+                                        std::cout << "[" << progress << "%] " << (message == nullptr ? "" : message) << std::endl;
+                                    };
+                                }
+
+                                RestoreDisk(sourcePath, targetPath, diskCallback);
+                            } else {
+                                if (callback) {
+                                    callback(percentage, "WARNING: Legacy disk backups without reconstruction metadata cannot be restored automatically");
+                                    callback(percentage, "Skipping automatic disk restore - create a new backup with reconstruction metadata");
+                                }
+                                LogWarning("Skipped legacy disk restore", "Item=" + item + " | Reason=Missing reconstruction metadata");
+                            }
+                        }
+                        else if (hasSystemState) {
+                            // This is a Windows system state backup
+                            // Linux can't restore Windows registry/BCD, but can restore files
+                            if (callback) {
+                                callback(percentage, "Windows system backup detected: " + item);
+                                callback(percentage, "Restoring files only (system state requires Windows)");
+                            }
+                            
+                            // Restore files excluding SystemState directory
+                            RestoreFiles(sourcePath, targetPath, overwrite, false);
+                        }
+                        else {
+                            // Regular directory - restore files
+                            RestoreFiles(sourcePath, targetPath, overwrite, false);
+                        }
+                    }
+                    else {
+                        // Single file - direct copy
+                        try {
+                            fs::create_directories(fs::path(targetPath).parent_path());
+                            
+                            auto copyOptions = overwrite ?
+                                fs::copy_options::overwrite_existing :
+                                fs::copy_options::skip_existing;
+                            
+                            fs::copy_file(sourcePath, targetPath, copyOptions);
+                        } catch (const std::exception& e) {
+                            if (callback) {
+                                callback(percentage, "Warning: Failed to restore file: " + std::string(e.what()));
+                            }
+                            LogWarning("Failed to restore file", "Item=" + item + " | Error=" + e.what());
+                        }
+                    }
+                }
+                else {
+                    // Source doesn't exist
+                    if (callback) {
+                        callback(percentage, "Warning: Source not found: " + item);
+                    }
+                    LogWarning("Source not found", "Item=" + item);
+                }
+
+                currentItem++;
+            }
+
+            if (callback) {
+                callback(100, "Restore completed");
+            }
+
+            LogSuccess("Restore completed", "BackupPath=" + backupPath + " | Destination=" + (destPath.empty() ? std::string("Original locations") : destPath) + " | ItemCount=" + std::to_string(items.size()));
+
+            return true;
+
+        } catch (const std::exception& e) {
+            SetError(std::string("Restore failed: ") + e.what());
+            return false;
+        }
+    }
+};
+
+// C API for compatibility
+extern "C" {
+    void* CreateRestoreEngine() {
+        return new RestoreEngine();
+    }
+
+    void DestroyRestoreEngine(void* engine) {
+        delete static_cast<RestoreEngine*>(engine);
+    }
+
+    int RestoreFiles(void* engine, const char* backupPath, 
+                     const char* destPath, int overwrite) {
+        auto* eng = static_cast<RestoreEngine*>(engine);
+        return eng->RestoreFiles(backupPath, destPath, overwrite != 0);
+    }
+
+    int MountNTFS(void* engine, const char* device, const char* mountPoint) {
+        auto* eng = static_cast<RestoreEngine*>(engine);
+        return eng->MountNTFSPartition(device, mountPoint);
+    }
+
+    int Unmount(void* engine, const char* mountPoint) {
+        auto* eng = static_cast<RestoreEngine*>(engine);
+        return eng->UnmountPartition(mountPoint);
+    }
+
+    const char* GetLastError(void* engine) {
+        auto* eng = static_cast<RestoreEngine*>(engine);
+        return eng->GetLastError().c_str();
+    }
+}

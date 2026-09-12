@@ -1,0 +1,107 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup>
+  <OutputType>WinExe</OutputType>
+  <TargetFramework>net8.0-windows</TargetFramework>
+  <Nullable>enable</Nullable>
+  <UseWPF>true</UseWPF>
+  <UseWindowsForms>true</UseWindowsForms>
+  <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+  <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
+  <StartupObject>SecureServerBackup.Program</StartupObject>
+  <Platforms>x64</Platforms>
+  <RootNamespace>SecureServerBackup</RootNamespace>
+  <AssemblyName>SecureServerBackup</AssemblyName>
+  <ApplicationIcon>Assets\SSB_LogoWinIcos.ico</ApplicationIcon>
+  <AssemblyTitle>SecureServerBackup</AssemblyTitle>
+  <!-- Version, OutputPath, and Runtime config generation come from Directory.Build.props -->
+</PropertyGroup>
+<ItemGroup>
+  <None Remove="Assets\File_color.svg" />
+  <None Remove="Assets\folder_color.svg" />
+  <None Remove="Images\error_icon.svg" />
+  <None Remove="Images\warning_icon.svg" />
+</ItemGroup>
+<ItemGroup>
+  <Content Include="Assets\File_color.svg">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Include="Assets\folder_color.svg">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Include="Assets\SSB_LogoWinIcos.ico" />
+    <Content Include="Assets\logo_small.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\logo_medium.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\logo_large.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+</ItemGroup>
+<ItemGroup>
+  <Resource Include="Assets\logo_medium.png" />
+</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Svg" Version="3.4.8" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.12" />
+    <PackageReference Include="System.Management" Version="10.0.12" />
+    <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
+    <PackageReference Include="zlib-msvc-x64" Version="1.2.11.8900" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BackupCommon\BackupCommon.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>BackupUI.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\logo_large.png" />
+    <Resource Include="Assets\logo_small.png" />
+    <Content Include="Assets\hard_drive.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="Images\error_icon.svg" />
+    <Resource Include="Images\warning_icon.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Converters\" />
+  </ItemGroup>
+  
+  <!-- Copy SecureServerBackupEngine.dll to centralized output directory after C++ build -->
+  <Target Name="CopyBackupEngine" AfterTargets="Build">
+    <ItemGroup>
+      <BackupEngineDll Include="$(SolutionDir)artifacts\bin\$(Configuration)\SecureServerBackupEngine.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BackupEngineDll)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('$(SolutionDir)artifacts\bin\$(Configuration)\SecureServerBackupEngine.dll')" />
+    <Message Text="Copied SecureServerBackupEngine.dll to centralized output: $(OutDir)" Importance="high" Condition="Exists('$(SolutionDir)artifacts\bin\$(Configuration)\SecureServerBackupEngine.dll')" />
+    <Warning Text="SecureServerBackupEngine.dll not found - Build BackupEngine C++ project first!" Condition="!Exists('$(SolutionDir)artifacts\bin\$(Configuration)\SecureServerBackupEngine.dll')" />
+  </Target>
+</Project>
+

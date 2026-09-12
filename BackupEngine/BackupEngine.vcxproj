@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}</ProjectGuid>
+    <!-- WindowsTargetPlatformVersion is centralized in Directory.Build.props -->
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <!-- PlatformToolset is centralized in Directory.Build.props -->
+    <CharacterSet>Unicode</CharacterSet>
+    <TargetName>SecureServerBackupEngine</TargetName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <!-- OutDir and IntDir are managed centrally in Directory.Build.props/targets -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ExcludePath>$(CommonExcludePath);$(VC_ExecutablePath_x64);</ExcludePath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <WimLibArch Condition="'$(Platform)'=='Win32'">x86</WimLibArch>
+    <WimLibArch Condition="'$(Platform)'=='x64'">amd64</WimLibArch>
+    <WimLibArch Condition="'$(Platform)'=='ARM'">arm</WimLibArch>
+    <WimLibArch Condition="'$(Platform)'=='ARM64'">arm64</WimLibArch>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>BACKUPENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningLevel>Level3</WarningLevel>
+      <!-- Async (SEH) EH (/EHa): makes catch(...) intercept hardware faults such as null WMI pointer AV, preventing service crashes. -->
+      <ExceptionHandling>Async</ExceptionHandling>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\SDKs\Wimgapi\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\SDKs\Wimgapi\Include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>VssApi.lib;wbemuuid.lib;ole32.lib;oleaut32.lib;wimgapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\SDKs\Wimgapi\Lib\$(WimLibArch)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\SDKs\Wimgapi\Lib\$(WimLibArch)</AdditionalLibraryDirectories>
+      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Release|x64'">LinkVerbose</ShowProgress>
+      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">LinkVerbose</ShowProgress>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="BackupEngine.h" />
+    <ClInclude Include="BackupEngine_Common.h" />
+    <ClInclude Include="BrsFileManager.h" />
+    <ClInclude Include="DiskConsolidator.h" />
+    <ClInclude Include="RecoveryManager.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ShellExtension.h" />
+    <ClInclude Include="VerificationEngine.h" />
+    <ClInclude Include="VSSSnapshotManager.h" />
+    <ClInclude Include="WimMountManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BackupEngine.cpp" />
+    <ClCompile Include="BackupEngine_Common.cpp" />
+    <ClCompile Include="BackupEngine_Exports.cpp" />
+    <ClCompile Include="BackupFiles_Implementation.cpp" />
+    <ClCompile Include="BackupInfo_Implementation.cpp" />
+    <ClCompile Include="BackupManager_Advanced.cpp" />
+    <ClCompile Include="BrsFileManager.cpp" />
+    <ClCompile Include="DiskConsolidator.cpp" />
+    <ClCompile Include="HyperVBackup_Implementation.cpp" />
+    <ClCompile Include="HyperVEngineExports.cpp" />
+    <ClCompile Include="HyperVManager.cpp" />
+    <ClCompile Include="HyperV_Enumeration.cpp" />
+    <ClCompile Include="RecoveryEnvironment.cpp" />
+    <ClCompile Include="RecoveryManager.cpp" />
+    <ClCompile Include="RestoreEngine_Advanced.cpp" />
+    <ClCompile Include="RestoreEnhanced.cpp" />
+    <ClCompile Include="ShellExtension.cpp" />
+    <ClCompile Include="VerificationEngine.cpp" />
+    <ClCompile Include="VolumeEnumeration.cpp" />
+    <ClCompile Include="VSSManager.cpp" />
+    <ClCompile Include="SystemStateRestore.cpp" />
+    <ClCompile Include="BackupVerification.cpp" />
+    <ClCompile Include="VSSSnapshotManager.cpp" />
+    <ClCompile Include="WimMountManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="BackupEngine.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\BackupUI\Assets\SSB_LogoWinIcos.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="..\packages\zlib-msvc-x64.1.2.11.8900\build\native\zlib-msvc-x64.targets" Condition="Exists('..\packages\zlib-msvc-x64.1.2.11.8900\build\native\zlib-msvc-x64.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\zlib-msvc-x64.1.2.11.8900\build\native\zlib-msvc-x64.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\zlib-msvc-x64.1.2.11.8900\build\native\zlib-msvc-x64.targets'))" />
+  </Target>
+</Project>

@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<TargetFramework>net8.0-windows</TargetFramework>
+	<Nullable>enable</Nullable>
+	<Platforms>x64</Platforms>
+	<RootNamespace>SecureServerBackupCommon</RootNamespace>
+	<AssemblyName>SecureServerBackupCommon</AssemblyName>
+	<!-- Version, OutputPath, and Runtime config generation come from Directory.Build.props -->
+	<UseWPF>true</UseWPF>
+	<AssemblyTitle>SecureServerBackupCommon</AssemblyTitle>
+	<Win32Resource>E:\VisualStudioProjects\BackupRestoreSolution\BackupRestoreSolution\BackupCommon\Resources\SSB_LogoWinIcosM.res</Win32Resource>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>
