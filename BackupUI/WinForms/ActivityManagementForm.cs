@@ -1,14 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+
+using SecureServerBackup.Helpers;
+
 using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
 	internal sealed class ActivityManagementForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly DataGridView jobsGrid;
 		private readonly Label statusLabel;
 		private readonly BindingSource bindingSource = new();
@@ -96,7 +101,45 @@ namespace SecureServerBackup.WinForms
 			Controls.Add(lowerActionsPanel);
 			Controls.Add(statusLabel);
 
-			Load += (_, _) => LoadJobLogs();
+			if (IsInDesignMode)
+			{
+				LoadDesignTimeRows();
+			}
+			else
+			{
+				Load += (_, _) => LoadJobLogs();
+			}
+		}
+
+		private void LoadDesignTimeRows()
+		{
+			currentRows =
+			[
+				new JobLogSummaryRow
+				{
+					JobName = "Sample Backup",
+					TotalActivities = 12,
+					LastActivity = DateTime.Now.AddMinutes(-5),
+					SuccessCount = 8,
+					WarningCount = 1,
+					ErrorCount = 0,
+					InfoCount = 3
+				},
+				new JobLogSummaryRow
+				{
+					JobName = "Weekly Clone",
+					TotalActivities = 4,
+					LastActivity = DateTime.Now.AddHours(-2),
+					SuccessCount = 2,
+					WarningCount = 1,
+					ErrorCount = 1,
+					InfoCount = 0
+				}
+			];
+
+			bindingSource.DataSource = currentRows;
+			statusLabel.Visible = true;
+			statusLabel.Text = $"Found {currentRows.Count} backup jobs with activity logs";
 		}
 
 		private static Button CreateButton(string text, EventHandler onClick)

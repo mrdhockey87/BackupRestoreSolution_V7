@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -9,10 +10,16 @@ namespace SecureServerBackup.WinForms
 {
 	internal sealed class ExclusionsManagementForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly ListBox exclusionsListBox;
 		private readonly TextBox extensionPatternTextBox;
 		private readonly Label noExclusionsLabel;
 		private readonly Label statusLabel;
+
+		public ExclusionsManagementForm()
+			: this([@"*.tmp", @"C:\Temp", @"C:\Users\Admin\Documents\draft.txt"])
+		{
+		}
 
 		public ExclusionsManagementForm(List<string> currentExclusions)
 		{
@@ -124,11 +131,19 @@ namespace SecureServerBackup.WinForms
 			Controls.Add(okButton);
 			Controls.Add(cancelButton);
 
-			Load += (_, _) =>
+			if (IsInDesignMode)
 			{
 				LoadExclusions();
 				UpdateStatus();
-			};
+			}
+			else
+			{
+				Load += (_, _) =>
+				{
+					LoadExclusions();
+					UpdateStatus();
+				};
+			}
 		}
 
 		public List<string> Exclusions { get; }

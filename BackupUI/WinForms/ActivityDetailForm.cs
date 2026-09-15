@@ -1,14 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+
+using SecureServerBackup.Helpers;
+
 using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
 	internal sealed class ActivityDetailForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly string? filterJobName;
 		private readonly Label statusLabel;
 		private readonly Label selectionCountLabel;
@@ -16,6 +21,11 @@ namespace SecureServerBackup.WinForms
 		private readonly DataGridView activitiesGrid;
 		private readonly BindingSource bindingSource = new();
 		private List<BackupLogEntry> currentLogs = new();
+
+		public ActivityDetailForm()
+			: this(null)
+		{
+		}
 
 		public ActivityDetailForm(string? jobName)
 		{
@@ -122,7 +132,41 @@ namespace SecureServerBackup.WinForms
 			Controls.Add(activitiesGrid);
 			Controls.Add(statusLabel);
 
-			Load += (_, _) => LoadActivities();
+			if (IsInDesignMode)
+			{
+				LoadDesignTimeActivities();
+			}
+			else
+			{
+				Load += (_, _) => LoadActivities();
+			}
+		}
+
+		private void LoadDesignTimeActivities()
+		{
+			currentLogs =
+			[
+				new BackupLogEntry
+				{
+					Timestamp = DateTime.Now.AddMinutes(-10),
+					JobName = "Sample Backup",
+					Level = BackupLogLevel.Info,
+					Message = "Backup started",
+					Details = "Design-time preview entry",
+					BackupPath = @"D:\Backups\Sample.ssb"
+				},
+				new BackupLogEntry
+				{
+					Timestamp = DateTime.Now.AddMinutes(-2),
+					JobName = "Sample Backup",
+					Level = BackupLogLevel.Success,
+					Message = "Backup completed",
+					Details = "Designer preview data",
+					BackupPath = @"D:\Backups\Sample.ssb"
+				}
+			];
+
+			ApplyLevelFilter();
 		}
 
 		private static Button CreateButton(string text, EventHandler onClick)

@@ -21,6 +21,11 @@ namespace SecureServerBackup.WinForms
 		private readonly Label selectedValueLabel;
 		private bool isUpdatingSelections;
 
+		public NextRunTimeEditForm()
+			: this(new BackupJob { Name = "Sample Backup" }, DateTime.Now.AddHours(2), DateTime.Now.AddDays(7))
+		{
+		}
+
 		public NextRunTimeEditForm(BackupJob job, DateTime currentNextRun, DateTime latestAllowedRun)
 		{
 			ArgumentNullException.ThrowIfNull(job);

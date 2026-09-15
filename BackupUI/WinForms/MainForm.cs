@@ -13,106 +13,18 @@ using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class MainForm : Form
+	internal sealed partial class MainForm : Form
 	{
 		private const string BackupJobCardTag = "BackupJobCard";
 
-		private readonly ToolStripStatusLabel versionStatusLabel;
-		private readonly TabControl mainTabControl;
-		private readonly FlowLayoutPanel backupJobsPanel;
-		private readonly Label emptyBackupJobsLabel;
-		private readonly ListView mountBackupsListView;
-		private readonly ListView verifyBackupsListView;
-		private readonly ListView restoreBackupsListView;
-		private readonly Label restoreStatusLabel;
-		private readonly Label emptyRestoreBackupsLabel;
-		private readonly ListView schedulesListView;
 		private readonly JobManager jobManager = new();
 
 		public MainForm()
 		{
-			Text = "Secure Server Backup";
-			MinimumSize = new Size(800, 500);
-			StartPosition = FormStartPosition.CenterScreen;
-			AutoScaleMode = AutoScaleMode.Font;
-			BackColor = WinFormsThemeManager.WindowBackground;
-
-			var menuStrip = BuildMenu();
-			var statusStrip = new StatusStrip
-			{
-				BackColor = WinFormsThemeManager.StatusBarBackground,
-				SizingGrip = false
-			};
-
-			versionStatusLabel = new ToolStripStatusLabel
-			{
-				Text = "Version: Loading..."
-			};
-			statusStrip.Items.Add(versionStatusLabel);
-
-			mainTabControl = new TabControl
-			{
-				Dock = DockStyle.Fill,
-				DrawMode = TabDrawMode.OwnerDrawFixed,
-				SizeMode = TabSizeMode.Fixed,
-				ItemSize = new Size(110, 28),
-				Padding = new Point(12, 4)
-			};
-			mainTabControl.DrawItem += MainTabControl_DrawItem;
-
-			backupJobsPanel = new FlowLayoutPanel
-			{
-				Dock = DockStyle.Fill,
-				FlowDirection = FlowDirection.TopDown,
-				WrapContents = false,
-				AutoScroll = true,
-				Padding = new Padding(12, 10, 12, 10),
-				BackColor = WinFormsThemeManager.PanelBackground,
-				BorderStyle = BorderStyle.FixedSingle
-			};
-			backupJobsPanel.Controls.Add(BuildBackupActionPanel());
-			emptyBackupJobsLabel = CreatePlaceholderLabel("No backup jobs have been created.");
-			backupJobsPanel.Controls.Add(emptyBackupJobsLabel);
-
-			mountBackupsListView = CreatePlaceholderListView();
-			verifyBackupsListView = CreatePlaceholderListView();
-			restoreBackupsListView = CreatePlaceholderListView();
-			restoreBackupsListView.Columns.Add("Backup Name", 220);
-			restoreBackupsListView.Columns.Add("Type", 120);
-			restoreBackupsListView.Columns.Add("Date", 160);
-			restoreBackupsListView.Columns.Add("Encrypted", 110);
-			restoreBackupsListView.Columns.Add("Path", 320);
-			restoreBackupsListView.DoubleClick += (_, _) => OpenSelectedRestoreBackup();
-
-			restoreStatusLabel = CreatePlaceholderLabel("Select a backup to open the restore workflow. Restoring the boot/system drive requires the recovery environment.");
-			restoreStatusLabel.MaximumSize = new Size(900, 0);
-			emptyRestoreBackupsLabel = CreatePlaceholderLabel("No restore backups are available.");
-			schedulesListView = CreatePlaceholderListView();
-
-			mainTabControl.TabPages.Add(CreateTabPage("Backup", backupJobsPanel));
-			mainTabControl.TabPages.Add(CreateTabPage("Activity", BuildActivityTabContent()));
-			mainTabControl.TabPages.Add(CreateTabPage("Mount Backups", mountBackupsListView));
-			mainTabControl.TabPages.Add(CreateTabPage("Verify", verifyBackupsListView));
-			mainTabControl.TabPages.Add(CreateRestoreTabPage());
-			mainTabControl.TabPages.Add(CreateTabPage("Schedules", schedulesListView));
-
-			Controls.Add(mainTabControl);
-			Controls.Add(statusStrip);
-			Controls.Add(menuStrip);
-			MainMenuStrip = menuStrip;
-
-			Resize += (_, _) => ResizeBackupJobCards();
-
-			Load += (_, _) =>
-			{
-				LoadVersion();
-				LoadBackupJobs();
-				LoadRestoreBackups();
-				if (SynchronizationContext.Current != null)
-				{
-					NotificationService.ConfigureUiContext(SynchronizationContext.Current, ShowActivityTab);
-				}
-			};
+			InitializeComponent();
+			ConfigureMenu();
+			ConfigureShell();
+			MainMenuStrip = mainMenuStrip;
 		}
 
 		private void LoadBackupJobs()
@@ -511,13 +423,11 @@ namespace SecureServerBackup.WinForms
 			versionStatusLabel.Text = VersionClass.GetVersion();
 		}
 
-		private MenuStrip BuildMenu()
+		private void ConfigureMenu()
 		{
-			var menuStrip = new MenuStrip
-			{
-				BackColor = WinFormsThemeManager.HeaderBackground,
-				RenderMode = ToolStripRenderMode.System
-			};
+			mainMenuStrip.Items.Clear();
+			mainMenuStrip.BackColor = WinFormsThemeManager.HeaderBackground;
+			mainMenuStrip.RenderMode = ToolStripRenderMode.System;
 
 			var fileMenu = new ToolStripMenuItem("&File");
 			fileMenu.DropDownItems.Add(new ToolStripMenuItem("E&xit", null, (_, _) => Close()));
@@ -541,7 +451,7 @@ namespace SecureServerBackup.WinForms
 			var helpMenu = new ToolStripMenuItem("&Help");
 			helpMenu.DropDownItems.Add(new ToolStripMenuItem("&About...", null, (_, _) => OpenAbout()));
 
-			menuStrip.Items.AddRange(
+			mainMenuStrip.Items.AddRange(
 			[
 				fileMenu,
 				backupMenu,
@@ -551,7 +461,47 @@ namespace SecureServerBackup.WinForms
 				helpMenu
 			]);
 
-			return menuStrip;
+		}
+
+		private void ConfigureShell()
+		{
+			BackColor = WinFormsThemeManager.WindowBackground;
+			mainStatusStrip.BackColor = WinFormsThemeManager.StatusBarBackground;
+			backupTabPage.BackColor = WinFormsThemeManager.WindowBackground;
+			activityTabPage.BackColor = WinFormsThemeManager.WindowBackground;
+			mountBackupsTabPage.BackColor = WinFormsThemeManager.WindowBackground;
+			verifyTabPage.BackColor = WinFormsThemeManager.WindowBackground;
+			restoreTabPage.BackColor = WinFormsThemeManager.WindowBackground;
+			schedulesTabPage.BackColor = WinFormsThemeManager.WindowBackground;
+			backupJobsPanel.BackColor = WinFormsThemeManager.PanelBackground;
+			activityTabPanel.BackColor = WinFormsThemeManager.PanelBackground;
+			restoreRootLayout.BackColor = WinFormsThemeManager.PanelBackground;
+			versionStatusLabel.Text = "Version: Loading...";
+			restoreStatusLabel.MaximumSize = new Size(900, 0);
+
+			ConfigurePlaceholderListView(mountBackupsListView);
+			ConfigurePlaceholderListView(verifyBackupsListView);
+			ConfigurePlaceholderListView(restoreBackupsListView);
+			ConfigurePlaceholderListView(schedulesListView);
+
+			restoreBackupsListView.Columns.Clear();
+			restoreBackupsListView.Columns.Add("Backup Name", 220);
+			restoreBackupsListView.Columns.Add("Type", 120);
+			restoreBackupsListView.Columns.Add("Date", 160);
+			restoreBackupsListView.Columns.Add("Encrypted", 110);
+			restoreBackupsListView.Columns.Add("Path", 320);
+
+			backupJobsPanel.Controls.Clear();
+			backupJobsPanel.Controls.Add(BuildBackupActionPanel());
+			backupJobsPanel.Controls.Add(emptyBackupJobsLabel);
+
+			activityTabPanel.Controls.Clear();
+			activityTabPanel.Controls.Add(BuildActivityTabContent());
+
+			restoreActionsPanel.Controls.Clear();
+			restoreActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadRestoreBackups()));
+			restoreActionsPanel.Controls.Add(CreateActionButton("Browse .ssb...", (_, _) => BrowseRestoreBackup()));
+			restoreActionsPanel.Controls.Add(CreateActionButton("Restore Selected", (_, _) => OpenSelectedRestoreBackup()));
 		}
 
 		private Control BuildBackupActionPanel()
@@ -601,60 +551,6 @@ namespace SecureServerBackup.WinForms
 			return panel;
 		}
 
-		private static TabPage CreateTabPage(string title, Control content)
-		{
-			var page = new TabPage(title)
-			{
-				BackColor = WinFormsThemeManager.WindowBackground,
-				Padding = new Padding(6)
-			};
-
-			content.Dock = DockStyle.Fill;
-			page.Controls.Add(content);
-			return page;
-		}
-
-		private TabPage CreateRestoreTabPage()
-		{
-			var page = new TabPage("Restore")
-			{
-				BackColor = WinFormsThemeManager.WindowBackground,
-				Padding = new Padding(6)
-			};
-
-			var layout = new TableLayoutPanel
-			{
-				Dock = DockStyle.Fill,
-				ColumnCount = 1,
-				RowCount = 4,
-				Padding = new Padding(10),
-				BackColor = WinFormsThemeManager.PanelBackground
-			};
-			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-			layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-			var restoreActionsPanel = new FlowLayoutPanel
-			{
-				AutoSize = true,
-				WrapContents = true,
-				Margin = new Padding(0, 0, 0, 8),
-				BackColor = WinFormsThemeManager.PanelBackground
-			};
-			restoreActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadRestoreBackups()));
-			restoreActionsPanel.Controls.Add(CreateActionButton("Browse .ssb...", (_, _) => BrowseRestoreBackup()));
-			restoreActionsPanel.Controls.Add(CreateActionButton("Restore Selected", (_, _) => OpenSelectedRestoreBackup()));
-
-			layout.Controls.Add(restoreActionsPanel, 0, 0);
-			layout.Controls.Add(restoreBackupsListView, 0, 1);
-			layout.Controls.Add(emptyRestoreBackupsLabel, 0, 2);
-			layout.Controls.Add(restoreStatusLabel, 0, 3);
-
-			page.Controls.Add(layout);
-			return page;
-		}
-
 		private Control BuildActivityTabContent()
 		{
 			var panel = new Panel
@@ -678,6 +574,16 @@ namespace SecureServerBackup.WinForms
 				Margin = new Padding(10, 8, 10, 8),
 				BackColor = WinFormsThemeManager.PanelBackground
 			};
+		}
+
+		private static void ConfigurePlaceholderListView(ListView listView)
+		{
+			listView.Dock = DockStyle.Fill;
+			listView.View = View.Details;
+			listView.FullRowSelect = true;
+			listView.GridLines = true;
+			listView.HideSelection = false;
+			listView.BackColor = Color.White;
 		}
 
 		private static Button CreateActionButton(string text, EventHandler onClick)
@@ -1332,6 +1238,27 @@ namespace SecureServerBackup.WinForms
 		{
 			using var form = new AboutForm();
 			form.ShowDialog(this);
+		}
+
+		private void MainForm_Load(object? sender, EventArgs e)
+		{
+			LoadVersion();
+			LoadBackupJobs();
+			LoadRestoreBackups();
+			if (SynchronizationContext.Current != null)
+			{
+				NotificationService.ConfigureUiContext(SynchronizationContext.Current, ShowActivityTab);
+			}
+		}
+
+		private void MainForm_Resize(object? sender, EventArgs e)
+		{
+			ResizeBackupJobCards();
+		}
+
+		private void RestoreBackupsListView_DoubleClick(object? sender, EventArgs e)
+		{
+			OpenSelectedRestoreBackup();
 		}
 	}
 }

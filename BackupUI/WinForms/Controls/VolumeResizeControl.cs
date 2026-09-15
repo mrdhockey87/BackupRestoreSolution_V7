@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -16,6 +17,7 @@ namespace SecureServerBackup.WinForms.Controls
 		private const int HandleWidth = 10;
 
 		private readonly List<Rectangle> resizeHandles = [];
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private List<VolumeResizeInfo> volumes = [];
 		private VolumeResizeManager? resizeManager;
 		private long targetDiskSize;
@@ -30,6 +32,11 @@ namespace SecureServerBackup.WinForms.Controls
 			BackColor = Color.White;
 			MinimumSize = new Size(500, 220);
 			Cursor = Cursors.Default;
+
+			if (IsInDesignMode)
+			{
+				InitializeDesignTimePreview();
+			}
 		}
 
 		public void Initialize(List<VolumeResizeInfo> sourceVolumes, long targetDiskSizeBytes)
@@ -58,6 +65,32 @@ namespace SecureServerBackup.WinForms.Controls
 		{
 			resizeManager?.AutoFit();
 			Invalidate();
+		}
+
+		private void InitializeDesignTimePreview()
+		{
+			volumes =
+			[
+				new VolumeResizeInfo
+				{
+					Index = 0,
+					Label = "Windows",
+					OriginalSize = 240L * 1024 * 1024 * 1024,
+					DataSize = 120L * 1024 * 1024 * 1024,
+					TargetSize = 260L * 1024 * 1024 * 1024
+				},
+				new VolumeResizeInfo
+				{
+					Index = 1,
+					Label = "Data",
+					OriginalSize = 180L * 1024 * 1024 * 1024,
+					DataSize = 80L * 1024 * 1024 * 1024,
+					TargetSize = 200L * 1024 * 1024 * 1024
+				}
+			];
+
+			targetDiskSize = 512L * 1024 * 1024 * 1024;
+			resizeManager = new VolumeResizeManager(volumes, targetDiskSize);
 		}
 
 		protected override void OnPaint(PaintEventArgs e)

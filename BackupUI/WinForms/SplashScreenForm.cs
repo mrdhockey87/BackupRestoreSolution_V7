@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Text.Json;
@@ -7,62 +8,18 @@ using System.Windows.Forms;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class SplashScreenForm : Form
+	internal sealed partial class SplashScreenForm : Form
 	{
-		private readonly PictureBox logoPictureBox;
-		private readonly Label statusLabel;
-		private readonly Label versionLabel;
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 
 		public SplashScreenForm()
 		{
-			var baseFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+			InitializeComponent();
 
-			FormBorderStyle = FormBorderStyle.None;
-			StartPosition = FormStartPosition.Manual;
-			ShowInTaskbar = false;
-			TopMost = true;
-			ClientSize = new Size(600, 400);
-			BackColor = WinFormsThemeManager.LightTurquoise;
-
-			logoPictureBox = new PictureBox
+			if (IsInDesignMode)
 			{
-				Location = new Point(200, 20),
-				Size = new Size(200, 200),
-				SizeMode = PictureBoxSizeMode.Zoom,
-				BackColor = Color.Transparent
-			};
-
-			var titleLabel = new Label
-			{
-				Text = "Secure Server Backup",
-				Font = new Font(baseFont.FontFamily, 18F, FontStyle.Bold),
-				ForeColor = WinFormsThemeManager.PrimaryTurquoise,
-				AutoSize = true,
-				Location = new Point(160, 235)
-			};
-
-			statusLabel = new Label
-			{
-				Text = "Starting...",
-				Font = baseFont,
-				ForeColor = WinFormsThemeManager.SecondaryText,
-				AutoSize = true,
-				Location = new Point(250, 305)
-			};
-
-			versionLabel = new Label
-			{
-				Text = "Version: Loading...",
-				Font = baseFont,
-				ForeColor = WinFormsThemeManager.SecondaryText,
-				AutoSize = true,
-				Location = new Point(240, 275)
-			};
-
-			Controls.Add(logoPictureBox);
-			Controls.Add(titleLabel);
-			Controls.Add(statusLabel);
-			Controls.Add(versionLabel);
+				return;
+			}
 
 			LoadSavedPosition();
 			LoadLogo();

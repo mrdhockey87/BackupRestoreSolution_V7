@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.ServiceProcess;
 using System.Threading.Tasks;
@@ -7,50 +8,36 @@ using SecureServerBackup.Services;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class AboutForm : Form
+	internal sealed partial class AboutForm : Form
 	{
-		private readonly Label mainVersionLabel;
-		private readonly Label uiVersionLabel;
-		private readonly Label engineVersionLabel;
-		private readonly Label serviceVersionLabel;
-		private readonly Label serviceWarningLabel;
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 
 		public AboutForm()
 		{
-			var baseFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+			InitializeComponent();
+			mainVersionLabel.Text = "Version 0.0.0.0";
+			uiVersionLabel.Text = "UI Version: 0.0.0.0";
+			engineVersionLabel.Text = "Engine Version: 0.0.0.0";
+			serviceVersionLabel.Text = "Service Version: Loading...";
+			serviceWarningLabel.Text = string.Empty;
+		}
 
-			Text = "About Secure Server Backup";
-			FormBorderStyle = FormBorderStyle.FixedDialog;
-			StartPosition = FormStartPosition.CenterParent;
-			MinimizeBox = false;
-			MaximizeBox = false;
-			ShowInTaskbar = false;
-			ClientSize = new Size(420, 260);
-
-			mainVersionLabel = CreateLabel(new Point(20, 20), baseFont, bold: true);
-			uiVersionLabel = CreateLabel(new Point(20, 70), baseFont);
-			engineVersionLabel = CreateLabel(new Point(20, 105), baseFont);
-			serviceVersionLabel = CreateLabel(new Point(20, 140), baseFont);
-			serviceWarningLabel = CreateLabel(new Point(20, 175), baseFont);
-			serviceWarningLabel.ForeColor = Color.DarkOrange;
-
-			var okButton = new Button
+		private async void AboutForm_Load(object? sender, EventArgs e)
+		{
+			if (IsInDesignMode)
 			{
-				Text = "OK",
-				DialogResult = DialogResult.OK,
-				Location = new Point(310, 210),
-				Size = new Size(80, 30)
-			};
+				return;
+			}
 
-			Controls.Add(mainVersionLabel);
-			Controls.Add(uiVersionLabel);
-			Controls.Add(engineVersionLabel);
-			Controls.Add(serviceVersionLabel);
-			Controls.Add(serviceWarningLabel);
-			Controls.Add(okButton);
-
-			AcceptButton = okButton;
-			Load += async (_, _) => await LoadVersionsAsync();
+			try
+			{
+				await LoadVersionsAsync();
+			}
+			catch (InvalidOperationException)
+			{
+				serviceVersionLabel.Text = "Service Version: Not Installed";
+				serviceWarningLabel.Text = "Not installed";
+			}
 		}
 
 		private async Task LoadVersionsAsync()
@@ -107,14 +94,5 @@ namespace SecureServerBackup.WinForms
 			}
 		}
 
-		private static Label CreateLabel(Point location, Font baseFont, bool bold = false)
-		{
-			return new Label
-			{
-				AutoSize = true,
-				Location = location,
-				Font = bold ? new Font(baseFont, FontStyle.Bold) : baseFont
-			};
-		}
 	}
 }

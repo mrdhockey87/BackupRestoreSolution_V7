@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace SecureServerBackup.WinForms
 {
 	public sealed class BackupWindowNewForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly BackupJob? existingJob;
 		private readonly JobManager jobManager = new();
 		private readonly Label actionInfoLabel;
@@ -113,15 +115,15 @@ namespace SecureServerBackup.WinForms
 
 			Text = job == null ? "Create Backup" : $"Edit Backup - {job.Name}";
 			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(1180, 820);
-			ClientSize = new Size(1280, 860);
+			MinimumSize = new Size(1040, 800);
+			ClientSize = new Size(1120, 840);
 			AutoScaleMode = AutoScaleMode.Font;
 			BackColor = Color.White;
 
 			var root = new TableLayoutPanel
 			{
 				Dock = DockStyle.Fill,
-				Padding = new Padding(12),
+				Padding = new Padding(10),
 				ColumnCount = 1,
 				RowCount = 3
 			};
@@ -142,11 +144,10 @@ namespace SecureServerBackup.WinForms
 			var contentLayout = new TableLayoutPanel
 			{
 				Dock = DockStyle.Fill,
-				ColumnCount = 2,
+				ColumnCount = 1,
 				RowCount = 1
 			};
-			contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-			contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+			contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
 			nativeCoverageLabel = new Label
 			{
@@ -163,8 +164,8 @@ namespace SecureServerBackup.WinForms
 				Dock = DockStyle.Fill,
 				ColumnCount = 2
 			};
-			settingsAndActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 49F));
-			settingsAndActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 51F));
+			settingsAndActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 430F));
+			settingsAndActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
 			var settingsScroll = new Panel
 			{
@@ -172,17 +173,22 @@ namespace SecureServerBackup.WinForms
 				AutoScroll = true
 			};
 
-			var settingsStack = new FlowLayoutPanel
+			var settingsStack = new TableLayoutPanel
 			{
 				Dock = DockStyle.Top,
-				FlowDirection = FlowDirection.TopDown,
-				WrapContents = false,
-				AutoSize = true
+				AutoSize = true,
+				AutoSizeMode = AutoSizeMode.GrowAndShrink,
+				ColumnCount = 1,
+				RowCount = 0,
+				Margin = new Padding(0)
 			};
+			settingsStack.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
 			var basicGroup = CreateGroupBox("Settings");
 			var basicLayout = CreateDetailsLayout();
 			backupNameTextBox = AddLabeledTextBox(basicLayout, 0, "Backup Name:");
+			backupNameTextBox.Width = 280;
+			backupNameTextBox.Anchor = AnchorStyles.Left;
 			backupTypeComboBox = new ComboBox();
 			backupTypeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
 			backupTypeComboBox.Items.AddRange(new object[]
@@ -199,30 +205,31 @@ namespace SecureServerBackup.WinForms
 			backupTypeComboBox.SelectedIndexChanged += (_, _) => UpdateBackupTypeUi();
 
 			EnsureRow(basicLayout, 1);
-			basicLayout.Controls.Add(new Label { Text = "Backup Type:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 10, 6) }, 0, 1);
+			basicLayout.Controls.Add(new Label { Text = "Backup Type:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 4, 6, 4) }, 0, 1);
 			var backupTypePanel = new TableLayoutPanel
 			{
 				AutoSize = true,
-				ColumnCount = 3,
-				RowCount = 3,
-				Margin = new Padding(0, 0, 6, 0)
+				ColumnCount = 2,
+				RowCount = 4,
+				Margin = new Padding(0, 0, 2, 0)
 			};
-			backupTypePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3F));
-			backupTypePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3F));
-			backupTypePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.4F));
+			backupTypePanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+			backupTypePanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
 			AddBackupTypeRadioButton(backupTypePanel, 0, 0, "Full Backup", 0);
 			AddBackupTypeRadioButton(backupTypePanel, 1, 0, "Full then Incremental", 1);
-			AddBackupTypeRadioButton(backupTypePanel, 2, 0, "Full then Differential", 2);
-			AddBackupTypeRadioButton(backupTypePanel, 0, 1, "Selected Files & Folder", 3);
-			AddBackupTypeRadioButton(backupTypePanel, 1, 1, "Clone to Disk", 4);
-			AddBackupTypeRadioButton(backupTypePanel, 2, 1, "Clone to Virtual Disk (Hyper-V)", 5);
-			AddBackupTypeRadioButton(backupTypePanel, 0, 2, "Clone Hyper-V System", 6);
-			AddBackupTypeRadioButton(backupTypePanel, 1, 2, "Export Hyper-V System", 7);
+			AddBackupTypeRadioButton(backupTypePanel, 0, 1, "Full then Differential", 2);
+			AddBackupTypeRadioButton(backupTypePanel, 1, 1, "Selected Files & Folder", 3);
+			AddBackupTypeRadioButton(backupTypePanel, 0, 2, "Clone to Disk", 4);
+			AddBackupTypeRadioButton(backupTypePanel, 1, 2, "Clone to Virtual Disk (Hyper-V)", 5);
+			AddBackupTypeRadioButton(backupTypePanel, 0, 3, "Clone Hyper-V System", 6);
+			AddBackupTypeRadioButton(backupTypePanel, 1, 3, "Export Hyper-V System", 7);
 			basicLayout.Controls.Add(backupTypePanel, 1, 1);
 			basicLayout.SetColumnSpan(backupTypePanel, 2);
 
 			destinationTextBox = AddLabeledTextBox(basicLayout, 2, "Backup Destination:");
+			destinationTextBox.Width = 320;
+			destinationTextBox.Anchor = AnchorStyles.Left;
 			var destinationButton = new Button
 			{
 				Text = "Browse...",
@@ -237,22 +244,29 @@ namespace SecureServerBackup.WinForms
 			basicGroup.Controls.Add(basicLayout);
 
 			var nativeSourcesGroup = CreateGroupBox("What to Backup");
-			var nativeSourcesLayout = new FlowLayoutPanel
+			nativeSourcesGroup.AutoSize = false;
+			nativeSourcesGroup.Dock = DockStyle.Fill;
+			var nativeSourcesLayout = new TableLayoutPanel
 			{
 				Dock = DockStyle.Fill,
-				FlowDirection = FlowDirection.TopDown,
-				WrapContents = false,
-				AutoSize = true,
+				AutoSize = false,
+				ColumnCount = 1,
+				RowCount = 3,
 				Padding = new Padding(10)
 			};
-			nativeSourcesLayout.Controls.Add(new Label
+			nativeSourcesLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+			nativeSourcesLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			nativeSourcesLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+			nativeSourcesLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			var nativeSourcesInfoLabel = new Label
 			{
 				Text = "Check drives or volumes to backup. Files and folders are shown when volumes are unchecked. Boot volumes will automatically include system state backup.",
 				AutoSize = true,
-				MaximumSize = new Size(520, 0),
+				MaximumSize = new Size(400, 0),
 				ForeColor = Color.DimGray,
 				Margin = new Padding(0, 0, 0, 8)
-			});
+			};
+			nativeSourcesLayout.Controls.Add(nativeSourcesInfoLabel, 0, 0);
 
 			var sourceButtonsPanel = new FlowLayoutPanel
 			{
@@ -318,8 +332,8 @@ namespace SecureServerBackup.WinForms
 			driveTree = new TreeView
 			{
 				CheckBoxes = true,
-				Width = 560,
-				Height = 600,
+				Dock = DockStyle.Fill,
+				Margin = new Padding(0),
 				ShowLines = true,
 				HideSelection = false,
 				ImageList = driveImageList,
@@ -339,7 +353,7 @@ namespace SecureServerBackup.WinForms
 			collapseTreeButton.Click += (_, _) => driveTree.CollapseAll();
 			showHiddenPartitionsCheckBox.CheckedChanged += (_, _) => PopulateDriveTree();
 
-			var treeBottomPanel = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false, Margin = new Padding(0, 8, 0, 0) };
+			var treeBottomPanel = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false, Margin = new Padding(0, 8, 0, 0), Dock = DockStyle.Fill };
 			treeBottomPanel.Controls.Add(refreshDriveTreeButton);
 			treeBottomPanel.Controls.Add(expandTreeButton);
 			treeBottomPanel.Controls.Add(collapseTreeButton);
@@ -353,12 +367,15 @@ namespace SecureServerBackup.WinForms
 			};
 			nativeSourceListBox.SelectedIndexChanged += (_, _) => UpdateNativeSourceUi();
 
-			nativeSourcesLayout.Controls.Add(driveTree);
-			nativeSourcesLayout.Controls.Add(treeBottomPanel);
+			nativeSourcesLayout.Controls.Add(driveTree, 0, 1);
+			nativeSourcesLayout.Controls.Add(treeBottomPanel, 0, 2);
 			nativeSourcesGroup.Controls.Add(nativeSourcesLayout);
 
 			// Populate drives initially
-			PopulateDriveTree();
+			if (!IsInDesignMode)
+			{
+				PopulateDriveTree();
+			}
 
 			retentionPanel = CreateRetentionPanel("Full Backup Retention", "Keep last", out retainCountTextBox, "full backup(s)");
 			selectedFilesRetentionPanel = CreateRetentionPanel("Selected Files Version Retention", "Keep last", out selectedFilesRetentionComboBox, "version(s)");
@@ -539,6 +556,19 @@ namespace SecureServerBackup.WinForms
 			settingsStack.Controls.Add(scheduleGroup);
 			settingsScroll.Controls.Add(settingsStack);
 
+			Control[] settingsWidthControls = [basicGroup, retentionPanel, selectedFilesRetentionPanel, cloneRetentionPanel, exclusionsGroup, encryptionGroup, scheduleGroup];
+			void ResizeSettingsWidth()
+			{
+				int width = Math.Max(320, settingsScroll.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 6);
+				settingsStack.Width = width;
+				foreach (Control control in settingsWidthControls)
+				{
+					control.Width = width;
+				}
+			}
+
+			settingsScroll.Resize += (_, _) => ResizeSettingsWidth();
+
 			var actionsPanel = new Panel
 			{
 				Dock = DockStyle.Fill,
@@ -624,7 +654,7 @@ namespace SecureServerBackup.WinForms
 			settingsAndActionsLayout.Controls.Add(nativeSourcesGroup, 0, 0);
 			settingsAndActionsLayout.Controls.Add(settingsScroll, 1, 0);
 			contentLayout.Controls.Add(settingsAndActionsLayout, 0, 0);
-			contentLayout.SetColumnSpan(settingsAndActionsLayout, 2);
+			ResizeSettingsWidth();
 
 			var buttonPanel = new FlowLayoutPanel
 			{
@@ -651,11 +681,45 @@ namespace SecureServerBackup.WinForms
 			CancelButton = cancelButton;
 
 			InitializeScheduleControls();
+
+			if (IsInDesignMode)
+			{
+				ApplyDesignTimeState();
+				return;
+			}
+
 			LoadExistingJob();
 			UpdateBackupTypeUi();
 			UpdateEncryptionUi();
 			UpdateScheduleUi();
 			RefreshNativeSourceListBox();
+			UpdateAdvancedStateSummary();
+		}
+
+		private void ApplyDesignTimeState()
+		{
+			backupNameTextBox.Text = "Sample Backup Job";
+			destinationTextBox.Text = @"D:\Backups";
+			backupTypeComboBox.SelectedIndex = 0;
+			encryptCheckBox.Checked = true;
+			encryptionPasswordTextBox.Text = "password";
+			verifyEncryptionPasswordTextBox.Text = "password";
+			enableScheduleCheckBox.Checked = true;
+			nativeSourcePaths.Clear();
+			nativeSourcePaths.Add(@"C:\Users\Admin\Documents");
+			nativeSourcePaths.Add(@"D:\Projects");
+			RefreshNativeSourceListBox();
+
+			driveTree.Nodes.Clear();
+			var diskNode = new TreeNode("Disk 0 - Sample SSD (512 GB)");
+			diskNode.Nodes.Add(new TreeNode(@"C:\ (NTFS, 240 GB)"));
+			diskNode.Nodes.Add(new TreeNode(@"D:\ (NTFS, 180 GB)"));
+			driveTree.Nodes.Add(diskNode);
+			driveTree.ExpandAll();
+
+			UpdateBackupTypeUi();
+			UpdateEncryptionUi();
+			UpdateScheduleUi();
 			UpdateAdvancedStateSummary();
 		}
 
@@ -685,7 +749,7 @@ namespace SecureServerBackup.WinForms
 			{
 				Text = text,
 				AutoSize = true,
-				Margin = new Padding(0, 3, 12, 6),
+				Margin = new Padding(0, 2, 8, 4),
 				Anchor = AnchorStyles.Left
 			};
 
@@ -714,10 +778,10 @@ namespace SecureServerBackup.WinForms
 			{
 				Dock = DockStyle.Fill,
 				AutoSize = true,
-				Padding = new Padding(10),
+				Padding = new Padding(8),
 				ColumnCount = 3
 			};
-			panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
+			panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
 			panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 			panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 			return panel;
@@ -726,8 +790,8 @@ namespace SecureServerBackup.WinForms
 		private static TextBox AddLabeledTextBox(TableLayoutPanel panel, int row, string label)
 		{
 			EnsureRow(panel, row);
-			panel.Controls.Add(new Label { Text = label, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 10, 6) }, 0, row);
-			var textBox = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 3, 6, 3) };
+			panel.Controls.Add(new Label { Text = label, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 4, 8, 4) }, 0, row);
+			var textBox = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2) };
 			panel.Controls.Add(textBox, 1, row);
 			return textBox;
 		}
@@ -735,8 +799,8 @@ namespace SecureServerBackup.WinForms
 		private static ComboBox AddLabeledComboBox(TableLayoutPanel panel, int row, string label)
 		{
 			EnsureRow(panel, row);
-			panel.Controls.Add(new Label { Text = label, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 10, 6) }, 0, row);
-			var comboBox = new ComboBox { Dock = DockStyle.Fill, Margin = new Padding(0, 3, 6, 3) };
+			panel.Controls.Add(new Label { Text = label, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 4, 8, 4) }, 0, row);
+			var comboBox = new ComboBox { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2) };
 			panel.Controls.Add(comboBox, 1, row);
 			return comboBox;
 		}
@@ -745,7 +809,7 @@ namespace SecureServerBackup.WinForms
 		{
 			EnsureRow(panel, row);
 			panel.Controls.Add(new Label { AutoSize = true }, 0, row);
-			var checkBox = new CheckBox { Text = text, AutoSize = true, Checked = isChecked, Margin = new Padding(0, 6, 6, 6) };
+			var checkBox = new CheckBox { Text = text, AutoSize = true, Checked = isChecked, Margin = new Padding(0, 4, 4, 4) };
 			panel.Controls.Add(checkBox, 1, row);
 			return checkBox;
 		}

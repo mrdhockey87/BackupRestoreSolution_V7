@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -6,120 +7,24 @@ using System.Windows.Forms;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class RecoveryEnvironmentForm : Form
+	internal sealed partial class RecoveryEnvironmentForm : Form
 	{
-		private readonly TextBox isoPathTextBox;
-		private readonly Label isoStatusLabel;
-		private readonly Label isoNoteLabel;
-		private readonly Button openIsoLocationButton;
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private string isoPath = string.Empty;
 
 		public RecoveryEnvironmentForm()
 		{
-			Font baseFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
-			Text = "Recovery Environment Creator";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(760, 560);
-			ClientSize = new Size(760, 560);
-			BackColor = Color.White;
+			InitializeComponent();
+		}
 
-			var titleLabel = new Label
+		private void RecoveryEnvironmentForm_Load(object? sender, EventArgs e)
+		{
+			if (IsInDesignMode)
 			{
-				Text = "Recovery USB Creation",
-				Font = new Font(baseFont, FontStyle.Bold),
-				AutoSize = true,
-				Location = new Point(16, 16)
-			};
+				return;
+			}
 
-			var isoPathHeaderLabel = new Label
-			{
-				Text = "Recovery ISO Path:",
-				AutoSize = true,
-				Location = new Point(16, 54)
-			};
-
-			isoPathTextBox = new TextBox
-			{
-				Location = new Point(16, 76),
-				Size = new Size(710, 24),
-				ReadOnly = true
-			};
-
-			isoStatusLabel = new Label
-			{
-				AutoSize = true,
-				Location = new Point(16, 110)
-			};
-
-			isoNoteLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 136),
-				Size = new Size(710, 54)
-			};
-
-			openIsoLocationButton = new Button
-			{
-				Text = "Open ISO Location",
-				Location = new Point(16, 198),
-				Size = new Size(140, 32)
-			};
-			openIsoLocationButton.Click += (_, _) => OpenIsoLocation();
-
-			var openRufusButton = new Button
-			{
-				Text = "Open Rufus Website",
-				Location = new Point(166, 198),
-				Size = new Size(150, 32)
-			};
-			openRufusButton.Click += (_, _) => OpenRufusWebsite();
-
-			var printInstructionsButton = new Button
-			{
-				Text = "Print Instructions",
-				Location = new Point(326, 198),
-				Size = new Size(140, 32)
-			};
-			printInstructionsButton.Click += (_, _) => PrintInstructions();
-
-			var instructionsTextBox = new TextBox
-			{
-				Location = new Point(16, 246),
-				Size = new Size(710, 260),
-				Multiline = true,
-				ReadOnly = true,
-				ScrollBars = ScrollBars.Vertical,
-				Text = "1. Download Rufus from https://rufus.ie\r\n" +
-					   "2. Select the recovery ISO shown above.\r\n" +
-					   "3. Create a bootable USB drive in Rufus.\r\n" +
-					   "4. Boot from the USB drive on the target machine.\r\n\r\n" +
-					   "Restore options on the recovery media:\r\n" +
-					   "- restore_gui: graphical interface\r\n" +
-					   "- restore_tui: terminal UI\r\n" +
-					   "- restore_cli: direct command-line restore"
-			};
-
-			var closeButton = new Button
-			{
-				Text = "Close",
-				Size = new Size(100, 32),
-				Location = new Point(626, 516),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-				DialogResult = DialogResult.OK
-			};
-
-			Controls.Add(titleLabel);
-			Controls.Add(isoPathHeaderLabel);
-			Controls.Add(isoPathTextBox);
-			Controls.Add(isoStatusLabel);
-			Controls.Add(isoNoteLabel);
-			Controls.Add(openIsoLocationButton);
-			Controls.Add(openRufusButton);
-			Controls.Add(printInstructionsButton);
-			Controls.Add(instructionsTextBox);
-			Controls.Add(closeButton);
-
-			Load += (_, _) => CheckIsoFile();
+			CheckIsoFile();
 		}
 
 		private void CheckIsoFile()
@@ -219,6 +124,21 @@ namespace SecureServerBackup.WinForms
 			{
 				MessageBox.Show(this, $"Failed to create printable instructions: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
+		}
+
+		private void OpenIsoLocationButton_Click(object? sender, EventArgs e)
+		{
+			OpenIsoLocation();
+		}
+
+		private void OpenRufusButton_Click(object? sender, EventArgs e)
+		{
+			OpenRufusWebsite();
+		}
+
+		private void PrintInstructionsButton_Click(object? sender, EventArgs e)
+		{
+			PrintInstructions();
 		}
 
 		private string GenerateInstructionsHtml()

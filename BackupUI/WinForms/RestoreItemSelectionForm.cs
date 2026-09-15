@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -8,9 +9,14 @@ using SecureServerBackup.Windows;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class RestoreItemSelectionForm : Form
+	internal sealed partial class RestoreItemSelectionForm : Form
 	{
-		private readonly ListBox itemsListBox;
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
+
+		public RestoreItemSelectionForm()
+			: this(CreateDesignTimeBackup(), CreateDesignTimeRestorePoint(), [@"Users\\Admin\\Documents", @"Users\\Admin\\Desktop\\Report.txt"])
+		{
+		}
 
 		public RestoreItemSelectionForm(AvailableBackupInfo backup, RestorePoint restorePoint, IReadOnlyList<string> items)
 		{
@@ -21,72 +27,16 @@ namespace SecureServerBackup.WinForms
 			Backup = backup;
 			RestorePoint = restorePoint;
 
-			Text = "Select Restore Items";
-			StartPosition = FormStartPosition.CenterParent;
-			FormBorderStyle = FormBorderStyle.FixedDialog;
-			MinimizeBox = false;
-			MaximizeBox = false;
-			ShowInTaskbar = false;
-			ClientSize = new Size(760, 430);
-			MinimumSize = new Size(760, 430);
-			BackColor = Color.White;
-
-			var summaryLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 16),
-				Size = new Size(720, 48),
-				Text = $"Restore point: {restorePoint.DisplayName}{Environment.NewLine}Source: {restorePoint.FilePath}"
-			};
-
-			itemsListBox = new ListBox
-			{
-				Location = new Point(16, 74),
-				Size = new Size(720, 280),
-				SelectionMode = SelectionMode.MultiExtended,
-				Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
-			};
+			InitializeComponent();
+			summaryLabel.Text = $"Restore point: {restorePoint.DisplayName}{Environment.NewLine}Source: {restorePoint.FilePath}";
+			helpLabel.Text = "Select one or more files or folders to restore, then click Next.";
 
 			foreach (string item in items.Where(item => !string.IsNullOrWhiteSpace(item)))
 			{
 				itemsListBox.Items.Add(item);
 			}
 
-			var helpLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 362),
-				Size = new Size(720, 24),
-				Text = "Select one or more files or folders to restore, then click Next."
-			};
-
-			var nextButton = new Button
-			{
-				Text = "Next",
-				Size = new Size(96, 32),
-				Location = new Point(540, 392),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-				Enabled = itemsListBox.Items.Count > 0
-			};
-			nextButton.Click += (_, _) => ConfirmSelection();
-
-			var cancelButton = new Button
-			{
-				Text = "Cancel",
-				Size = new Size(96, 32),
-				Location = new Point(640, 392),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-				DialogResult = DialogResult.Cancel
-			};
-
-			AcceptButton = nextButton;
-			CancelButton = cancelButton;
-
-			Controls.Add(summaryLabel);
-			Controls.Add(itemsListBox);
-			Controls.Add(helpLabel);
-			Controls.Add(nextButton);
-			Controls.Add(cancelButton);
+			nextButton.Enabled = itemsListBox.Items.Count > 0;
 		}
 
 		public AvailableBackupInfo Backup { get; }
@@ -111,6 +61,32 @@ namespace SecureServerBackup.WinForms
 			SelectedItems = selectedItems;
 			DialogResult = DialogResult.OK;
 			Close();
+		}
+
+		private static AvailableBackupInfo CreateDesignTimeBackup()
+		{
+			return new AvailableBackupInfo
+			{
+				BackupName = "Sample Backup",
+				BackupType = "Full",
+				BackupPath = @"D:\Backups\Sample.ssb"
+			};
+		}
+
+		private static RestorePoint CreateDesignTimeRestorePoint()
+		{
+			return new RestorePoint
+			{
+				DisplayName = "2026-08-15 10:30 (Full)",
+				BackupType = "Full",
+				FilePath = @"D:\Backups\Sample.ssb",
+				Timestamp = new DateTime(2026, 8, 15, 10, 30, 0)
+			};
+		}
+
+		private void NextButton_Click(object? sender, EventArgs e)
+		{
+			ConfirmSelection();
 		}
 	}
 }

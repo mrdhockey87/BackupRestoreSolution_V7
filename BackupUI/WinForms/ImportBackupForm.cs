@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Text;
@@ -12,6 +13,7 @@ namespace SecureServerBackup.WinForms
 {
 	internal sealed class ImportBackupForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly TextBox filePathTextBox;
 		private readonly Panel validationPanel;
 		private readonly Label validationStatusLabel;

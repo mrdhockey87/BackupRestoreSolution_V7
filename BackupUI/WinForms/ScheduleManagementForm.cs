@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace SecureServerBackup.WinForms
 {
 	internal sealed class ScheduleManagementForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly JobManager jobManager = new();
 		private readonly DataGridView jobsGrid;
 
@@ -77,7 +79,41 @@ namespace SecureServerBackup.WinForms
 			Controls.Add(jobsGrid);
 			Controls.Add(closeButton);
 
-			Load += (_, _) => LoadJobs();
+			if (IsInDesignMode)
+			{
+				LoadDesignTimeJobs();
+			}
+			else
+			{
+				Load += (_, _) => LoadJobs();
+			}
+		}
+
+		private void LoadDesignTimeJobs()
+		{
+			jobsGrid.DataSource = new[]
+			{
+				new BackupJob
+				{
+					Name = "Daily Files",
+					Type = BackupType.Full,
+					DestinationPath = @"D:\Backups",
+					IsCurrentlyRunning = false,
+					LastRunTime = DateTime.Now.AddDays(-1),
+					NextScheduledRun = DateTime.Now.AddHours(6),
+					Schedule = new BackupSchedule { Enabled = true, Frequency = ScheduleFrequency.Daily, Time = new TimeSpan(2, 0, 0) }
+				},
+				new BackupJob
+				{
+					Name = "Weekly Clone",
+					Type = BackupType.CloneToVirtualDisk,
+					DestinationPath = @"E:\Clones",
+					IsCurrentlyRunning = false,
+					LastRunTime = DateTime.Now.AddDays(-7),
+					NextScheduledRun = DateTime.Now.AddDays(1),
+					Schedule = new BackupSchedule { Enabled = true, Frequency = ScheduleFrequency.Weekly, Time = new TimeSpan(3, 0, 0), DaysOfWeek = { DayOfWeek.Sunday } }
+				}
+			};
 		}
 
 		private static Button CreateButton(string text, EventHandler onClick)

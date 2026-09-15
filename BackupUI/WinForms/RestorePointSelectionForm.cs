@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -8,44 +9,30 @@ using SecureServerBackup.Windows;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class RestorePointSelectionForm : Form
+	internal sealed partial class RestorePointSelectionForm : Form
 	{
-		private readonly ListBox restorePointsListBox;
-		private readonly Button nextButton;
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
+
+		public RestorePointSelectionForm()
+			: this(CreateDesignTimeBackup())
+		{
+		}
 
 		public RestorePointSelectionForm(AvailableBackupInfo backup)
 		{
 			ArgumentNullException.ThrowIfNull(backup);
 
 			Backup = backup;
-			RestorePoints = RestoreWorkflowHelper.GetRestorePointsForBackup(backup.BackupPath)
-				.ToList();
+			RestorePoints = IsInDesignMode
+				? [CreateDesignTimeRestorePoint()]
+				: RestoreWorkflowHelper.GetRestorePointsForBackup(backup.BackupPath).ToList();
 
-			Text = "Select Restore Point";
-			StartPosition = FormStartPosition.CenterParent;
-			FormBorderStyle = FormBorderStyle.FixedDialog;
-			MinimizeBox = false;
-			MaximizeBox = false;
-			ShowInTaskbar = false;
-			ClientSize = new Size(760, 420);
-			MinimumSize = new Size(760, 420);
-			BackColor = Color.White;
-
-			var summaryLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 16),
-				Size = new Size(720, 56),
-				Text = $"Backup: {backup.BackupName} ({backup.BackupType}){Environment.NewLine}Source: {backup.BackupPath}"
-			};
-
-			restorePointsListBox = new ListBox
-			{
-				Location = new Point(16, 82),
-				Size = new Size(720, 250),
-				DisplayMember = nameof(RestorePoint.DisplayName),
-				Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
-			};
+			InitializeComponent();
+			summaryLabel.Text = $"Backup: {backup.BackupName} ({backup.BackupType}){Environment.NewLine}Source: {backup.BackupPath}";
+			helpLabel.Text = RestorePoints.Count == 0
+				? "No restore points were found for the selected backup."
+				: "Select the restore point you want to open, then click Next.";
+			nextButton.Enabled = RestorePoints.Count > 0;
 
 			foreach (RestorePoint restorePoint in RestorePoints)
 			{
@@ -56,46 +43,6 @@ namespace SecureServerBackup.WinForms
 			{
 				restorePointsListBox.SelectedIndex = 0;
 			}
-
-			restorePointsListBox.DoubleClick += (_, _) => ConfirmSelection();
-
-			var helpLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 340),
-				Size = new Size(720, 24),
-				Text = RestorePoints.Count == 0
-					? "No restore points were found for the selected backup."
-					: "Select the restore point you want to open, then click Next."
-			};
-
-			nextButton = new Button
-			{
-				Text = "Next",
-				Size = new Size(96, 32),
-				Location = new Point(540, 374),
-				Enabled = RestorePoints.Count > 0,
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right
-			};
-			nextButton.Click += (_, _) => ConfirmSelection();
-
-			var cancelButton = new Button
-			{
-				Text = "Cancel",
-				Size = new Size(96, 32),
-				Location = new Point(640, 374),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-				DialogResult = DialogResult.Cancel
-			};
-
-			AcceptButton = nextButton;
-			CancelButton = cancelButton;
-
-			Controls.Add(summaryLabel);
-			Controls.Add(restorePointsListBox);
-			Controls.Add(helpLabel);
-			Controls.Add(nextButton);
-			Controls.Add(cancelButton);
 		}
 
 		public AvailableBackupInfo Backup { get; }
@@ -115,6 +62,37 @@ namespace SecureServerBackup.WinForms
 			SelectedRestorePoint = selectedRestorePoint;
 			DialogResult = DialogResult.OK;
 			Close();
+		}
+
+		private static AvailableBackupInfo CreateDesignTimeBackup()
+		{
+			return new AvailableBackupInfo
+			{
+				BackupName = "Sample Backup",
+				BackupType = "Full",
+				BackupPath = @"D:\Backups\Sample.ssb"
+			};
+		}
+
+		private static RestorePoint CreateDesignTimeRestorePoint()
+		{
+			return new RestorePoint
+			{
+				DisplayName = "2026-08-15 10:30 (Full)",
+				BackupType = "Full",
+				FilePath = @"D:\Backups\Sample.ssb",
+				Timestamp = new DateTime(2026, 8, 15, 10, 30, 0)
+			};
+		}
+
+		private void RestorePointsListBox_DoubleClick(object? sender, EventArgs e)
+		{
+			ConfirmSelection();
+		}
+
+		private void NextButton_Click(object? sender, EventArgs e)
+		{
+			ConfirmSelection();
 		}
 	}
 }

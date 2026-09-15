@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.6.14";        // Get version from assembly - this will always match the project file version
+        private static readonly string version_fallback_number = "7.3.6.25";        // Get version from assembly - this will always match the project file version
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -67,6 +67,31 @@ namespace SecureServerBackup
 
 
 /*
+ *  Version 7.3.6.25 Fixed the RestorePointSelectionForm.Designer.cs to initialize its components
+ *                   container by adding components = new Container() that was missing in the init mdail 9/15/2026
+ *  Version 7.3.6.24 Fixed RestorePointSelectionForm.Designer.cs to initialize its components
+ *                   container for solution builds after the field-assignment warning reappeared
+ *                   in Visual Studio Build Solution. mdail 9/15/2026
+ *  Version 7.3.6.23 Fixed RestorePointSelectionForm.Designer.cs to initialize its components
+ *                   container again so BackupUI rebuilds no longer fail with CS0649 and the
+ *                   downstream SecureServerBackup.dll metadata-file errors. mdail 9/15/2026
+ *  Version 7.3.6.22 Moved the ActivityLogExportHelper to the Helpers folder and refactoered the export logic to use a single helper
+ *                   class for both CSV and text exports, improving maintainability and reducing code duplication. mdail 9/15/2026
+ *  Version 7.3.6.21 Updated the version metadata after the RestorePointSelectionForm designer-file
+ *                   components container fix so the last BackupUI designer rebuild repair is recorded. mdail 9/15/2026
+ *  Version 7.3.6.20 Added design-time preview guards and sample state for the remaining BackupUI
+ *                   WinForms management and workflow screens so they can open in the Visual Studio
+ *                   designer without live job, service, or backup-file dependencies. mdail 9/15/2026
+ *  Version 7.3.6.19 Changed BackupWindowNewForm so the right-side groups stretch to the scroll-view edge and the left tree uses a proper
+ *                   top/tree/bottom layout, preventing the tree from clipping the bottom buttons or center divider. mdail 09/15/2026
+ *  Version 7.3.6.18 Changed BackupWindowNewForm so the right-side groups stretch to the scroll-view edge and the left tree uses a proper
+ *                   top/tree/bottom layout, preventing the tree from clipping the bottom buttons or center divider. mdail 09/12/2026
+ *  Version 7.3.6.17 Fixed BackupWindowNewForm's split layout so the left tree pane and right settings pane size cleanly on the page
+ *                   without overlapping, while restoring a bit more width to the backup tree. mdail 09/12/2026
+ *  Version 7.3.6.16 Further narrowed BackupWindowNewForm's left pane, tightened backup-type spacing, and shortened the backup name and
+ *                   destination text boxes so the settings section fits on-screen more cleanly. mdail 09/12/2026
+ *  Version 7.3.6.15 Reduced BackupWindowNewForm width, narrowed the backup tree, and tightened top settings spacing so the settings panel
+ *                   stays on-screen without wasted horizontal space. mdail 09/12/2026
  *  Version 7.3.6.14 Updated BackupWindowNewForm file nodes to use File_color.svg, scaled to the WinForms tree image-list size for
  *                   consistent file and folder styling in the backup tree. mdail 09/12/2026
  *  Version 7.3.6.13 Updated BackupWindowNewForm so resting volume and partition nodes use the same hard-drive icon as disk nodes,
@@ -150,6 +175,7 @@ namespace SecureServerBackup
  * Version 6.3.5.82 Started the WPF to WinForms migration by moving BackupUI to an explicit
  *                  Program.Main entry point and adding WinForms shells, shared UI infrastructure,
  *                  and reusable WinForms control/dialog scaffolding. mdail 07/04/2026
+ * 
  * Version 6.3.5.81 Fixed service-side Hyper-V clone and export post-run verification so the
  *                  verifier now finds nested exported VHD/VHDX files instead of assuming a
  *                  root-level JobName.vhdx path. Added regression coverage for both nested

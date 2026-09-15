@@ -23,6 +23,11 @@ namespace SecureServerBackup.WinForms
 		private readonly Button startRestoreButton;
 		private readonly Label summaryLabel;
 
+		public RestoreFileSelectionForm()
+			: this(CreateDesignTimeRestoreSelection())
+		{
+		}
+
 		public RestoreFileSelectionForm(RestoreSelectionContext restoreSelection)
 		{
 			ArgumentNullException.ThrowIfNull(restoreSelection);
@@ -129,6 +134,26 @@ namespace SecureServerBackup.WinForms
 			return $"Backup: {backup.BackupName} ({backup.BackupType}){Environment.NewLine}" +
 				   $"Restore point: {restoreSelection.RestorePoint.DisplayName}{Environment.NewLine}" +
 				   scopeText;
+		}
+
+		private static RestoreSelectionContext CreateDesignTimeRestoreSelection()
+		{
+			return new RestoreSelectionContext
+			{
+				Backup = new AvailableBackupInfo
+				{
+					BackupName = "Sample Backup",
+					BackupType = "Selected Files & Folder",
+					BackupPath = @"D:\Backups\Sample.ssb"
+				},
+				RestorePoint = new RestorePoint
+				{
+					DisplayName = "2026-08-15 10:30 (Full)",
+					FilePath = @"D:\Backups\Sample.ssb"
+				},
+				ScopeKind = RestoreScopeKind.SelectedItems,
+				SelectedItems = [@"Users\Admin\Documents", @"Users\Admin\Desktop\Report.txt"]
+			};
 		}
 
 		private void BrowseDestination()

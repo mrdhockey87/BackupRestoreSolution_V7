@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -10,6 +11,7 @@ namespace SecureServerBackup.WinForms
 {
 	internal sealed class VolumeConfigurationForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly List<VolumeInfo> sourceVolumes;
 		private readonly List<VolumeResizeInfo> resizeVolumes;
 		private readonly long targetTotalSize;
@@ -22,6 +24,18 @@ namespace SecureServerBackup.WinForms
 		private readonly Label statusLabel;
 		private readonly Label warningLabel;
 		private readonly Button acceptButton;
+
+		public VolumeConfigurationForm()
+			: this(
+			[
+				new VolumeInfo { Label = "Windows", Size = 240L * 1024 * 1024 * 1024, UsedSpace = 120L * 1024 * 1024 * 1024, FileSystem = "NTFS", AllocationUnitSize = 4096 },
+				new VolumeInfo { Label = "Data", Size = 180L * 1024 * 1024 * 1024, UsedSpace = 80L * 1024 * 1024 * 1024, FileSystem = "NTFS", AllocationUnitSize = 4096 }
+			],
+			512L * 1024 * 1024 * 1024,
+			4096,
+			4096)
+		{
+		}
 
 		public VolumeConfigurationForm(List<VolumeInfo> sourceVols, long targetSize, int sourceAUS, int targetAUS)
 		{
@@ -154,7 +168,14 @@ namespace SecureServerBackup.WinForms
 			Controls.Add(acceptButton);
 			Controls.Add(cancelButton);
 
-			Load += (_, _) => InitializeLayout();
+			if (IsInDesignMode)
+			{
+				InitializeLayout();
+			}
+			else
+			{
+				Load += (_, _) => InitializeLayout();
+			}
 		}
 
 		public VolumeInfo[]? FinalConfiguration { get; private set; }

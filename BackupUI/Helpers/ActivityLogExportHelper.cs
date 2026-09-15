@@ -4,9 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+
 using SecureServerBackupCommon;
 
-namespace SecureServerBackup.WinForms
+namespace SecureServerBackup.Helpers
 {
 	internal static class ActivityLogExportHelper
 	{

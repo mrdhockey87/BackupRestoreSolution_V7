@@ -8,106 +8,28 @@ using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class BackupProgressForm : Form
+	internal sealed partial class BackupProgressForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly Guid jobId;
 		private readonly string jobName;
 		private readonly BackupServiceClient serviceClient;
-		private readonly Timer progressTimer;
-		private readonly ProgressBar progressBar;
-		private readonly Label progressLabel;
-		private readonly Label percentageLabel;
-		private readonly TextBox currentFileTextBox;
-		private readonly Button abortButton;
-		private readonly Button hideCloseButton;
 		private bool isCompleted;
 		private bool abortRequested;
 		private DateTime? waitingStartTime;
+
+		public BackupProgressForm()
+			: this(Guid.Empty, "Sample Backup")
+		{
+		}
 
 		public BackupProgressForm(Guid jobId, string jobName)
 		{
 			this.jobId = jobId;
 			this.jobName = jobName;
 			serviceClient = new BackupServiceClient();
-
+			InitializeComponent();
 			Text = $"Backup Progress: {jobName}";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(660, 320);
-			ClientSize = new Size(660, 320);
-			BackColor = Color.White;
-
-			progressLabel = new Label
-			{
-				Text = "Initializing backup...",
-				AutoSize = false,
-				Location = new Point(20, 20),
-				Size = new Size(600, 24)
-			};
-
-			progressBar = new ProgressBar
-			{
-				Location = new Point(20, 56),
-				Size = new Size(600, 24),
-				Minimum = 0,
-				Maximum = 100
-			};
-
-			percentageLabel = new Label
-			{
-				Text = "0%",
-				AutoSize = true,
-				Location = new Point(20, 90)
-			};
-
-			var currentFileLabel = new Label
-			{
-				Text = "Current File:",
-				AutoSize = true,
-				Location = new Point(20, 122)
-			};
-
-			currentFileTextBox = new TextBox
-			{
-				Location = new Point(20, 146),
-				Size = new Size(600, 96),
-				ReadOnly = true,
-				Multiline = true,
-				ScrollBars = ScrollBars.Vertical
-			};
-
-			abortButton = new Button
-			{
-				Text = "Abort",
-				Size = new Size(100, 32),
-				Location = new Point(410, 262),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right
-			};
-			abortButton.Click += async (_, _) => await AbortBackupAsync();
-
-			hideCloseButton = new Button
-			{
-				Text = "Hide",
-				Size = new Size(100, 32),
-				Location = new Point(520, 262),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right
-			};
-			hideCloseButton.Click += (_, _) => Close();
-
-			Controls.Add(progressLabel);
-			Controls.Add(progressBar);
-			Controls.Add(percentageLabel);
-			Controls.Add(currentFileLabel);
-			Controls.Add(currentFileTextBox);
-			Controls.Add(abortButton);
-			Controls.Add(hideCloseButton);
-
-			progressTimer = new Timer { Interval = 1000 };
-			progressTimer.Tick += async (_, _) => await UpdateProgressAsync();
-			Load += async (_, _) =>
-			{
-				progressTimer.Start();
-				await UpdateProgressAsync();
-			};
 		}
 
 		public bool WasClosedWhileBackupRunning => !isCompleted && !abortRequested;
@@ -243,6 +165,50 @@ namespace SecureServerBackup.WinForms
 
 			progressTimer.Stop();
 			base.OnClosing(e);
+		}
+
+		private async void BackupProgressForm_Load(object? sender, EventArgs e)
+		{
+			if (IsInDesignMode)
+			{
+				return;
+			}
+
+			progressTimer.Start();
+
+			try
+			{
+				await UpdateProgressAsync();
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Error loading backup progress: {ex.Message}");
+			}
+		}
+
+		private async void ProgressTimer_Tick(object? sender, EventArgs e)
+		{
+			if (IsInDesignMode)
+			{
+				return;
+			}
+
+			await UpdateProgressAsync();
+		}
+
+		private async void AbortButton_Click(object? sender, EventArgs e)
+		{
+			if (IsInDesignMode)
+			{
+				return;
+			}
+
+			await AbortBackupAsync();
+		}
+
+		private void HideCloseButton_Click(object? sender, EventArgs e)
+		{
+			Close();
 		}
 	}
 }

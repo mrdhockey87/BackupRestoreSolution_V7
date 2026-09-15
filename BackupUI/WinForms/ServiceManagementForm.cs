@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.ServiceProcess;
@@ -13,6 +14,7 @@ namespace SecureServerBackup.WinForms
 {
 	internal sealed class ServiceManagementForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly BackupServiceManager serviceManager = new();
 		private readonly Label statusValueLabel;
 		private readonly Label installedValueLabel;
@@ -130,7 +132,28 @@ namespace SecureServerBackup.WinForms
 			Controls.Add(controlGroup);
 			Controls.Add(closeButton);
 
-			Load += async (_, _) => await RefreshStatusAsync();
+			if (IsInDesignMode)
+			{
+				LoadDesignTimeStatus();
+			}
+			else
+			{
+				Load += async (_, _) => await RefreshStatusAsync();
+			}
+		}
+
+		private void LoadDesignTimeStatus()
+		{
+			installedValueLabel.Text = "Yes";
+			statusValueLabel.Text = "Running";
+			serviceVersionValueLabel.Text = VersionClass.GetAssemblyVersion();
+			versionWarningLabel.Text = string.Empty;
+			versionWarningLabel.Visible = false;
+			startButton.Enabled = false;
+			stopButton.Enabled = true;
+			restartButton.Enabled = true;
+			installButton.Enabled = false;
+			uninstallButton.Enabled = true;
 		}
 
 		private static Label CreateCaptionLabel(string text, int x, int y)

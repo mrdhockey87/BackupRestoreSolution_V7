@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -6,16 +7,17 @@ using SecureServerBackup.Services;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class RestoreProgressForm : Form
+	internal sealed partial class RestoreProgressForm : Form
 	{
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly Func<BackupEngineInterop.ProgressCallback, Task> restoreOperation;
 		private readonly bool keepWindowOpen;
-		private readonly ProgressBar progressBar;
-		private readonly Label percentageLabel;
-		private readonly Label progressLabel;
-		private readonly TextBox currentItemTextBox;
-		private readonly Button closeButton;
 		private bool isCompleted;
+
+		public RestoreProgressForm()
+			: this("Sample Restore", true, _ => Task.CompletedTask)
+		{
+		}
 
 		public RestoreProgressForm(string restoreName, bool keepWindowOpen, Func<BackupEngineInterop.ProgressCallback, Task> restoreOperation)
 		{
@@ -23,60 +25,8 @@ namespace SecureServerBackup.WinForms
 			this.restoreOperation = restoreOperation;
 			this.keepWindowOpen = keepWindowOpen;
 
+			InitializeComponent();
 			Text = $"Restore Progress: {restoreName}";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(620, 260);
-			ClientSize = new Size(620, 260);
-			BackColor = Color.White;
-
-			progressLabel = new Label
-			{
-				Text = "Preparing restore...",
-				AutoSize = false,
-				Location = new Point(20, 20),
-				Size = new Size(560, 24)
-			};
-
-			progressBar = new ProgressBar
-			{
-				Location = new Point(20, 56),
-				Size = new Size(560, 24),
-				Minimum = 0,
-				Maximum = 100
-			};
-
-			percentageLabel = new Label
-			{
-				Text = "0%",
-				AutoSize = true,
-				Location = new Point(20, 90)
-			};
-
-			currentItemTextBox = new TextBox
-			{
-				Location = new Point(20, 120),
-				Size = new Size(560, 70),
-				ReadOnly = true,
-				Multiline = true,
-				ScrollBars = ScrollBars.Vertical
-			};
-
-			closeButton = new Button
-			{
-				Text = "Hide",
-				Size = new Size(100, 32),
-				Location = new Point(480, 208),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right
-			};
-			closeButton.Click += (_, _) => Close();
-
-			Controls.Add(progressLabel);
-			Controls.Add(progressBar);
-			Controls.Add(percentageLabel);
-			Controls.Add(currentItemTextBox);
-			Controls.Add(closeButton);
-
-			Load += async (_, _) => await RunRestoreAsync();
 		}
 
 		public bool RestoreSucceeded { get; private set; }
@@ -148,6 +98,21 @@ namespace SecureServerBackup.WinForms
 			}
 
 			base.OnFormClosing(e);
+		}
+
+		private async void RestoreProgressForm_Load(object? sender, EventArgs e)
+		{
+			if (IsInDesignMode)
+			{
+				return;
+			}
+
+			await RunRestoreAsync();
+		}
+
+		private void CloseButton_Click(object? sender, EventArgs e)
+		{
+			Close();
 		}
 	}
 }

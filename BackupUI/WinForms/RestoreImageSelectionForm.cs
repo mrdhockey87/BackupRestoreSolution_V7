@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -19,6 +20,7 @@ namespace SecureServerBackup.WinForms
 	internal sealed class RestoreImageSelectionForm : Form
 	{
 		private const string RestoreLogJobName = "[Restore]";
+		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 
 		private readonly RestoreSelectionContext restoreSelection;
 		private readonly Label summaryLabel;
@@ -53,6 +55,11 @@ namespace SecureServerBackup.WinForms
 		private int? selectedTargetDiskNumber;
 		private VolumeInfo? selectedRestoreVolume;
 		private IReadOnlyList<VolumeInfo>? selectedRestoreDiskGroup;
+
+		public RestoreImageSelectionForm()
+			: this(CreateDesignTimeRestoreSelection())
+		{
+		}
 
 		public RestoreImageSelectionForm(RestoreSelectionContext restoreSelection)
 		{
@@ -240,7 +247,66 @@ namespace SecureServerBackup.WinForms
 			root.Controls.Add(buttonsPanel, 0, 4);
 			Controls.Add(root);
 
-			Load += async (_, _) => await InitializeAsync();
+			if (IsInDesignMode)
+			{
+				PopulateDesignTimeState();
+			}
+			else
+			{
+				Load += async (_, _) => await InitializeAsync();
+			}
+		}
+
+		private static RestoreSelectionContext CreateDesignTimeRestoreSelection()
+		{
+			return new RestoreSelectionContext
+			{
+				Backup = new AvailableBackupInfo
+				{
+					BackupName = "Sample Image Backup",
+					BackupType = "Clone to Disk",
+					BackupPath = @"D:\Backups\SystemSample.ssb"
+				},
+				RestorePoint = new RestorePoint
+				{
+					DisplayName = "2026-08-15 10:30 (Full)",
+					BackupType = "Full",
+					FilePath = @"D:\Backups\SystemSample.ssb"
+				},
+				SelectedVolumes =
+				[
+					new VolumeInfo
+					{
+						ImageIndex = 1,
+						Label = "Windows",
+						FileSystem = "NTFS",
+						Size = 240L * 1024 * 1024 * 1024,
+						UsedSpace = 120L * 1024 * 1024 * 1024,
+						SourceVolumeMountPath = "C:\\",
+						PartitionNumber = 3,
+						IsBootVolume = true
+					}
+				]
+			};
+		}
+
+		private void PopulateDesignTimeState()
+		{
+			PopulateRestoreModes();
+			selectedTargetLabel.Text = "Selected target: Disk 1";
+			targetListView.Items.Clear();
+			var item = new ListViewItem("Disk");
+			item.SubItems.Add("Disk 1");
+			item.SubItems.Add("\\.\\PhysicalDrive1");
+			item.SubItems.Add("512 GB");
+			item.SubItems.Add("Ready for restore");
+			targetListView.Items.Add(item);
+			if (restoreModeComboBox.Items.Count > 0)
+			{
+				restoreModeComboBox.SelectedIndex = 0;
+			}
+			UpdatePanels();
+			UpdateActionState();
 		}
 
 		private async Task InitializeAsync()
