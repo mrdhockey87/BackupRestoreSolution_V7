@@ -25,6 +25,7 @@ namespace SecureServerBackup.WinForms
 
 		private void InitializeComponent()
 		{
+			components = new Container();
 			summaryLabel = new Label();
 			itemsListBox = new ListBox();
 			helpLabel = new Label();

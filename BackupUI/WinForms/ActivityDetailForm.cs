@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -11,14 +10,10 @@ using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class ActivityDetailForm : Form
+	internal sealed partial class ActivityDetailForm : Form
 	{
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly string? filterJobName;
-		private readonly Label statusLabel;
-		private readonly Label selectionCountLabel;
-		private readonly ComboBox filterComboBox;
-		private readonly DataGridView activitiesGrid;
 		private readonly BindingSource bindingSource = new();
 		private List<BackupLogEntry> currentLogs = new();
 
@@ -30,107 +25,11 @@ namespace SecureServerBackup.WinForms
 		public ActivityDetailForm(string? jobName)
 		{
 			filterJobName = string.IsNullOrWhiteSpace(jobName) ? null : jobName;
-			Text = string.IsNullOrEmpty(filterJobName) ? "All Activity Details" : $"Activity Details - {filterJobName}";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(1000, 620);
-			ClientSize = new Size(1000, 620);
-			BackColor = Color.White;
 
-			var titleLabel = new Label
-			{
-				Text = string.IsNullOrEmpty(filterJobName) ? "All Activities" : $"Activities for: {filterJobName}",
-				Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
-				AutoSize = true,
-				Location = new Point(16, 16)
-			};
-
-			var topActions = new FlowLayoutPanel
-			{
-				Location = new Point(16, 48),
-				Size = new Size(950, 36),
-				WrapContents = true
-			};
-
-			var refreshButton = CreateButton("Refresh", (_, _) => LoadActivities());
-			var exportCsvButton = CreateButton("Export CSV", (_, _) => ExportSelected("CSV"));
-			var exportTextButton = CreateButton("Export Text", (_, _) => ExportSelected("Text"));
-			var deleteButton = CreateButton("Delete Selected", (_, _) => DeleteSelectedActivities());
-			var copyButton = CreateButton("Copy Selected", (_, _) => CopySelectedToClipboard());
-			var selectAllButton = CreateButton("Select All", SelectAllActivities);
-			var clearSelectionButton = CreateButton("Clear Selection", ClearActivitySelection);
-			topActions.Controls.AddRange([refreshButton, exportCsvButton, exportTextButton, deleteButton, copyButton, selectAllButton, clearSelectionButton]);
-
-			var filterLabel = new Label
-			{
-				Text = "Level:",
-				AutoSize = true,
-				Location = new Point(16, 96)
-			};
-
-			filterComboBox = new ComboBox
-			{
-				DropDownStyle = ComboBoxStyle.DropDownList,
-				Location = new Point(66, 92),
-				Size = new Size(140, 24)
-			};
-			filterComboBox.Items.AddRange(["All", "Info", "Success", "Warning", "Error"]);
-			filterComboBox.SelectedIndexChanged += (_, _) => ApplyLevelFilter();
-			filterComboBox.SelectedIndex = 0;
-
-			selectionCountLabel = new Label
-			{
-				Text = "0 activities selected",
-				AutoSize = true,
-				Location = new Point(230, 96)
-			};
-
-			activitiesGrid = new DataGridView
-			{
-				Location = new Point(16, 128),
-				Size = new Size(952, 430),
-				ReadOnly = true,
-				AllowUserToAddRows = false,
-				AllowUserToDeleteRows = false,
-				MultiSelect = true,
-				SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-				AutoGenerateColumns = false,
-				AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-			};
-			activitiesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupLogEntry.Timestamp), HeaderText = "Timestamp", FillWeight = 140 });
-			activitiesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupLogEntry.JobName), HeaderText = "Job", FillWeight = 120 });
-			activitiesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupLogEntry.Level), HeaderText = "Level", FillWeight = 70 });
-			activitiesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupLogEntry.Message), HeaderText = "Message", FillWeight = 220 });
-			activitiesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupLogEntry.Details), HeaderText = "Details", FillWeight = 220 });
-			activitiesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupLogEntry.BackupPath), HeaderText = "Backup Path", FillWeight = 180 });
+			InitializeComponent();
 			activitiesGrid.DataSource = bindingSource;
-			activitiesGrid.SelectionChanged += (_, _) => UpdateSelectionCount();
-
-			var contextMenu = new ContextMenuStrip();
-			contextMenu.Items.Add("Export CSV", null, (_, _) => ExportSelected("CSV"));
-			contextMenu.Items.Add("Export Text", null, (_, _) => ExportSelected("Text"));
-			contextMenu.Items.Add(new ToolStripSeparator());
-			contextMenu.Items.Add("Copy Selected", null, (_, _) => CopySelectedToClipboard());
-			contextMenu.Items.Add("Delete Selected", null, (_, _) => DeleteSelectedActivities());
-			contextMenu.Items.Add(new ToolStripSeparator());
-			contextMenu.Items.Add("Select All", null, (_, _) => activitiesGrid.SelectAll());
-			contextMenu.Items.Add("Clear Selection", null, (_, _) => activitiesGrid.ClearSelection());
-			activitiesGrid.ContextMenuStrip = contextMenu;
-
-			statusLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 570),
-				Size = new Size(952, 40),
-				ForeColor = Color.DimGray
-			};
-
-			Controls.Add(titleLabel);
-			Controls.Add(topActions);
-			Controls.Add(filterLabel);
-			Controls.Add(filterComboBox);
-			Controls.Add(selectionCountLabel);
-			Controls.Add(activitiesGrid);
-			Controls.Add(statusLabel);
+			filterComboBox.SelectedIndex = 0;
+			ApplyFormText();
 
 			if (IsInDesignMode)
 			{
@@ -138,8 +37,19 @@ namespace SecureServerBackup.WinForms
 			}
 			else
 			{
-				Load += (_, _) => LoadActivities();
+				Load += ActivityDetailForm_Load;
 			}
+		}
+
+		private void ApplyFormText()
+		{
+			Text = string.IsNullOrEmpty(filterJobName) ? "All Activity Details" : $"Activity Details - {filterJobName}";
+			titleLabel.Text = string.IsNullOrEmpty(filterJobName) ? "All Activities" : $"Activities for: {filterJobName}";
+		}
+
+		private void ActivityDetailForm_Load(object? sender, EventArgs e)
+		{
+			LoadActivities();
 		}
 
 		private void LoadDesignTimeActivities()
@@ -169,25 +79,87 @@ namespace SecureServerBackup.WinForms
 			ApplyLevelFilter();
 		}
 
-		private static Button CreateButton(string text, EventHandler onClick)
+		private void RefreshButton_Click(object? sender, EventArgs e)
 		{
-			var button = new Button
-			{
-				Text = text,
-				AutoSize = true,
-				MinimumSize = new Size(100, 30),
-				Margin = new Padding(0, 0, 8, 0)
-			};
-			button.Click += onClick;
-			return button;
+			LoadActivities();
 		}
 
-		private void SelectAllActivities(object? sender, EventArgs e)
+		private void ExportCsvButton_Click(object? sender, EventArgs e)
+		{
+			ExportSelected("CSV");
+		}
+
+		private void ExportTextButton_Click(object? sender, EventArgs e)
+		{
+			ExportSelected("Text");
+		}
+
+		private void DeleteButton_Click(object? sender, EventArgs e)
+		{
+			DeleteSelectedActivities();
+		}
+
+		private void CopyButton_Click(object? sender, EventArgs e)
+		{
+			CopySelectedToClipboard();
+		}
+
+		private void SelectAllButton_Click(object? sender, EventArgs e)
+		{
+			SelectAllActivities();
+		}
+
+		private void ClearSelectionButton_Click(object? sender, EventArgs e)
+		{
+			ClearActivitySelection();
+		}
+
+		private void FilterComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			ApplyLevelFilter();
+		}
+
+		private void ActivitiesGrid_SelectionChanged(object? sender, EventArgs e)
+		{
+			UpdateSelectionCount();
+		}
+
+		private void ExportCsvToolStripMenuItem_Click(object? sender, EventArgs e)
+		{
+			ExportSelected("CSV");
+		}
+
+		private void ExportTextToolStripMenuItem_Click(object? sender, EventArgs e)
+		{
+			ExportSelected("Text");
+		}
+
+		private void CopySelectedToolStripMenuItem_Click(object? sender, EventArgs e)
+		{
+			CopySelectedToClipboard();
+		}
+
+		private void DeleteSelectedToolStripMenuItem_Click(object? sender, EventArgs e)
+		{
+			DeleteSelectedActivities();
+		}
+
+		private void SelectAllToolStripMenuItem_Click(object? sender, EventArgs e)
+		{
+			SelectAllActivities();
+		}
+
+		private void ClearSelectionToolStripMenuItem_Click(object? sender, EventArgs e)
+		{
+			ClearActivitySelection();
+		}
+
+		private void SelectAllActivities()
 		{
 			activitiesGrid.SelectAll();
 		}
 
-		private void ClearActivitySelection(object? sender, EventArgs e)
+		private void ClearActivitySelection()
 		{
 			activitiesGrid.ClearSelection();
 		}

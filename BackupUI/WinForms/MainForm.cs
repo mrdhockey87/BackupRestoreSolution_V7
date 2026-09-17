@@ -18,6 +18,7 @@ namespace SecureServerBackup.WinForms
 		private const string BackupJobCardTag = "BackupJobCard";
 
 		private readonly JobManager jobManager = new();
+		private ActivityManagementForm? activityManagementView;
 
 		public MainForm()
 		{
@@ -557,10 +558,21 @@ namespace SecureServerBackup.WinForms
 			{
 				Dock = DockStyle.Fill,
 				BackColor = WinFormsThemeManager.PanelBackground,
-				Padding = new Padding(12)
+				Padding = new Padding(0)
 			};
 
-			panel.Controls.Add(CreateHeaderActionButton("Open Activity...", (_, _) => OpenActivityManagement(), 140));
+			activityManagementView?.Dispose();
+			activityManagementView = new ActivityManagementForm
+			{
+				TopLevel = false,
+				FormBorderStyle = FormBorderStyle.None,
+				Dock = DockStyle.Fill,
+				Visible = false
+			};
+
+			panel.Controls.Add(activityManagementView);
+			activityManagementView.Show();
+
 			return panel;
 		}
 

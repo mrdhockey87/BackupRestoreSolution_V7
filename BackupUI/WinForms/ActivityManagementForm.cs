@@ -21,7 +21,7 @@ namespace SecureServerBackup.WinForms
 
 		public ActivityManagementForm()
 		{
-			Text = "Activity Management";
+			Text = "Backup Job Activity Logs";
 			StartPosition = FormStartPosition.CenterParent;
 			MinimumSize = new Size(960, 560);
 			ClientSize = new Size(960, 560);
@@ -29,7 +29,7 @@ namespace SecureServerBackup.WinForms
 
 			var titleLabel = new Label
 			{
-				Text = "Backup Activity Management",
+				Text = "Backup Job Activity Logs",
 				Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
 				AutoSize = true,
 				Location = new Point(16, 16)

@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.6.25";        // Get version from assembly - this will always match the project file version
+        private static readonly string version_fallback_number = "7.3.6.28";        // Get version from assembly - this will always match the project file version
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -67,6 +67,12 @@ namespace SecureServerBackup
 
 
 /*
+ *  Version 7.3.6.28 Changed the main Activities tab to show the Backup Job Activity Logs list with Refresh and View All Activities 
+ *                   actions instead of the old single open button. mdail 9/17/2026
+ *  Version 7.3.6.27 Fixed the RestoreItemSelectionForm giving an error during build because the InitializeComponent was missing
+ *                   components = new Container(); mdail 9/17/2026
+ *  Version 7.3.6.26 Converted ActivityDetailForm to a designer-backed WinForms partial form so it now opens in the 
+ *                   Visual Studio designer. mdail 9/17/2026
  *  Version 7.3.6.25 Fixed the RestorePointSelectionForm.Designer.cs to initialize its components
  *                   container by adding components = new Container() that was missing in the init mdail 9/15/2026
  *  Version 7.3.6.24 Fixed RestorePointSelectionForm.Designer.cs to initialize its components
