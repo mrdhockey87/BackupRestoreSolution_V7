@@ -40,14 +40,14 @@ namespace SecureServerBackup.WinForms
 				{
 					var fileInfo = new FileInfo(isoPath);
 					isoStatusLabel.Text = $"ISO Found ({FormatBytes(fileInfo.Length)})";
-					isoStatusLabel.ForeColor = Color.DarkGreen;
+					isoStatusLabel.ForeColor = WinFormsThemeManager.SuccessText;
 					openIsoLocationButton.Enabled = true;
 					isoNoteLabel.Text = string.Empty;
 				}
 				else
 				{
 					isoStatusLabel.Text = "ISO file not found";
-					isoStatusLabel.ForeColor = Color.DarkRed;
+					isoStatusLabel.ForeColor = WinFormsThemeManager.ErrorText;
 					openIsoLocationButton.Enabled = false;
 					isoNoteLabel.Text = "The ISO should be deployed in the LinuxRestore folder. If it is missing, build it with the LinuxRestore BUILD-AND-CREATE-ISO.ps1 script.";
 				}
@@ -55,7 +55,7 @@ namespace SecureServerBackup.WinForms
 			catch (Exception ex)
 			{
 				isoStatusLabel.Text = $"Error: {ex.Message}";
-				isoStatusLabel.ForeColor = Color.DarkRed;
+				isoStatusLabel.ForeColor = WinFormsThemeManager.ErrorText;
 				openIsoLocationButton.Enabled = false;
 			}
 		}

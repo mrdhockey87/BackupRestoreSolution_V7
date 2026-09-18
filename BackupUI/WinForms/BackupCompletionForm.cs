@@ -23,9 +23,9 @@ namespace SecureServerBackup.WinForms
 			ConfigureAutoClose(true);
 			titleLabel.Text = "Backup Complete";
 			iconLabel.Text = "✅";
-			iconLabel.ForeColor = Color.DarkGreen;
+			iconLabel.ForeColor = WinFormsThemeManager.SuccessText;
 			messageLabel.Text = $"Backup job '{jobName}' completed successfully!";
-			okButton.BackColor = SystemColors.Control;
+			WinFormsThemeManager.ApplyButtonTheme(okButton, WinFormsThemeManager.ButtonBackground);
 		}
 
 		public void ConfigureFailure(string jobName, string? errorMessage)
@@ -33,9 +33,9 @@ namespace SecureServerBackup.WinForms
 			ConfigureAutoClose(true);
 			titleLabel.Text = "Backup Failed";
 			iconLabel.Text = "❌";
-			iconLabel.ForeColor = Color.DarkRed;
+			iconLabel.ForeColor = WinFormsThemeManager.ErrorText;
 			messageLabel.Text = $"Backup job '{jobName}' failed!{Environment.NewLine}{Environment.NewLine}Error: {errorMessage ?? "Unknown error"}{Environment.NewLine}{Environment.NewLine}Check Activity log for details.";
-			okButton.BackColor = Color.MistyRose;
+			WinFormsThemeManager.ApplyButtonTheme(okButton, WinFormsThemeManager.DangerColor);
 		}
 
 		private void ConfigureAutoClose(bool enableAutoClose)

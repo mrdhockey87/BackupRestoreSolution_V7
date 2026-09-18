@@ -13,11 +13,15 @@ namespace SecureServerBackup.WinForms
 		internal static Color LightTurquoise => ColorTranslator.FromHtml("#AFEEEE");
 		internal static Color VeryLightTurquoise => ColorTranslator.FromHtml("#E0F7F7");
 		internal static Color ButtonBackground => ColorTranslator.FromHtml("#008B8B");
+		internal static Color ButtonForeground => Color.Black;
 		internal static Color ButtonHover => ColorTranslator.FromHtml("#20B2AA");
 		internal static Color ButtonPressed => ColorTranslator.FromHtml("#5F9EA0");
 		internal static Color PrimaryText => Color.Black;
 		internal static Color SecondaryText => ColorTranslator.FromHtml("#333333");
 		internal static Color ErrorText => ColorTranslator.FromHtml("#8B0000");
+		internal static Color WarningText => ColorTranslator.FromHtml("#FF8C00");
+		internal static Color SuccessText => ColorTranslator.FromHtml("#006400");
+		internal static Color InfoText => ColorTranslator.FromHtml("#000080");
 		internal static Color WindowBackground => ColorTranslator.FromHtml("#F5FFFF");
 		internal static Color PanelBackground => ColorTranslator.FromHtml("#E0F7F7");
 		internal static Color AlternateRowBackground => ColorTranslator.FromHtml("#5F9EA0");
@@ -27,6 +31,11 @@ namespace SecureServerBackup.WinForms
 		internal static Color LightBorderColor => ColorTranslator.FromHtml("#B0E0E6");
 		internal static Color SelectionBackground => ColorTranslator.FromHtml("#008B8B");
 		internal static Color SelectionForeground => Color.White;
+		internal static Color SuccessBackground => ColorTranslator.FromHtml("#E6F4EA");
+		internal static Color WarningBackground => ColorTranslator.FromHtml("#FFF8DC");
+		internal static Color ErrorBackground => ColorTranslator.FromHtml("#FFE4E1");
+		internal static Color InfoBackground => ColorTranslator.FromHtml("#E0F7F7");
+		internal static Color HelpHeaderBackground => ColorTranslator.FromHtml("#2C3E50");
 		internal static Color CardBorderColor => ColorTranslator.FromHtml("#56D6D6");
 		internal static Color DangerColor => ColorTranslator.FromHtml("#8B0000");
 
@@ -96,25 +105,44 @@ namespace SecureServerBackup.WinForms
 			}
 
 			control.Disposed += (_, _) => ThemedControls.Remove(control);
+			control.ControlAdded += OnControlAdded;
 
 			if (control is Form form)
 			{
 				form.BackColor = WindowBackground;
-				form.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(form.ForeColor))
+				{
+					form.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is TabPage)
 			{
 				control.BackColor = WindowBackground;
-				control.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(control.ForeColor))
+				{
+					control.ForeColor = PrimaryText;
+				}
 			}
-			else if (control is Panel or FlowLayoutPanel or TableLayoutPanel or SplitContainer or GroupBox)
+			else if (control is GroupBox)
 			{
-				if (ShouldApplyBackground(control.BackColor))
+				control.BackColor = VeryLightTurquoise;
+
+				if (ShouldApplyForeground(control.ForeColor))
+				{
+					control.ForeColor = PrimaryText;
+				}
+			}
+			else if (control is Panel or FlowLayoutPanel or TableLayoutPanel or SplitContainer)
+			{
+				if (ShouldApplyContainerBackground(control.BackColor))
 				{
 					control.BackColor = PanelBackground;
 				}
 
-				control.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(control.ForeColor))
+				{
+					control.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is Label)
 			{
@@ -123,57 +151,57 @@ namespace SecureServerBackup.WinForms
 					control.BackColor = Color.Transparent;
 				}
 
-				control.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(control.ForeColor))
+				{
+					control.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is Button button)
 			{
-				button.UseVisualStyleBackColor = false;
-				if (ShouldApplyBackground(button.BackColor))
-				{
-					button.BackColor = ButtonBackground;
-				}
+				Color buttonBackColor = ShouldApplyButtonBackground(button.BackColor)
+					? ButtonBackground
+					: button.BackColor;
 
-				button.ForeColor = PrimaryText;
-				button.FlatStyle = FlatStyle.Flat;
-				button.FlatAppearance.BorderColor = BorderColor;
-				button.FlatAppearance.MouseOverBackColor = ButtonHover;
-				button.FlatAppearance.MouseDownBackColor = ButtonPressed;
+				ApplyButtonTheme(button, buttonBackColor);
 			}
 			else if (control is CheckBox or RadioButton)
 			{
-				if (ShouldApplyBackground(control.BackColor))
+				if (ShouldApplyContainerBackground(control.BackColor))
 				{
 					control.BackColor = PanelBackground;
 				}
 
-				control.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(control.ForeColor))
+				{
+					control.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is TextBoxBase or ComboBox or NumericUpDown or DateTimePicker or ListBox or CheckedListBox)
 			{
-				if (ShouldApplyBackground(control.BackColor))
-				{
-					control.BackColor = Color.White;
-				}
+				control.BackColor = VeryLightTurquoise;
 
-				control.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(control.ForeColor))
+				{
+					control.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is ListView listView)
 			{
-				if (ShouldApplyBackground(listView.BackColor))
-				{
-					listView.BackColor = VeryLightTurquoise;
-				}
+				listView.BackColor = VeryLightTurquoise;
 
-				listView.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(listView.ForeColor))
+				{
+					listView.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is TreeView treeView)
 			{
-				if (ShouldApplyBackground(treeView.BackColor))
-				{
-					treeView.BackColor = VeryLightTurquoise;
-				}
+				treeView.BackColor = VeryLightTurquoise;
 
-				treeView.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(treeView.ForeColor))
+				{
+					treeView.ForeColor = PrimaryText;
+				}
 				try
 				{
 					treeView.LineColor = BorderColor;
@@ -184,32 +212,49 @@ namespace SecureServerBackup.WinForms
 			}
 			else if (control is TabControl tabControl)
 			{
-				if (ShouldApplyBackground(tabControl.BackColor))
+				if (ShouldApplyContainerBackground(tabControl.BackColor))
 				{
 					tabControl.BackColor = WindowBackground;
 				}
 
-				tabControl.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(tabControl.ForeColor))
+				{
+					tabControl.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is DataGridView dataGridView)
 			{
 				ApplyThemeToDataGridView(dataGridView);
 			}
+			else if (control is ProgressBar progressBar)
+			{
+				progressBar.BackColor = VeryLightTurquoise;
+				progressBar.ForeColor = ButtonBackground;
+			}
 
 			if (control is MenuStrip menuStrip)
 			{
 				menuStrip.BackColor = HeaderBackground;
-				menuStrip.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(menuStrip.ForeColor))
+				{
+					menuStrip.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is StatusStrip statusStrip)
 			{
 				statusStrip.BackColor = StatusBarBackground;
-				statusStrip.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(statusStrip.ForeColor))
+				{
+					statusStrip.ForeColor = PrimaryText;
+				}
 			}
 			else if (control is ToolStrip toolStrip)
 			{
 				toolStrip.BackColor = HeaderBackground;
-				toolStrip.ForeColor = PrimaryText;
+				if (ShouldApplyForeground(toolStrip.ForeColor))
+				{
+					toolStrip.ForeColor = PrimaryText;
+				}
 			}
 
 			foreach (Control child in control.Controls)
@@ -236,12 +281,59 @@ namespace SecureServerBackup.WinForms
 			dataGridView.AlternatingRowsDefaultCellStyle.ForeColor = PrimaryText;
 		}
 
-		private static bool ShouldApplyBackground(Color backColor)
+		internal static void ApplyButtonTheme(Button button, Color backColor)
+		{
+			ArgumentNullException.ThrowIfNull(button);
+
+			button.UseVisualStyleBackColor = false;
+			button.BackColor = backColor;
+			button.ForeColor = GetButtonForeground(backColor);
+			button.FlatStyle = FlatStyle.Flat;
+			button.FlatAppearance.BorderColor = ControlPaint.Dark(backColor);
+			button.FlatAppearance.MouseOverBackColor = GetHoverColor(backColor);
+			button.FlatAppearance.MouseDownBackColor = GetPressedColor(backColor);
+		}
+
+		private static Color GetButtonForeground(Color backColor)
+		{
+			return backColor == DangerColor || backColor == WarningText
+				? VeryLightTurquoise
+				: ButtonForeground;
+		}
+
+		private static Color GetHoverColor(Color backColor)
+		{
+			return backColor == ButtonBackground ? ButtonHover : ControlPaint.Light(backColor);
+		}
+
+		private static Color GetPressedColor(Color backColor)
+		{
+			return backColor == ButtonBackground ? ButtonPressed : ControlPaint.Dark(backColor);
+		}
+
+		private static bool ShouldApplyButtonBackground(Color backColor)
 		{
 			return backColor.IsEmpty ||
 				backColor == Color.Transparent ||
 				backColor.ToArgb() == SystemColors.Control.ToArgb() ||
-				backColor.ToArgb() == SystemColors.ButtonFace.ToArgb();
+				backColor.ToArgb() == SystemColors.ButtonFace.ToArgb() ||
+				backColor.ToArgb() == Color.White.ToArgb();
+		}
+
+		private static bool ShouldApplyContainerBackground(Color backColor)
+		{
+			return backColor.IsEmpty ||
+				backColor == Color.Transparent ||
+				backColor.ToArgb() == SystemColors.Control.ToArgb() ||
+				backColor.ToArgb() == SystemColors.ButtonFace.ToArgb() ||
+				backColor.ToArgb() == Color.White.ToArgb();
+		}
+
+		private static bool ShouldApplyForeground(Color foreColor)
+		{
+			return foreColor.IsEmpty ||
+				foreColor.ToArgb() == SystemColors.ControlText.ToArgb() ||
+				foreColor.ToArgb() == SystemColors.WindowText.ToArgb();
 		}
 
 		private sealed class TurquoiseProfessionalColorTable : ProfessionalColorTable

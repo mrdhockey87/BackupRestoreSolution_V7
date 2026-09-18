@@ -27,11 +27,11 @@ namespace SecureServerBackup.WinForms
 			iconLabel.Visible = icon != DialogIcon.None;
 			(iconLabel.Text, iconLabel.ForeColor) = icon switch
 			{
-				DialogIcon.Information => ("ℹ️", Color.Navy),
-				DialogIcon.Warning => ("⚠️", Color.DarkOrange),
-				DialogIcon.Error => ("❌", Color.DarkRed),
-				DialogIcon.Question => ("❓", Color.LightSeaGreen),
-				DialogIcon.Success => ("✅", Color.DarkGreen),
+				DialogIcon.Information => ("ℹ️", WinFormsThemeManager.InfoText),
+				DialogIcon.Warning => ("⚠️", WinFormsThemeManager.WarningText),
+				DialogIcon.Error => ("❌", WinFormsThemeManager.ErrorText),
+				DialogIcon.Question => ("❓", WinFormsThemeManager.PrimaryTurquoise),
+				DialogIcon.Success => ("✅", WinFormsThemeManager.SuccessText),
 				_ => (string.Empty, Color.Transparent)
 			};
 		}

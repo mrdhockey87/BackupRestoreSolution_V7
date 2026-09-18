@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.6.33";        // Get version from assembly - this will always match the project file version
+        private static readonly string version_fallback_number = "7.3.6.34";        // Get version from assembly - this will always match the project file version
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -67,6 +67,8 @@ namespace SecureServerBackup
 
 
 /*
+ *  Version 7.3.6.34 Converted the legacy TurquoiseTheme.xaml palette into the WinForms theme manager and applied the
+ *                   old WPF turquoise colors to the WinForms shell dialogs lists tabs and activity status styling. mdail 9/18/2026
  *  Version 7.3.6.33 Moved the Activity Management View Details and Export Activities actions into the grid,
  *                   reordered the columns, colored the Success Warning and Error counts, and showed Last Activity with date and time. mdail 9/18/2026
  *  Version 7.3.6.31 FIxed the RestorePointSelectionForm giving error that the components might be null by enabling nullable mdail 9/18/2026

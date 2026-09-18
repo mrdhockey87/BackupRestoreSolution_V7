@@ -4,8 +4,6 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
-
 using SecureServerBackup.Helpers;
 
 using SecureServerBackupCommon;
@@ -40,11 +38,11 @@ namespace SecureServerBackup.WinForms
 		{
 			jobsGrid.DataSource = bindingSource;
 			lastActivityColumn.DefaultCellStyle.Format = "g";
-			totalActivitiesColumn.DefaultCellStyle.ForeColor = Color.Black;
-			successCountColumn.DefaultCellStyle.ForeColor = Color.Green;
-			warningCountColumn.DefaultCellStyle.ForeColor = Color.DarkOrange;
-			errorCountColumn.DefaultCellStyle.ForeColor = Color.Red;
-			actionsColumn.DefaultCellStyle.ForeColor = Color.Black;
+			totalActivitiesColumn.DefaultCellStyle.ForeColor = WinFormsThemeManager.PrimaryText;
+			successCountColumn.DefaultCellStyle.ForeColor = WinFormsThemeManager.SuccessText;
+			warningCountColumn.DefaultCellStyle.ForeColor = WinFormsThemeManager.WarningText;
+			errorCountColumn.DefaultCellStyle.ForeColor = WinFormsThemeManager.ErrorText;
+			actionsColumn.DefaultCellStyle.ForeColor = WinFormsThemeManager.PrimaryText;
 		}
 
 		private void ActivityManagementForm_Load(object? sender, EventArgs e)
@@ -145,8 +143,8 @@ namespace SecureServerBackup.WinForms
 			e.Paint(e.CellBounds, DataGridViewPaintParts.Background | DataGridViewPaintParts.Border);
 			(Rectangle viewDetailsBounds, Rectangle exportActivitiesBounds) = GetActionButtonBounds(e.CellBounds);
 			Graphics graphics = e.Graphics;
-			ButtonRenderer.DrawButton(graphics, viewDetailsBounds, ViewDetailsActionText, jobsGrid.Font, false, PushButtonState.Normal);
-			ButtonRenderer.DrawButton(graphics, exportActivitiesBounds, ExportActivitiesActionText, jobsGrid.Font, false, PushButtonState.Normal);
+			DrawActionButton(graphics, viewDetailsBounds, ViewDetailsActionText, WinFormsThemeManager.MediumTurquoise);
+			DrawActionButton(graphics, exportActivitiesBounds, ExportActivitiesActionText, WinFormsThemeManager.ButtonBackground);
 			e.Handled = true;
 		}
 
@@ -314,6 +312,23 @@ namespace SecureServerBackup.WinForms
 				buttonHeight);
 
 			return (viewDetailsBounds, exportActivitiesBounds);
+		}
+
+		private void DrawActionButton(Graphics graphics, Rectangle bounds, string text, Color backColor)
+		{
+			using SolidBrush backBrush = new(backColor);
+			using Pen borderPen = new(ControlPaint.Dark(backColor));
+
+			graphics.FillRectangle(backBrush, bounds);
+			graphics.DrawRectangle(borderPen, bounds);
+
+			TextRenderer.DrawText(
+				graphics,
+				text,
+				jobsGrid.Font,
+				bounds,
+				WinFormsThemeManager.PrimaryText,
+				TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
 		}
 
 		private sealed class JobLogSummaryRow

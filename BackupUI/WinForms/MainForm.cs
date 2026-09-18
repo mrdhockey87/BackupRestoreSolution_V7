@@ -595,7 +595,7 @@ namespace SecureServerBackup.WinForms
 			listView.FullRowSelect = true;
 			listView.GridLines = true;
 			listView.HideSelection = false;
-			listView.BackColor = Color.White;
+			listView.BackColor = WinFormsThemeManager.VeryLightTurquoise;
 		}
 
 		private static Button CreateActionButton(string text, EventHandler onClick)
@@ -621,7 +621,7 @@ namespace SecureServerBackup.WinForms
 				FullRowSelect = true,
 				GridLines = true,
 				HideSelection = false,
-				BackColor = Color.White
+				BackColor = WinFormsThemeManager.VeryLightTurquoise
 			};
 		}
 
@@ -632,14 +632,10 @@ namespace SecureServerBackup.WinForms
 				Text = text,
 				Width = width,
 				Height = 32,
-				Margin = new Padding(0, 0, 10, 0),
-				BackColor = WinFormsThemeManager.ButtonBackground,
-				ForeColor = WinFormsThemeManager.PrimaryText,
-				FlatStyle = FlatStyle.Flat
+				Margin = new Padding(0, 0, 10, 0)
 			};
 
-			button.FlatAppearance.BorderColor = WinFormsThemeManager.BorderColor;
-			button.FlatAppearance.BorderSize = 1;
+			WinFormsThemeManager.ApplyButtonTheme(button, WinFormsThemeManager.ButtonBackground);
 			button.Click += onClick;
 			return button;
 		}
@@ -651,14 +647,10 @@ namespace SecureServerBackup.WinForms
 				Text = text,
 				Width = 130,
 				Height = 34,
-				Margin = new Padding(0, 0, 0, 10),
-				BackColor = backColor,
-				ForeColor = WinFormsThemeManager.PrimaryText,
-				FlatStyle = FlatStyle.Flat
+				Margin = new Padding(0, 0, 0, 10)
 			};
 
-			button.FlatAppearance.BorderSize = 1;
-			button.FlatAppearance.BorderColor = ControlPaint.Dark(backColor);
+			WinFormsThemeManager.ApplyButtonTheme(button, backColor);
 			button.Click += onClick;
 			return button;
 		}
@@ -669,8 +661,9 @@ namespace SecureServerBackup.WinForms
 			bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
 			Rectangle bounds = e.Bounds;
 
-			using var backBrush = new SolidBrush(isSelected ? WinFormsThemeManager.LightTurquoise : Color.White);
+			using var backBrush = new SolidBrush(isSelected ? WinFormsThemeManager.MediumTurquoise : WinFormsThemeManager.VeryLightTurquoise);
 			using var borderPen = new Pen(WinFormsThemeManager.BorderColor);
+			Font tabFont = isSelected ? new Font(Font, FontStyle.Bold) : Font;
 
 			e.Graphics.FillRectangle(backBrush, bounds);
 			e.Graphics.DrawRectangle(borderPen, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
@@ -678,10 +671,15 @@ namespace SecureServerBackup.WinForms
 			TextRenderer.DrawText(
 				e.Graphics,
 				page.Text,
-				Font,
+				tabFont,
 				bounds,
 				WinFormsThemeManager.PrimaryText,
 				TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+
+			if (isSelected)
+			{
+				tabFont.Dispose();
+			}
 		}
 
 		private void ResizeBackupJobCards()
