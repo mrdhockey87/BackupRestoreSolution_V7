@@ -9,7 +9,7 @@ using SecureServerBackup.WinForms.Controls;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class VolumeConfigurationForm : Form
+	internal sealed partial class VolumeConfigurationForm : Form
 	{
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly List<VolumeInfo> sourceVolumes;
@@ -17,13 +17,6 @@ namespace SecureServerBackup.WinForms
 		private readonly long targetTotalSize;
 		private readonly int sourceAllocationUnitSize;
 		private readonly int targetAllocationUnitSize;
-		private readonly VolumeResizeControl resizeControl;
-		private readonly Label sourceDiskInfoLabel;
-		private readonly Label targetDiskInfoLabel;
-		private readonly Label spaceInfoLabel;
-		private readonly Label statusLabel;
-		private readonly Label warningLabel;
-		private readonly Button acceptButton;
 
 		public VolumeConfigurationForm()
 			: this(
@@ -50,123 +43,7 @@ namespace SecureServerBackup.WinForms
 			sourceAllocationUnitSize = sourceAUS;
 			targetAllocationUnitSize = targetAUS;
 			resizeVolumes = [];
-
-			Text = "Configure Volume Sizes";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(900, 620);
-			ClientSize = new Size(980, 680);
-			BackColor = Color.White;
-
-			var titleLabel = new Label
-			{
-				Text = "Configure Restore Volume Sizes",
-				Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
-				AutoSize = true,
-				Location = new Point(16, 16)
-			};
-
-			sourceDiskInfoLabel = new Label
-			{
-				AutoSize = true,
-				Location = new Point(16, 52)
-			};
-
-			targetDiskInfoLabel = new Label
-			{
-				AutoSize = true,
-				Location = new Point(16, 76)
-			};
-
-			spaceInfoLabel = new Label
-			{
-				AutoSize = true,
-				Location = new Point(16, 100),
-				ForeColor = Color.DimGray
-			};
-
-			warningLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 128),
-				Size = new Size(940, 50),
-				ForeColor = Color.DarkOrange,
-				Visible = false
-			};
-
-			resizeControl = new VolumeResizeControl
-			{
-				Location = new Point(16, 190),
-				Size = new Size(940, 330),
-				Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
-			};
-
-			var instructionsLabel = new Label
-			{
-				Text = "Drag the red handles in the target layout to resize adjacent volumes. Use Auto Fit to proportionally fill the target disk or Reset to restore the default layout.",
-				AutoSize = false,
-				Location = new Point(16, 530),
-				Size = new Size(940, 36),
-				Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
-			};
-
-			statusLabel = new Label
-			{
-				Text = "Ready.",
-				AutoSize = false,
-				Location = new Point(16, 572),
-				Size = new Size(620, 28),
-				ForeColor = Color.DimGray,
-				Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
-			};
-
-			var autoFitButton = new Button
-			{
-				Text = "Auto Fit",
-				Size = new Size(100, 32),
-				Location = new Point(646, 568),
-				Anchor = AnchorStyles.Right | AnchorStyles.Bottom
-			};
-			autoFitButton.Click += (_, _) => AutoFitVolumes();
-
-			var resetButton = new Button
-			{
-				Text = "Reset",
-				Size = new Size(100, 32),
-				Location = new Point(756, 568),
-				Anchor = AnchorStyles.Right | AnchorStyles.Bottom
-			};
-			resetButton.Click += (_, _) => ResetVolumes();
-
-			acceptButton = new Button
-			{
-				Text = "Accept",
-				Size = new Size(100, 32),
-				Location = new Point(646, 608),
-				Anchor = AnchorStyles.Right | AnchorStyles.Bottom
-			};
-			acceptButton.Click += (_, _) => AcceptConfiguration();
-
-			var cancelButton = new Button
-			{
-				Text = "Cancel",
-				Size = new Size(100, 32),
-				Location = new Point(756, 608),
-				Anchor = AnchorStyles.Right | AnchorStyles.Bottom,
-				DialogResult = DialogResult.Cancel
-			};
-
-			Controls.Add(titleLabel);
-			Controls.Add(sourceDiskInfoLabel);
-			Controls.Add(targetDiskInfoLabel);
-			Controls.Add(spaceInfoLabel);
-			Controls.Add(warningLabel);
-			Controls.Add(resizeControl);
-			Controls.Add(instructionsLabel);
-			Controls.Add(statusLabel);
-			Controls.Add(autoFitButton);
-			Controls.Add(resetButton);
-			Controls.Add(acceptButton);
-			Controls.Add(cancelButton);
+			InitializeComponent();
 
 			if (IsInDesignMode)
 			{
@@ -174,8 +51,28 @@ namespace SecureServerBackup.WinForms
 			}
 			else
 			{
-				Load += (_, _) => InitializeLayout();
+				Load += VolumeConfigurationForm_Load;
 			}
+		}
+
+		private void VolumeConfigurationForm_Load(object? sender, EventArgs e)
+		{
+			InitializeLayout();
+		}
+
+		private void AutoFitButton_Click(object? sender, EventArgs e)
+		{
+			AutoFitVolumes();
+		}
+
+		private void ResetButton_Click(object? sender, EventArgs e)
+		{
+			ResetVolumes();
+		}
+
+		private void AcceptButton_Click(object? sender, EventArgs e)
+		{
+			AcceptConfiguration();
 		}
 
 		public VolumeInfo[]? FinalConfiguration { get; private set; }

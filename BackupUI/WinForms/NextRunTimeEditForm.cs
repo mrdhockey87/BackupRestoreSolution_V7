@@ -7,18 +7,11 @@ using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class NextRunTimeEditForm : Form
+	internal sealed partial class NextRunTimeEditForm : Form
 	{
 		private readonly DateTime earliestAllowedRun;
 		private readonly DateTime latestAllowedRun;
 		private readonly List<int> availableYears;
-		private readonly ComboBox yearComboBox;
-		private readonly ComboBox monthComboBox;
-		private readonly ComboBox dayComboBox;
-		private readonly ComboBox periodComboBox;
-		private readonly ComboBox hourComboBox;
-		private readonly ComboBox minuteComboBox;
-		private readonly Label selectedValueLabel;
 		private bool isUpdatingSelections;
 
 		public NextRunTimeEditForm()
@@ -30,85 +23,12 @@ namespace SecureServerBackup.WinForms
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			Text = "Edit Next Run";
-			StartPosition = FormStartPosition.CenterParent;
-			FormBorderStyle = FormBorderStyle.FixedDialog;
-			MinimizeBox = false;
-			MaximizeBox = false;
-			ShowInTaskbar = false;
-			ClientSize = new Size(520, 320);
-			BackColor = Color.White;
-
 			earliestAllowedRun = DateTime.Now.AddMinutes(1);
 			this.latestAllowedRun = latestAllowedRun;
 			SelectedNextRun = currentNextRun < earliestAllowedRun ? earliestAllowedRun : currentNextRun;
 			availableYears = Enumerable.Range(earliestAllowedRun.Year, latestAllowedRun.Year - earliestAllowedRun.Year + 1).ToList();
-
-			var currentRunLabel = new Label
-			{
-				Text = $"Current next run: {currentNextRun:yyyy-MM-dd hh:mm tt}",
-				AutoSize = true,
-				Location = new Point(16, 16)
-			};
-
-			var allowedRangeLabel = new Label
-			{
-				Text = $"Allowed range: {earliestAllowedRun:yyyy-MM-dd hh:mm tt} to {latestAllowedRun:yyyy-MM-dd hh:mm tt}",
-				AutoSize = true,
-				Location = new Point(16, 42)
-			};
-
-			var noticeLabel = new Label
-			{
-				Text = "This changes only the upcoming next run. The original schedule time and date settings stay unchanged for future runs.",
-				AutoSize = false,
-				Location = new Point(16, 70),
-				Size = new Size(480, 42)
-			};
-
-			yearComboBox = CreateComboBox(16, 132);
-			monthComboBox = CreateComboBox(104, 132);
-			dayComboBox = CreateComboBox(192, 132);
-			periodComboBox = CreateComboBox(280, 132);
-			hourComboBox = CreateComboBox(368, 132);
-			minuteComboBox = CreateComboBox(456, 132);
-			minuteComboBox.Width = 48;
-
-			AddLabeledControl("Year", yearComboBox, 16, 112);
-			AddLabeledControl("Month", monthComboBox, 104, 112);
-			AddLabeledControl("Day", dayComboBox, 192, 112);
-			AddLabeledControl("AM/PM", periodComboBox, 280, 112);
-			AddLabeledControl("Hour", hourComboBox, 368, 112);
-			AddLabeledControl("Minute", minuteComboBox, 456, 112);
-
-			selectedValueLabel = new Label
-			{
-				AutoSize = true,
-				Location = new Point(16, 184)
-			};
-
-			var saveButton = new Button
-			{
-				Text = "Save",
-				Size = new Size(90, 30),
-				Location = new Point(324, 264)
-			};
-			saveButton.Click += (_, _) => SaveSelection();
-
-			var cancelButton = new Button
-			{
-				Text = "Cancel",
-				Size = new Size(90, 30),
-				Location = new Point(424, 264),
-				DialogResult = DialogResult.Cancel
-			};
-
-			Controls.Add(currentRunLabel);
-			Controls.Add(allowedRangeLabel);
-			Controls.Add(noticeLabel);
-			Controls.Add(selectedValueLabel);
-			Controls.Add(saveButton);
-			Controls.Add(cancelButton);
+			InitializeComponent();
+			ApplyRuntimeLabels(currentNextRun, latestAllowedRun);
 
 			LoadDateTimeOptions();
 			ApplyDateTimeSelection(SelectedNextRun);
@@ -117,28 +37,45 @@ namespace SecureServerBackup.WinForms
 
 		public DateTime SelectedNextRun { get; private set; }
 
-		private ComboBox CreateComboBox(int x, int y)
+		private void ApplyRuntimeLabels(DateTime currentNextRun, DateTime latestAllowed)
 		{
-			var comboBox = new ComboBox
-			{
-				DropDownStyle = ComboBoxStyle.DropDownList,
-				Location = new Point(x, y),
-				Size = new Size(72, 24)
-			};
-			comboBox.SelectedIndexChanged += (_, _) => DateTimePartSelectionChanged(comboBox);
-			Controls.Add(comboBox);
-			return comboBox;
+			currentRunLabel.Text = $"Current next run: {currentNextRun:yyyy-MM-dd hh:mm tt}";
+			allowedRangeLabel.Text = $"Allowed range: {earliestAllowedRun:yyyy-MM-dd hh:mm tt} to {latestAllowed:yyyy-MM-dd hh:mm tt}";
 		}
 
-		private void AddLabeledControl(string text, Control control, int x, int y)
+		private void YearComboBox_SelectedIndexChanged(object? sender, EventArgs e)
 		{
-			var label = new Label
-			{
-				Text = text,
-				AutoSize = true,
-				Location = new Point(x, y)
-			};
-			Controls.Add(label);
+			DateTimePartSelectionChanged(yearComboBox);
+		}
+
+		private void MonthComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			DateTimePartSelectionChanged(monthComboBox);
+		}
+
+		private void DayComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			DateTimePartSelectionChanged(dayComboBox);
+		}
+
+		private void PeriodComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			DateTimePartSelectionChanged(periodComboBox);
+		}
+
+		private void HourComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			DateTimePartSelectionChanged(hourComboBox);
+		}
+
+		private void MinuteComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			DateTimePartSelectionChanged(minuteComboBox);
+		}
+
+		private void SaveButton_Click(object? sender, EventArgs e)
+		{
+			SaveSelection();
 		}
 
 		private void LoadDateTimeOptions()

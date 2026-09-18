@@ -78,6 +78,42 @@
     <Compile Update="WinForms\ActivityDetailForm.Designer.cs">
       <DependentUpon>ActivityDetailForm.cs</DependentUpon>
     </Compile>
+    <Compile Update="WinForms\ActivityManagementForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\BackupWindowNewForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\BackupWindowNewForm.Designer.cs">
+      <DependentUpon>BackupWindowNewForm.cs</DependentUpon>
+    </Compile>
+    <Compile Update="WinForms\ExclusionsManagementForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\ImportBackupForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\NextRunTimeEditForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\RestoreFileSelectionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\RestoreImageSelectionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\RestoreImageSelectionForm.Designer.cs">
+      <DependentUpon>RestoreImageSelectionForm.cs</DependentUpon>
+    </Compile>
+    <Compile Update="WinForms\ServiceManagementForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\ScheduleManagementForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinForms\VolumeConfigurationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Properties\Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>

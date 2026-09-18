@@ -13,15 +13,11 @@ using SecureServerBackup.Windows;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class RestoreFileSelectionForm : Form
+	internal sealed partial class RestoreFileSelectionForm : Form
 	{
 		private readonly AvailableBackupInfo backup;
 		private readonly RestoreSelectionContext restoreSelection;
 		private readonly bool requireAlternateDestination;
-		private readonly TextBox destinationTextBox;
-		private readonly CheckBox overwriteCheckBox;
-		private readonly Button startRestoreButton;
-		private readonly Label summaryLabel;
 
 		public RestoreFileSelectionForm()
 			: this(CreateDesignTimeRestoreSelection())
@@ -37,89 +33,28 @@ namespace SecureServerBackup.WinForms
 			this.restoreSelection = restoreSelection;
 			backup = restoreSelection.Backup;
 			requireAlternateDestination = restoreSelection.RequireAlternateDestination;
-
-			Text = "Restore Files and Folders";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(760, 360);
-			ClientSize = new Size(760, 360);
-			BackColor = Color.White;
-
-			summaryLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 16),
-				Size = new Size(720, 72),
-				Text = BuildSummaryText()
-			};
-
-			var destinationLabel = new Label
-			{
-				Text = "Target Location:",
-				AutoSize = true,
-				Location = new Point(16, 108)
-			};
-
-			destinationTextBox = new TextBox
-			{
-				Location = new Point(16, 132),
-				Size = new Size(600, 24)
-			};
-			destinationTextBox.TextChanged += (_, _) => UpdateActionState();
-
-			var browseButton = new Button
-			{
-				Text = "Browse...",
-				Location = new Point(626, 130),
-				Size = new Size(110, 28)
-			};
-			browseButton.Click += (_, _) => BrowseDestination();
-
-			overwriteCheckBox = new CheckBox
-			{
-				Text = "Overwrite existing files",
-				AutoSize = true,
-				Location = new Point(16, 176)
-			};
-
-			var noteLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 208),
-				Size = new Size(720, 56),
-				ForeColor = Color.DimGray,
-				Text = requireAlternateDestination
-					? "This restore must target a location that is not on the currently booted drive."
-					: "Select the destination folder and start the restore."
-			};
-
-			startRestoreButton = new Button
-			{
-				Text = "Start Restore",
-				Location = new Point(526, 290),
-				Size = new Size(100, 32),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right
-			};
-			startRestoreButton.Click += async (_, _) => await StartRestoreAsync();
-
-			var cancelButton = new Button
-			{
-				Text = "Cancel",
-				Location = new Point(636, 290),
-				Size = new Size(100, 32),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-				DialogResult = DialogResult.Cancel
-			};
-
-			Controls.Add(summaryLabel);
-			Controls.Add(destinationLabel);
-			Controls.Add(destinationTextBox);
-			Controls.Add(browseButton);
-			Controls.Add(overwriteCheckBox);
-			Controls.Add(noteLabel);
-			Controls.Add(startRestoreButton);
-			Controls.Add(cancelButton);
+			InitializeComponent();
+			summaryLabel.Text = BuildSummaryText();
+			noteLabel.Text = requireAlternateDestination
+				? "This restore must target a location that is not on the currently booted drive."
+				: "Select the destination folder and start the restore.";
 
 			UpdateActionState();
+		}
+
+		private void DestinationTextBox_TextChanged(object? sender, EventArgs e)
+		{
+			UpdateActionState();
+		}
+
+		private void BrowseButton_Click(object? sender, EventArgs e)
+		{
+			BrowseDestination();
+		}
+
+		private async void StartRestoreButton_Click(object? sender, EventArgs e)
+		{
+			await StartRestoreAsync();
 		}
 
 		private string BuildSummaryText()

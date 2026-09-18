@@ -4,14 +4,15 @@ using System.Windows.Forms;
 
 namespace SecureServerBackup.WinForms
 {
+	#nullable enable
 	partial class RestoreItemSelectionForm
 	{
-		private IContainer components;
+		private IContainer? components = null;
 		private Label summaryLabel;
 		private ListBox itemsListBox;
 		private Label helpLabel;
 		private Button nextButton;
-		private Button cancelButton;
+		private Button? cancelButton;
 
 		protected override void Dispose(bool disposing)
 		{
@@ -25,7 +26,6 @@ namespace SecureServerBackup.WinForms
 
 		private void InitializeComponent()
 		{
-			components = new Container();
 			summaryLabel = new Label();
 			itemsListBox = new ListBox();
 			helpLabel = new Label();
@@ -62,7 +62,7 @@ namespace SecureServerBackup.WinForms
 			// nextButton
 			// 
 			nextButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			nextButton.Location = new Point(472, 335);
+			nextButton.Location = new Point(472, 343);
 			nextButton.Name = "nextButton";
 			nextButton.Size = new Size(84, 27);
 			nextButton.TabIndex = 3;
@@ -74,7 +74,7 @@ namespace SecureServerBackup.WinForms
 			// 
 			cancelButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
 			cancelButton.DialogResult = DialogResult.Cancel;
-			cancelButton.Location = new Point(560, 335);
+			cancelButton.Location = new Point(560, 343);
 			cancelButton.Name = "cancelButton";
 			cancelButton.Size = new Size(84, 27);
 			cancelButton.TabIndex = 4;
@@ -88,7 +88,7 @@ namespace SecureServerBackup.WinForms
 			AutoScaleMode = AutoScaleMode.Font;
 			BackColor = Color.White;
 			CancelButton = cancelButton;
-			ClientSize = new Size(665, 370);
+			ClientSize = new Size(665, 378);
 			Controls.Add(cancelButton);
 			Controls.Add(nextButton);
 			Controls.Add(helpLabel);

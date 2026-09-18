@@ -6,7 +6,7 @@ using System.Linq;
 using System.Windows.Forms;
 using SecureServerBackup.Models;
 using SecureServerBackup.Windows;
-
+#nullable enable
 namespace SecureServerBackup.WinForms
 {
 	internal sealed partial class RestorePointSelectionForm : Form
@@ -28,18 +28,18 @@ namespace SecureServerBackup.WinForms
 				: RestoreWorkflowHelper.GetRestorePointsForBackup(backup.BackupPath).ToList();
 
 			InitializeComponent();
-			summaryLabel.Text = $"Backup: {backup.BackupName} ({backup.BackupType}){Environment.NewLine}Source: {backup.BackupPath}";
-			helpLabel.Text = RestorePoints.Count == 0
+			summaryLabel!.Text = $"Backup: {backup.BackupName} ({backup.BackupType}){Environment.NewLine}Source: {backup.BackupPath}";
+			helpLabel!.Text = RestorePoints.Count == 0
 				? "No restore points were found for the selected backup."
 				: "Select the restore point you want to open, then click Next.";
-			nextButton.Enabled = RestorePoints.Count > 0;
+			nextButton!.Enabled = RestorePoints.Count > 0;
 
 			foreach (RestorePoint restorePoint in RestorePoints)
 			{
-				restorePointsListBox.Items.Add(restorePoint);
+				restorePointsListBox!.Items.Add(restorePoint);
 			}
 
-			if (restorePointsListBox.Items.Count > 0)
+			if (restorePointsListBox!.Items.Count > 0)
 			{
 				restorePointsListBox.SelectedIndex = 0;
 			}

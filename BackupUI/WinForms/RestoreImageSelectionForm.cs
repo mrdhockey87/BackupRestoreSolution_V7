@@ -17,34 +17,12 @@ using BackupEngineInterop = SecureServerBackup.Services.BackupEngineInterop;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class RestoreImageSelectionForm : Form
+	internal sealed partial class RestoreImageSelectionForm : Form
 	{
 		private const string RestoreLogJobName = "[Restore]";
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 
 		private readonly RestoreSelectionContext restoreSelection;
-		private readonly Label summaryLabel;
-		private readonly ComboBox restoreModeComboBox;
-		private readonly Label modeHelpLabel;
-		private readonly ListView targetListView;
-		private readonly Panel targetListPanel;
-		private readonly Panel hyperVVmPanel;
-		private readonly Panel hyperVVirtualDiskPanel;
-		private readonly Label selectedTargetLabel;
-		private readonly Button startRestoreButton;
-		private readonly CheckBox showHiddenCheckBox;
-		private readonly TextBox hyperVVmNameTextBox;
-		private readonly ComboBox hyperVVmActionComboBox;
-		private readonly ComboBox hyperVVmReplaceComboBox;
-		private readonly TextBox hyperVRestoreDirectoryTextBox;
-		private readonly CheckBox startHyperVVmCheckBox;
-		private readonly TextBox hyperVVirtualDiskPathTextBox;
-		private readonly ComboBox hyperVDiskAttachModeComboBox;
-		private readonly ComboBox existingHyperVVmComboBox;
-		private readonly TextBox newHyperVVmNameTextBox;
-		private readonly TextBox newHyperVVmPathTextBox;
-		private readonly ComboBox newHyperVGenerationComboBox;
-		private readonly CheckBox startCreatedHyperVVmCheckBox;
 
 		private readonly List<TargetChoice> restoreTargets = new();
 		private RestoreTargetKind restoreTargetKind;
@@ -70,182 +48,9 @@ namespace SecureServerBackup.WinForms
 			this.restoreSelection = restoreSelection;
 			selectedRestoreDiskGroup = restoreSelection.SelectedVolumes.Count > 1 ? restoreSelection.SelectedVolumes : null;
 			selectedRestoreVolume = restoreSelection.SelectedVolumes.Count == 1 ? restoreSelection.SelectedVolumes[0] : null;
+			InitializeComponent();
 
-			hyperVVmNameTextBox = new TextBox();
-			hyperVVmActionComboBox = new ComboBox();
-			hyperVVmReplaceComboBox = new ComboBox();
-			hyperVRestoreDirectoryTextBox = new TextBox();
-			startHyperVVmCheckBox = new CheckBox();
-			hyperVVirtualDiskPathTextBox = new TextBox();
-			hyperVDiskAttachModeComboBox = new ComboBox();
-			existingHyperVVmComboBox = new ComboBox();
-			newHyperVVmNameTextBox = new TextBox();
-			newHyperVVmPathTextBox = new TextBox();
-			newHyperVGenerationComboBox = new ComboBox();
-			startCreatedHyperVVmCheckBox = new CheckBox();
-
-			Text = "Restore Backup";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(980, 680);
-			ClientSize = new Size(1040, 760);
-			BackColor = Color.White;
-
-			var root = new TableLayoutPanel
-			{
-				Dock = DockStyle.Fill,
-				ColumnCount = 1,
-				RowCount = 5,
-				Padding = new Padding(12)
-			};
-			root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-			root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-			root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-			root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-			root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-			summaryLabel = new Label
-			{
-				AutoSize = false,
-				Height = 64,
-				Dock = DockStyle.Top,
-				Text = BuildSummaryText()
-			};
-
-			var modePanel = new FlowLayoutPanel
-			{
-				Dock = DockStyle.Fill,
-				FlowDirection = FlowDirection.LeftToRight,
-				WrapContents = false,
-				AutoSize = true,
-				Margin = new Padding(0, 4, 0, 4)
-			};
-			modePanel.Controls.Add(new Label
-			{
-				Text = "Restore Target Type:",
-				AutoSize = true,
-				Margin = new Padding(0, 8, 8, 0)
-			});
-			restoreModeComboBox = new ComboBox
-			{
-				DropDownStyle = ComboBoxStyle.DropDownList,
-				Width = 240
-			};
-			restoreModeComboBox.SelectedIndexChanged += (_, _) => UpdateRestoreModeFromSelection();
-			modePanel.Controls.Add(restoreModeComboBox);
-
-			showHiddenCheckBox = new CheckBox
-			{
-				Text = "Show hidden partitions",
-				AutoSize = true,
-				Margin = new Padding(16, 8, 0, 0)
-			};
-			showHiddenCheckBox.CheckedChanged += async (_, _) =>
-			{
-				showHiddenPartitions = showHiddenCheckBox.Checked;
-				await LoadRestoreTargetsAsync();
-			};
-			modePanel.Controls.Add(showHiddenCheckBox);
-
-			modeHelpLabel = new Label
-			{
-				AutoSize = false,
-				Height = 40,
-				Dock = DockStyle.Top,
-				ForeColor = Color.DimGray,
-				Text = string.Empty
-			};
-
-			targetListView = new ListView
-			{
-				Dock = DockStyle.Fill,
-				View = View.Details,
-				FullRowSelect = true,
-				MultiSelect = false,
-				GridLines = true,
-				HideSelection = false
-			};
-			targetListView.Columns.Add("Type", 120);
-			targetListView.Columns.Add("Name", 320);
-			targetListView.Columns.Add("Path", 300);
-			targetListView.Columns.Add("Size", 120);
-			targetListView.Columns.Add("Notes", 120);
-			targetListView.SelectedIndexChanged += (_, _) => HandleTargetSelectionChanged();
-			targetListView.DoubleClick += async (_, _) => await StartRestoreAsync();
-
-			var targetToolbar = new FlowLayoutPanel
-			{
-				Dock = DockStyle.Top,
-				FlowDirection = FlowDirection.LeftToRight,
-				WrapContents = false,
-				AutoSize = true,
-				Margin = new Padding(0, 0, 0, 8)
-			};
-			var refreshTargetsButton = new Button
-			{
-				Text = "Refresh Targets",
-				AutoSize = true
-			};
-			refreshTargetsButton.Click += async (_, _) => await LoadRestoreTargetsAsync();
-			targetToolbar.Controls.Add(refreshTargetsButton);
-
-			selectedTargetLabel = new Label
-			{
-				AutoSize = true,
-				Margin = new Padding(12, 8, 0, 0),
-				Text = "No target selected"
-			};
-			targetToolbar.Controls.Add(selectedTargetLabel);
-
-			targetListPanel = new Panel
-			{
-				Dock = DockStyle.Fill
-			};
-			targetListPanel.Controls.Add(targetListView);
-			targetListPanel.Controls.Add(targetToolbar);
-
-			hyperVVmPanel = BuildHyperVVmPanel();
-			hyperVVirtualDiskPanel = BuildHyperVVirtualDiskPanel();
-
-			var contentHost = new Panel
-			{
-				Dock = DockStyle.Fill
-			};
-			contentHost.Controls.Add(targetListPanel);
-			contentHost.Controls.Add(hyperVVmPanel);
-			contentHost.Controls.Add(hyperVVirtualDiskPanel);
-
-			var buttonsPanel = new FlowLayoutPanel
-			{
-				Dock = DockStyle.Fill,
-				FlowDirection = FlowDirection.RightToLeft,
-				WrapContents = false,
-				AutoSize = true,
-				Padding = new Padding(0, 8, 0, 0)
-			};
-			var cancelButton = new Button
-			{
-				Text = "Cancel",
-				Size = new Size(96, 32),
-				DialogResult = DialogResult.Cancel
-			};
-			startRestoreButton = new Button
-			{
-				Text = "Start Restore",
-				Size = new Size(120, 32)
-			};
-			startRestoreButton.Click += async (_, _) => await StartRestoreAsync();
-			buttonsPanel.Controls.Add(cancelButton);
-			buttonsPanel.Controls.Add(startRestoreButton);
-
-			AcceptButton = startRestoreButton;
-			CancelButton = cancelButton;
-
-			root.Controls.Add(summaryLabel, 0, 0);
-			root.Controls.Add(modePanel, 0, 1);
-			root.Controls.Add(modeHelpLabel, 0, 2);
-			root.Controls.Add(contentHost, 0, 3);
-			root.Controls.Add(buttonsPanel, 0, 4);
-			Controls.Add(root);
+			summaryLabel.Text = BuildSummaryText();
 
 			if (IsInDesignMode)
 			{
@@ -253,7 +58,104 @@ namespace SecureServerBackup.WinForms
 			}
 			else
 			{
-				Load += async (_, _) => await InitializeAsync();
+				Load += RestoreImageSelectionForm_Load;
+			}
+		}
+
+		private async void RestoreImageSelectionForm_Load(object? sender, EventArgs e)
+		{
+			try
+			{
+				await InitializeAsync();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(this, ex.Message, "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		private void HyperVVmActionComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			UpdateHyperVUiState();
+		}
+
+		private void HyperVDiskAttachModeComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			UpdateHyperVUiState();
+		}
+
+		private void BrowseHyperVRestoreDirectoryButton_Click(object? sender, EventArgs e)
+		{
+			BrowseHyperVRestoreDirectory();
+		}
+
+		private void BrowseHyperVVirtualDiskPathButton_Click(object? sender, EventArgs e)
+		{
+			BrowseHyperVVirtualDiskPath();
+		}
+
+		private void BrowseNewHyperVVmPathButton_Click(object? sender, EventArgs e)
+		{
+			BrowseNewHyperVVmLocation();
+		}
+
+		private void RestoreModeComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			UpdateRestoreModeFromSelection();
+		}
+
+		private async void ShowHiddenCheckBox_CheckedChanged(object? sender, EventArgs e)
+		{
+			showHiddenPartitions = showHiddenCheckBox.Checked;
+
+			try
+			{
+				await LoadRestoreTargetsAsync();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(this, ex.Message, "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		private void TargetListView_SelectedIndexChanged(object? sender, EventArgs e)
+		{
+			HandleTargetSelectionChanged();
+		}
+
+		private async void TargetListView_DoubleClick(object? sender, EventArgs e)
+		{
+			try
+			{
+				await StartRestoreAsync();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(this, ex.Message, "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		private async void RefreshTargetsButton_Click(object? sender, EventArgs e)
+		{
+			try
+			{
+				await LoadRestoreTargetsAsync();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(this, ex.Message, "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		private async void StartRestoreButton_Click(object? sender, EventArgs e)
+		{
+			try
+			{
+				await StartRestoreAsync();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(this, ex.Message, "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 

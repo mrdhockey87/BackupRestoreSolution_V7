@@ -11,73 +11,14 @@ using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class ScheduleManagementForm : Form
+	internal sealed partial class ScheduleManagementForm : Form
 	{
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly JobManager jobManager = new();
-		private readonly DataGridView jobsGrid;
 
 		public ScheduleManagementForm()
 		{
-			Text = "Schedule Management";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(980, 560);
-			ClientSize = new Size(980, 560);
-			BackColor = Color.White;
-
-			var titleLabel = new Label
-			{
-				Text = "Manage Scheduled Backup Jobs",
-				Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
-				AutoSize = true,
-				Location = new Point(16, 16)
-			};
-
-			var actionsPanel = new FlowLayoutPanel
-			{
-				Location = new Point(16, 48),
-				Size = new Size(940, 36),
-				WrapContents = true
-			};
-			actionsPanel.Controls.Add(CreateButton("Refresh", (_, _) => LoadJobs()));
-			actionsPanel.Controls.Add(CreateButton("Edit Next Run", (_, _) => EditNextRun()));
-			actionsPanel.Controls.Add(CreateButton("Edit Job", (_, _) => EditJob()));
-			actionsPanel.Controls.Add(CreateButton("Delete Job", (_, _) => DeleteJob()));
-			actionsPanel.Controls.Add(CreateButton("Run Now", async (_, _) => await RunNowAsync()));
-
-			jobsGrid = new DataGridView
-			{
-				Location = new Point(16, 96),
-				Size = new Size(940, 420),
-				ReadOnly = true,
-				AllowUserToAddRows = false,
-				AllowUserToDeleteRows = false,
-				SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-				MultiSelect = false,
-				AutoGenerateColumns = false,
-				AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-			};
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.Name), HeaderText = "Job Name", FillWeight = 180 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.Type), HeaderText = "Type", FillWeight = 80 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.DestinationPath), HeaderText = "Destination", FillWeight = 220 });
-			jobsGrid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(BackupJob.IsCurrentlyRunning), HeaderText = "Running", FillWeight = 60 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.LastRunTime), HeaderText = "Last Run", FillWeight = 110 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(BackupJob.NextScheduledRun), HeaderText = "Next Run", FillWeight = 110 });
-			jobsGrid.DoubleClick += (_, _) => EditJob();
-
-			var closeButton = new Button
-			{
-				Text = "Close",
-				Size = new Size(100, 32),
-				Location = new Point(856, 524),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-				DialogResult = DialogResult.OK
-			};
-
-			Controls.Add(titleLabel);
-			Controls.Add(actionsPanel);
-			Controls.Add(jobsGrid);
-			Controls.Add(closeButton);
+			InitializeComponent();
 
 			if (IsInDesignMode)
 			{
@@ -85,8 +26,13 @@ namespace SecureServerBackup.WinForms
 			}
 			else
 			{
-				Load += (_, _) => LoadJobs();
+				Load += ScheduleManagementForm_Load;
 			}
+		}
+
+		private void ScheduleManagementForm_Load(object? sender, EventArgs e)
+		{
+			LoadJobs();
 		}
 
 		private void LoadDesignTimeJobs()
@@ -116,17 +62,34 @@ namespace SecureServerBackup.WinForms
 			};
 		}
 
-		private static Button CreateButton(string text, EventHandler onClick)
+		private void RefreshButton_Click(object? sender, EventArgs e)
 		{
-			var button = new Button
-			{
-				Text = text,
-				AutoSize = true,
-				MinimumSize = new Size(100, 30),
-				Margin = new Padding(0, 0, 8, 0)
-			};
-			button.Click += onClick;
-			return button;
+			LoadJobs();
+		}
+
+		private void EditNextRunButton_Click(object? sender, EventArgs e)
+		{
+			EditNextRun();
+		}
+
+		private void EditJobButton_Click(object? sender, EventArgs e)
+		{
+			EditJob();
+		}
+
+		private void DeleteJobButton_Click(object? sender, EventArgs e)
+		{
+			DeleteJob();
+		}
+
+		private async void RunNowButton_Click(object? sender, EventArgs e)
+		{
+			await RunNowAsync();
+		}
+
+		private void JobsGrid_DoubleClick(object? sender, EventArgs e)
+		{
+			EditJob();
 		}
 
 		private void LoadJobs()

@@ -28,15 +28,15 @@ namespace SecureServerBackup.WinForms
 			RestorePoint = restorePoint;
 
 			InitializeComponent();
-			summaryLabel.Text = $"Restore point: {restorePoint.DisplayName}{Environment.NewLine}Source: {restorePoint.FilePath}";
-			helpLabel.Text = "Select one or more files or folders to restore, then click Next.";
+			summaryLabel!.Text = $"Restore point: {restorePoint.DisplayName}{Environment.NewLine}Source: {restorePoint.FilePath}";
+			helpLabel!.Text = "Select one or more files or folders to restore, then click Next.";
 
 			foreach (string item in items.Where(item => !string.IsNullOrWhiteSpace(item)))
 			{
-				itemsListBox.Items.Add(item);
+				itemsListBox!.Items.Add(item);
 			}
 
-			nextButton.Enabled = itemsListBox.Items.Count > 0;
+			nextButton!.Enabled = itemsListBox!.Items.Count > 0;
 		}
 
 		public AvailableBackupInfo Backup { get; }

@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 using SecureServerBackup.Helpers;
 
@@ -11,95 +12,19 @@ using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class ActivityManagementForm : Form
+	internal sealed partial class ActivityManagementForm : Form
 	{
+		private const string ActionsColumnName = "actionsColumn";
+		private const string ViewDetailsActionText = "View Details";
+		private const string ExportActivitiesActionText = "Export Activities";
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
-		private readonly DataGridView jobsGrid;
-		private readonly Label statusLabel;
 		private readonly BindingSource bindingSource = new();
 		private List<JobLogSummaryRow> currentRows = new();
 
 		public ActivityManagementForm()
 		{
-			Text = "Backup Job Activity Logs";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(960, 560);
-			ClientSize = new Size(960, 560);
-			BackColor = Color.White;
-
-			var titleLabel = new Label
-			{
-				Text = "Backup Job Activity Logs",
-				Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
-				AutoSize = true,
-				Location = new Point(16, 16)
-			};
-
-			var actionsPanel = new FlowLayoutPanel
-			{
-				Location = new Point(16, 48),
-				Size = new Size(920, 36),
-				WrapContents = true
-			};
-			actionsPanel.Controls.Add(CreateButton("Refresh", (_, _) => LoadJobLogs()));
-			actionsPanel.Controls.Add(CreateButton("View All Activities", (_, _) => OpenActivityDetails(null)));
-
-			jobsGrid = new DataGridView
-			{
-				Location = new Point(16, 96),
-				Size = new Size(920, 410),
-				ReadOnly = true,
-				AllowUserToAddRows = false,
-				AllowUserToDeleteRows = false,
-				SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-				MultiSelect = false,
-				AutoGenerateColumns = false,
-				AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-			};
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(JobLogSummaryRow.JobName), HeaderText = "Job Name", FillWeight = 180 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(JobLogSummaryRow.TotalActivities), HeaderText = "Total", FillWeight = 70 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(JobLogSummaryRow.LastActivity), HeaderText = "Last Activity", FillWeight = 120 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(JobLogSummaryRow.SuccessCount), HeaderText = "Success", FillWeight = 70 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(JobLogSummaryRow.WarningCount), HeaderText = "Warnings", FillWeight = 70 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(JobLogSummaryRow.ErrorCount), HeaderText = "Errors", FillWeight = 70 });
-			jobsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(JobLogSummaryRow.InfoCount), HeaderText = "Info", FillWeight = 70 });
-			jobsGrid.DataSource = bindingSource;
-			jobsGrid.CellDoubleClick += (_, e) =>
-			{
-				if (e.RowIndex >= 0)
-				{
-					OpenSelectedJobDetails();
-				}
-			};
-
-			var contextMenu = new ContextMenuStrip();
-			contextMenu.Items.Add("View Details", null, (_, _) => OpenSelectedJobDetails());
-			contextMenu.Items.Add("Export Activities", null, (_, _) => ExportSelectedJobActivities());
-			jobsGrid.ContextMenuStrip = contextMenu;
-
-			var lowerActionsPanel = new FlowLayoutPanel
-			{
-				Location = new Point(16, 516),
-				Size = new Size(920, 36),
-				WrapContents = true
-			};
-			lowerActionsPanel.Controls.Add(CreateButton("View Details", (_, _) => OpenSelectedJobDetails()));
-			lowerActionsPanel.Controls.Add(CreateButton("Export Activities", (_, _) => ExportSelectedJobActivities()));
-
-			statusLabel = new Label
-			{
-				AutoSize = false,
-				Location = new Point(16, 556),
-				Size = new Size(920, 24),
-				ForeColor = Color.DimGray,
-				Visible = false
-			};
-
-			Controls.Add(titleLabel);
-			Controls.Add(actionsPanel);
-			Controls.Add(jobsGrid);
-			Controls.Add(lowerActionsPanel);
-			Controls.Add(statusLabel);
+			InitializeComponent();
+			InitializeJobsGrid();
 
 			if (IsInDesignMode)
 			{
@@ -107,8 +32,24 @@ namespace SecureServerBackup.WinForms
 			}
 			else
 			{
-				Load += (_, _) => LoadJobLogs();
+				Load += ActivityManagementForm_Load;
 			}
+		}
+
+		private void InitializeJobsGrid()
+		{
+			jobsGrid.DataSource = bindingSource;
+			lastActivityColumn.DefaultCellStyle.Format = "g";
+			totalActivitiesColumn.DefaultCellStyle.ForeColor = Color.Black;
+			successCountColumn.DefaultCellStyle.ForeColor = Color.Green;
+			warningCountColumn.DefaultCellStyle.ForeColor = Color.DarkOrange;
+			errorCountColumn.DefaultCellStyle.ForeColor = Color.Red;
+			actionsColumn.DefaultCellStyle.ForeColor = Color.Black;
+		}
+
+		private void ActivityManagementForm_Load(object? sender, EventArgs e)
+		{
+			LoadJobLogs();
 		}
 
 		private void LoadDesignTimeRows()
@@ -142,17 +83,81 @@ namespace SecureServerBackup.WinForms
 			statusLabel.Text = $"Found {currentRows.Count} backup jobs with activity logs";
 		}
 
-		private static Button CreateButton(string text, EventHandler onClick)
+		private void RefreshButton_Click(object? sender, EventArgs e)
 		{
-			var button = new Button
+			LoadJobLogs();
+		}
+
+		private void ViewAllActivitiesButton_Click(object? sender, EventArgs e)
+		{
+			OpenActivityDetails(null);
+		}
+
+		private void JobsGrid_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
+		{
+			if (e.RowIndex >= 0 && e.ColumnIndex != jobsGrid.Columns[ActionsColumnName].Index)
 			{
-				Text = text,
-				AutoSize = true,
-				MinimumSize = new Size(120, 30),
-				Margin = new Padding(0, 0, 8, 0)
-			};
-			button.Click += onClick;
-			return button;
+				OpenSelectedJobDetails();
+			}
+		}
+
+		private void JobsGrid_CellMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+		{
+			if (e.Button != MouseButtons.Left || e.RowIndex < 0 || e.ColumnIndex != jobsGrid.Columns[ActionsColumnName].Index)
+			{
+				return;
+			}
+
+			JobLogSummaryRow? selectedRow = GetRow(e.RowIndex);
+			if (selectedRow == null)
+			{
+				return;
+			}
+
+			Rectangle displayedCellBounds = jobsGrid.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
+			(Rectangle viewDetailsBounds, Rectangle exportActivitiesBounds) = GetActionButtonBounds(new Rectangle(Point.Empty, displayedCellBounds.Size));
+			Point clickPoint = new(e.X, e.Y);
+
+			if (viewDetailsBounds.Contains(clickPoint))
+			{
+				OpenJobDetails(selectedRow);
+				return;
+			}
+
+			if (exportActivitiesBounds.Contains(clickPoint))
+			{
+				ExportJobActivities(selectedRow);
+			}
+		}
+
+		private void JobsGrid_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
+		{
+			if (e.RowIndex < 0 || e.ColumnIndex != jobsGrid.Columns[ActionsColumnName].Index)
+			{
+				return;
+			}
+
+			if (e.Graphics == null)
+			{
+				return;
+			}
+
+			e.Paint(e.CellBounds, DataGridViewPaintParts.Background | DataGridViewPaintParts.Border);
+			(Rectangle viewDetailsBounds, Rectangle exportActivitiesBounds) = GetActionButtonBounds(e.CellBounds);
+			Graphics graphics = e.Graphics;
+			ButtonRenderer.DrawButton(graphics, viewDetailsBounds, ViewDetailsActionText, jobsGrid.Font, false, PushButtonState.Normal);
+			ButtonRenderer.DrawButton(graphics, exportActivitiesBounds, ExportActivitiesActionText, jobsGrid.Font, false, PushButtonState.Normal);
+			e.Handled = true;
+		}
+
+		private void ViewDetailsToolStripMenuItem_Click(object? sender, EventArgs e)
+		{
+			OpenSelectedJobDetails();
+		}
+
+		private void ExportActivitiesToolStripMenuItem_Click(object? sender, EventArgs e)
+		{
+			ExportSelectedJobActivities();
 		}
 
 		private void LoadJobLogs()
@@ -191,10 +196,30 @@ namespace SecureServerBackup.WinForms
 			return jobsGrid.CurrentRow?.DataBoundItem as JobLogSummaryRow;
 		}
 
+		private JobLogSummaryRow? GetRow(int rowIndex)
+		{
+			return rowIndex >= 0 && rowIndex < jobsGrid.Rows.Count
+				? jobsGrid.Rows[rowIndex].DataBoundItem as JobLogSummaryRow
+				: null;
+		}
+
 		private void OpenSelectedJobDetails()
 		{
 			JobLogSummaryRow? selectedRow = GetSelectedRow();
 			if (selectedRow == null || string.IsNullOrWhiteSpace(selectedRow.JobName))
+			{
+				CustomDialogService.ShowWarning(this, "Please select a job activity row first.", "No Selection");
+				return;
+			}
+
+			OpenJobDetails(selectedRow);
+		}
+
+		private void OpenJobDetails(JobLogSummaryRow selectedRow)
+		{
+			ArgumentNullException.ThrowIfNull(selectedRow);
+
+			if (string.IsNullOrWhiteSpace(selectedRow.JobName))
 			{
 				CustomDialogService.ShowWarning(this, "Please select a job activity row first.", "No Selection");
 				return;
@@ -220,6 +245,19 @@ namespace SecureServerBackup.WinForms
 		{
 			JobLogSummaryRow? selectedRow = GetSelectedRow();
 			if (selectedRow == null)
+			{
+				CustomDialogService.ShowWarning(this, "Please select a job activity row first.", "No Selection");
+				return;
+			}
+
+			ExportJobActivities(selectedRow);
+		}
+
+		private void ExportJobActivities(JobLogSummaryRow selectedRow)
+		{
+			ArgumentNullException.ThrowIfNull(selectedRow);
+
+			if (string.IsNullOrWhiteSpace(selectedRow.JobName))
 			{
 				CustomDialogService.ShowWarning(this, "Please select a job activity row first.", "No Selection");
 				return;
@@ -251,6 +289,31 @@ namespace SecureServerBackup.WinForms
 			{
 				CustomDialogService.ShowError(this, $"Error exporting activities: {ex.Message}", "Export Error");
 			}
+		}
+
+		private static (Rectangle ViewDetailsBounds, Rectangle ExportActivitiesBounds) GetActionButtonBounds(Rectangle cellBounds)
+		{
+			const int horizontalPadding = 6;
+			const int verticalPadding = 4;
+			const int buttonSpacing = 6;
+			int availableWidth = Math.Max(0, cellBounds.Width - (horizontalPadding * 2) - buttonSpacing);
+			int viewDetailsWidth = Math.Max(0, availableWidth / 2);
+			int exportActivitiesWidth = Math.Max(0, availableWidth - viewDetailsWidth);
+			int buttonHeight = Math.Max(0, cellBounds.Height - (verticalPadding * 2));
+
+			Rectangle viewDetailsBounds = new(
+				cellBounds.X + horizontalPadding,
+				cellBounds.Y + verticalPadding,
+				viewDetailsWidth,
+				buttonHeight);
+
+			Rectangle exportActivitiesBounds = new(
+				viewDetailsBounds.Right + buttonSpacing,
+				cellBounds.Y + verticalPadding,
+				exportActivitiesWidth,
+				buttonHeight);
+
+			return (viewDetailsBounds, exportActivitiesBounds);
 		}
 
 		private sealed class JobLogSummaryRow

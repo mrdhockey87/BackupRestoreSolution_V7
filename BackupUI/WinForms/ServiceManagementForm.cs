@@ -12,125 +12,15 @@ using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
-	internal sealed class ServiceManagementForm : Form
+	internal sealed partial class ServiceManagementForm : Form
 	{
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly BackupServiceManager serviceManager = new();
-		private readonly Label statusValueLabel;
-		private readonly Label installedValueLabel;
-		private readonly Label uiVersionValueLabel;
-		private readonly Label serviceVersionValueLabel;
-		private readonly Label versionWarningLabel;
-		private readonly Button startButton;
-		private readonly Button stopButton;
-		private readonly Button restartButton;
-		private readonly Button installButton;
-		private readonly Button uninstallButton;
 
 		public ServiceManagementForm()
 		{
-			Font baseFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
-			Text = "Service Management";
-			StartPosition = FormStartPosition.CenterParent;
-			MinimumSize = new Size(620, 500);
-			ClientSize = new Size(620, 500);
-			BackColor = Color.White;
-
-			var titleLabel = new Label
-			{
-				Text = "Backup Service Management",
-				Font = new Font(baseFont, FontStyle.Bold),
-				AutoSize = true,
-				Location = new Point(16, 16)
-			};
-
-			var statusGroup = new GroupBox
-			{
-				Text = "Service Status",
-				Location = new Point(16, 52),
-				Size = new Size(580, 190)
-			};
-
-			statusGroup.Controls.Add(CreateCaptionLabel("Status:", 16, 32));
-			statusValueLabel = CreateValueLabel("Unknown", 140, 32);
-			statusGroup.Controls.Add(statusValueLabel);
-
-			statusGroup.Controls.Add(CreateCaptionLabel("Installed:", 16, 60));
-			installedValueLabel = CreateValueLabel("Unknown", 140, 60);
-			statusGroup.Controls.Add(installedValueLabel);
-
-			statusGroup.Controls.Add(CreateCaptionLabel("UI Version:", 16, 98));
-			uiVersionValueLabel = CreateValueLabel(VersionClass.GetAssemblyVersion(), 140, 98);
-			statusGroup.Controls.Add(uiVersionValueLabel);
-
-			statusGroup.Controls.Add(CreateCaptionLabel("Service Version:", 16, 126));
-			serviceVersionValueLabel = CreateValueLabel("Unknown", 140, 126);
-			statusGroup.Controls.Add(serviceVersionValueLabel);
-
-			versionWarningLabel = new Label
-			{
-				AutoSize = true,
-				Location = new Point(280, 126),
-				ForeColor = Color.DarkRed,
-				Visible = false
-			};
-			statusGroup.Controls.Add(versionWarningLabel);
-
-			var refreshStatusButton = new Button
-			{
-				Text = "Refresh Status",
-				Location = new Point(16, 154),
-				Size = new Size(130, 28)
-			};
-			refreshStatusButton.Click += async (_, _) => await RefreshStatusAsync();
-			statusGroup.Controls.Add(refreshStatusButton);
-
-			var abortRetriesButton = new Button
-			{
-				Text = "Abort Failed Retries",
-				Location = new Point(156, 154),
-				Size = new Size(150, 28)
-			};
-			abortRetriesButton.Click += async (_, _) => await AbortFailedRetriesAsync();
-			statusGroup.Controls.Add(abortRetriesButton);
-
-			var controlGroup = new GroupBox
-			{
-				Text = "Service Control",
-				Location = new Point(16, 252),
-				Size = new Size(580, 140)
-			};
-
-			startButton = new Button { Text = "Start Service", Location = new Point(16, 30), Size = new Size(120, 30) };
-			startButton.Click += async (_, _) => await StartServiceAsync();
-			stopButton = new Button { Text = "Stop Service", Location = new Point(146, 30), Size = new Size(120, 30) };
-			stopButton.Click += async (_, _) => await StopServiceAsync();
-			restartButton = new Button { Text = "Restart Service", Location = new Point(276, 30), Size = new Size(120, 30) };
-			restartButton.Click += async (_, _) => await RestartServiceAsync();
-			installButton = new Button { Text = "Install and Start Service", Location = new Point(16, 78), Size = new Size(170, 30) };
-			installButton.Click += async (_, _) => await InstallServiceAsync();
-			uninstallButton = new Button { Text = "Uninstall Service", Location = new Point(196, 78), Size = new Size(130, 30) };
-			uninstallButton.Click += async (_, _) => await UninstallServiceAsync();
-
-			controlGroup.Controls.Add(startButton);
-			controlGroup.Controls.Add(stopButton);
-			controlGroup.Controls.Add(restartButton);
-			controlGroup.Controls.Add(installButton);
-			controlGroup.Controls.Add(uninstallButton);
-
-			var closeButton = new Button
-			{
-				Text = "Close",
-				Location = new Point(496, 410),
-				Size = new Size(100, 32),
-				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-				DialogResult = DialogResult.OK
-			};
-
-			Controls.Add(titleLabel);
-			Controls.Add(statusGroup);
-			Controls.Add(controlGroup);
-			Controls.Add(closeButton);
+			InitializeComponent();
+			uiVersionValueLabel.Text = VersionClass.GetAssemblyVersion();
 
 			if (IsInDesignMode)
 			{
@@ -138,8 +28,48 @@ namespace SecureServerBackup.WinForms
 			}
 			else
 			{
-				Load += async (_, _) => await RefreshStatusAsync();
+				Load += ServiceManagementForm_Load;
 			}
+		}
+
+		private async void ServiceManagementForm_Load(object? sender, EventArgs e)
+		{
+			await RefreshStatusAsync();
+		}
+
+		private async void RefreshStatusButton_Click(object? sender, EventArgs e)
+		{
+			await RefreshStatusAsync();
+		}
+
+		private async void AbortRetriesButton_Click(object? sender, EventArgs e)
+		{
+			await AbortFailedRetriesAsync();
+		}
+
+		private async void StartButton_Click(object? sender, EventArgs e)
+		{
+			await StartServiceAsync();
+		}
+
+		private async void StopButton_Click(object? sender, EventArgs e)
+		{
+			await StopServiceAsync();
+		}
+
+		private async void RestartButton_Click(object? sender, EventArgs e)
+		{
+			await RestartServiceAsync();
+		}
+
+		private async void InstallButton_Click(object? sender, EventArgs e)
+		{
+			await InstallServiceAsync();
+		}
+
+		private async void UninstallButton_Click(object? sender, EventArgs e)
+		{
+			await UninstallServiceAsync();
 		}
 
 		private void LoadDesignTimeStatus()
@@ -154,17 +84,6 @@ namespace SecureServerBackup.WinForms
 			restartButton.Enabled = true;
 			installButton.Enabled = false;
 			uninstallButton.Enabled = true;
-		}
-
-		private static Label CreateCaptionLabel(string text, int x, int y)
-		{
-			Font baseFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
-			return new Label { Text = text, AutoSize = true, Location = new Point(x, y), Font = new Font(baseFont, FontStyle.Bold) };
-		}
-
-		private static Label CreateValueLabel(string text, int x, int y)
-		{
-			return new Label { Text = text, AutoSize = true, Location = new Point(x, y) };
 		}
 
 		private async Task RefreshStatusAsync()

@@ -2,16 +2,17 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
+#nullable enable
 namespace SecureServerBackup.WinForms
 {
 	partial class RestorePointSelectionForm
 	{
-		private IContainer components;
+		private IContainer? components = null;
 		private Label summaryLabel;
 		private ListBox restorePointsListBox;
 		private Label helpLabel;
 		private Button nextButton;
-		private Button cancelButton;
+		private Button? cancelButton;
 
 		protected override void Dispose(bool disposing)
 		{
@@ -25,7 +26,7 @@ namespace SecureServerBackup.WinForms
 
 		private void InitializeComponent()
 		{
-
+			//components = new Container(); is required for the designer to work properly, do not remove it mdail 9/18/2026
 			components = new Container();
 			summaryLabel = new Label();
 			restorePointsListBox = new ListBox();
@@ -63,7 +64,7 @@ namespace SecureServerBackup.WinForms
 			// nextButton
 			// 
 			nextButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			nextButton.Location = new Point(472, 338);
+			nextButton.Location = new Point(472, 344);
 			nextButton.Name = "nextButton";
 			nextButton.Size = new Size(84, 27);
 			nextButton.TabIndex = 3;
@@ -75,7 +76,7 @@ namespace SecureServerBackup.WinForms
 			// 
 			cancelButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
 			cancelButton.DialogResult = DialogResult.Cancel;
-			cancelButton.Location = new Point(560, 338);
+			cancelButton.Location = new Point(560, 344);
 			cancelButton.Name = "cancelButton";
 			cancelButton.Size = new Size(84, 27);
 			cancelButton.TabIndex = 4;
@@ -89,7 +90,7 @@ namespace SecureServerBackup.WinForms
 			AutoScaleMode = AutoScaleMode.Font;
 			BackColor = Color.White;
 			CancelButton = cancelButton;
-			ClientSize = new Size(665, 379);
+			ClientSize = new Size(665, 385);
 			Controls.Add(cancelButton);
 			Controls.Add(nextButton);
 			Controls.Add(helpLabel);
