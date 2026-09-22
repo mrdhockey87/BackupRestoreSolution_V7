@@ -61,10 +61,10 @@ namespace SecureServerBackup.WinForms
 			// titleLabel
 			// 
 			titleLabel.AutoSize = true;
-			titleLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-			titleLabel.Location = new Point(16, 16);
+			titleLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+			titleLabel.Location = new Point(16, 18);
 			titleLabel.Name = "titleLabel";
-			titleLabel.Size = new Size(141, 15);
+			titleLabel.Size = new Size(176, 19);
 			titleLabel.TabIndex = 0;
 			titleLabel.Text = "Backup Job Activity Logs";
 			// 
@@ -72,19 +72,19 @@ namespace SecureServerBackup.WinForms
 			// 
 			actionsPanel.Controls.Add(refreshButton);
 			actionsPanel.Controls.Add(viewAllActivitiesButton);
-			actionsPanel.Location = new Point(16, 48);
+			actionsPanel.Location = new Point(209, 12);
 			actionsPanel.Name = "actionsPanel";
-			actionsPanel.Size = new Size(920, 36);
+			actionsPanel.Size = new Size(727, 37);
 			actionsPanel.TabIndex = 1;
-			actionsPanel.WrapContents = true;
 			// 
 			// refreshButton
 			// 
 			refreshButton.AutoSize = true;
+			refreshButton.Location = new Point(0, 0);
 			refreshButton.Margin = new Padding(0, 0, 8, 0);
-			refreshButton.MinimumSize = new Size(120, 30);
+			refreshButton.MinimumSize = new Size(120, 34);
 			refreshButton.Name = "refreshButton";
-			refreshButton.Size = new Size(120, 30);
+			refreshButton.Size = new Size(120, 34);
 			refreshButton.TabIndex = 0;
 			refreshButton.Text = "Refresh";
 			refreshButton.UseVisualStyleBackColor = true;
@@ -93,10 +93,11 @@ namespace SecureServerBackup.WinForms
 			// viewAllActivitiesButton
 			// 
 			viewAllActivitiesButton.AutoSize = true;
+			viewAllActivitiesButton.Location = new Point(128, 0);
 			viewAllActivitiesButton.Margin = new Padding(0, 0, 8, 0);
-			viewAllActivitiesButton.MinimumSize = new Size(120, 30);
+			viewAllActivitiesButton.MinimumSize = new Size(120, 34);
 			viewAllActivitiesButton.Name = "viewAllActivitiesButton";
-			viewAllActivitiesButton.Size = new Size(129, 30);
+			viewAllActivitiesButton.Size = new Size(129, 34);
 			viewAllActivitiesButton.TabIndex = 1;
 			viewAllActivitiesButton.Text = "View All Activities";
 			viewAllActivitiesButton.UseVisualStyleBackColor = true;
@@ -111,13 +112,14 @@ namespace SecureServerBackup.WinForms
 			jobsGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			jobsGrid.Columns.AddRange(new DataGridViewColumn[] { jobNameColumn, totalActivitiesColumn, lastActivityColumn, successCountColumn, warningCountColumn, errorCountColumn, actionsColumn });
 			jobsGrid.ContextMenuStrip = jobsContextMenuStrip;
-			jobsGrid.Location = new Point(16, 96);
+			jobsGrid.Location = new Point(16, 55);
 			jobsGrid.MultiSelect = false;
 			jobsGrid.Name = "jobsGrid";
 			jobsGrid.ReadOnly = true;
+			jobsGrid.RowHeadersWidth = 45;
 			jobsGrid.RowTemplate.Height = 25;
 			jobsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-			jobsGrid.Size = new Size(920, 456);
+			jobsGrid.Size = new Size(920, 571);
 			jobsGrid.TabIndex = 2;
 			jobsGrid.CellDoubleClick += JobsGrid_CellDoubleClick;
 			jobsGrid.CellMouseClick += JobsGrid_CellMouseClick;
@@ -185,42 +187,42 @@ namespace SecureServerBackup.WinForms
 			jobsContextMenuStrip.ImageScalingSize = new Size(18, 18);
 			jobsContextMenuStrip.Items.AddRange(new ToolStripItem[] { viewDetailsToolStripMenuItem, exportActivitiesToolStripMenuItem });
 			jobsContextMenuStrip.Name = "jobsContextMenuStrip";
-			jobsContextMenuStrip.Size = new Size(168, 48);
+			jobsContextMenuStrip.Size = new Size(169, 48);
 			// 
 			// viewDetailsToolStripMenuItem
 			// 
 			viewDetailsToolStripMenuItem.Name = "viewDetailsToolStripMenuItem";
-			viewDetailsToolStripMenuItem.Size = new Size(167, 22);
+			viewDetailsToolStripMenuItem.Size = new Size(168, 22);
 			viewDetailsToolStripMenuItem.Text = "View Details";
 			viewDetailsToolStripMenuItem.Click += ViewDetailsToolStripMenuItem_Click;
 			// 
 			// exportActivitiesToolStripMenuItem
 			// 
 			exportActivitiesToolStripMenuItem.Name = "exportActivitiesToolStripMenuItem";
-			exportActivitiesToolStripMenuItem.Size = new Size(167, 22);
+			exportActivitiesToolStripMenuItem.Size = new Size(168, 22);
 			exportActivitiesToolStripMenuItem.Text = "Export Activities";
 			exportActivitiesToolStripMenuItem.Click += ExportActivitiesToolStripMenuItem_Click;
 			// 
 			// statusLabel
 			// 
 			statusLabel.ForeColor = Color.DimGray;
-			statusLabel.Location = new Point(16, 560);
+			statusLabel.Location = new Point(16, 635);
 			statusLabel.Name = "statusLabel";
-			statusLabel.Size = new Size(920, 24);
+			statusLabel.Size = new Size(920, 27);
 			statusLabel.TabIndex = 3;
 			statusLabel.Visible = false;
 			// 
 			// ActivityManagementForm
 			// 
-			AutoScaleDimensions = new SizeF(7F, 15F);
+			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
 			BackColor = Color.White;
-			ClientSize = new Size(960, 590);
+			ClientSize = new Size(960, 673);
 			Controls.Add(statusLabel);
 			Controls.Add(jobsGrid);
 			Controls.Add(actionsPanel);
 			Controls.Add(titleLabel);
-			MinimumSize = new Size(960, 560);
+			MinimumSize = new Size(960, 629);
 			Name = "ActivityManagementForm";
 			StartPosition = FormStartPosition.CenterParent;
 			Text = "Backup Job Activity Logs";

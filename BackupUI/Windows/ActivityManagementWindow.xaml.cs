@@ -9,6 +9,7 @@ using SecureServerBackup.Services;
 using Microsoft.Win32;
 using System.IO;
 using System.Text;
+using SecureServerBackup.Models;
 
 namespace SecureServerBackup.Windows
 {
@@ -27,7 +28,7 @@ namespace SecureServerBackup.Windows
                 var allLogs = BackupLogger.GetRecentLogs(10000); // Get more logs for aggregation
                 
                 // Group by job name - filter out null or empty job names
-                var jobGroups = allLogs
+                List<JobLogSummary> jobGroups = [.. allLogs
                     .Where(log => !string.IsNullOrEmpty(log.JobName))  // Filter out null/empty job names
                     .GroupBy(log => log.JobName)
                     .Select(group => new JobLogSummary
@@ -40,8 +41,7 @@ namespace SecureServerBackup.Windows
                         ErrorCount = group.Count(l => l.Level == BackupLogLevel.Error),
                         InfoCount = group.Count(l => l.Level == BackupLogLevel.Info)
                     })
-                    .OrderByDescending(s => s.LastActivity)
-                    .ToList();
+                    .OrderByDescending(s => s.LastActivity)];
 
                 dgJobLogs.ItemsSource = jobGroups;
                 txtStatus.Text = $"Found {jobGroups.Count} backup jobs with activity logs";
@@ -207,17 +207,5 @@ namespace SecureServerBackup.Windows
 
             return value.Replace("\"", "\"\"").Replace("\n", " ").Replace("\r", "");
         }
-    }
-
-    // Data model for job log summary
-    public class JobLogSummary
-    {
-        public string JobName { get; set; } = string.Empty;
-        public int TotalActivities { get; set; }
-        public DateTime LastActivity { get; set; }
-        public int SuccessCount { get; set; }
-        public int WarningCount { get; set; }
-        public int ErrorCount { get; set; }
-        public int InfoCount { get; set; }
     }
 }

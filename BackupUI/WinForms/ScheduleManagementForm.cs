@@ -30,6 +30,14 @@ namespace SecureServerBackup.WinForms
 			}
 		}
 
+		internal void ConfigureForEmbeddedHost()
+		{
+			closeButton.Visible = false;
+			ControlBox = false;
+			ShowIcon = false;
+			ShowInTaskbar = false;
+		}
+
 		private void ScheduleManagementForm_Load(object? sender, EventArgs e)
 		{
 			LoadJobs();

@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.6.34";        // Get version from assembly - this will always match the project file version
+        private static readonly string version_fallback_number = "7.3.6.39";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -67,6 +67,14 @@ namespace SecureServerBackup
 
 
 /*
+ *  Version 7.3.6.39 Converted the MainForm Mount Backups Verify and Schedules tabs into working WinForms views
+ *                   with real backup lists actions and the embedded schedule manager. mdail 9/22/2026
+ *  Version 7.3.6.38 Changed MainForm to automatically grow when the selected tab, including the embedded
+ *                   ActivityManagementForm, needs more room so controls are not clipped. mdail 9/22/2026
+ *  Version 7.3.6.37 Fixed MainForm.Designer.cs so the non-nullable WinForms components field is initialized
+ *                   in InitializeComponent instead of relying on a nullable components field. mdail 9/22/2026
+ *  Version 7.3.6.35 Changed the MainForm Activity tab to load ActivityManagementForm into activityTabPanel as a
+ *                   borderless dock-filled child form when the tab is opened. mdail 9/18/2026
  *  Version 7.3.6.34 Converted the legacy TurquoiseTheme.xaml palette into the WinForms theme manager and applied the
  *                   old WPF turquoise colors to the WinForms shell dialogs lists tabs and activity status styling. mdail 9/18/2026
  *  Version 7.3.6.33 Moved the Activity Management View Details and Export Activities actions into the grid,
@@ -190,7 +198,8 @@ namespace SecureServerBackup
  * Version 6.3.5.82 Started the WPF to WinForms migration by moving BackupUI to an explicit
  *                  Program.Main entry point and adding WinForms shells, shared UI infrastructure,
  *                  and reusable WinForms control/dialog scaffolding. mdail 07/04/2026
- * 
+ *  Version 7.3.6.36 Fixed MainForm.Designer.cs to use the standard WinForms components container pattern
+ *                   by initializing components in InitializeComponent and keeping the field non-nullable. mdail 9/18/2026
  * Version 6.3.5.81 Fixed service-side Hyper-V clone and export post-run verification so the
  *                  verifier now finds nested exported VHD/VHDX files instead of assuming a
  *                  root-level JobName.vhdx path. Added regression coverage for both nested
