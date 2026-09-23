@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.6.39";
+        private static readonly string version_fallback_number = "7.3.7.41";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -67,6 +67,13 @@ namespace SecureServerBackup
 
 
 /*
+ * 
+ *  Version 7.3.7.41 Try to fix the Mount backup tab after the AI messed it up badly. I have most of it so it 
+ *                   looks ok, except I havn't fixed to datagridview's rows so they know what data to expect
+ *                   and the clicks for the mount & unmount buttons is copied for the wpf however there are
+ *                   several places that it needs work because it referes to windows from the wpf code still. mdail 9/23/2026 
+ *  Version 7.3.6.40 Changed the MainForm Mount Backups tab to the expected dual-list WinForms layout with
+ *                   separate Available Backups and Mounted Backups sections plus Refresh Browse and Unmount All actions. mdail 9/23/2026
  *  Version 7.3.6.39 Converted the MainForm Mount Backups Verify and Schedules tabs into working WinForms views
  *                   with real backup lists actions and the embedded schedule manager. mdail 9/22/2026
  *  Version 7.3.6.38 Changed MainForm to automatically grow when the selected tab, including the embedded

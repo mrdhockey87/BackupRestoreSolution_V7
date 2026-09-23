@@ -1,15 +1,16 @@
-using System;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Windows.Forms;
-
 using SecureServerBackup.Models;
 using SecureServerBackup.Services;
 using SecureServerBackup.Windows; // Keep for remaining staged WPF windows still launched from this WinForms shell.
 
 using SecureServerBackupCommon;
+
+using System;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Windows;
+using System.Windows.Forms;
 
 namespace SecureServerBackup.WinForms
 {
@@ -18,33 +19,8 @@ namespace SecureServerBackup.WinForms
 		private const string BackupJobCardTag = "BackupJobCard";
 
 		private readonly JobManager jobManager = new();
-		private readonly System.Collections.Generic.Dictionary<string, MountedBackupSession> mountedBackupSessions = new(StringComparer.OrdinalIgnoreCase);
 		private ActivityManagementForm? activityManagementView;
 		private ScheduleManagementForm? scheduleManagementView;
-
-		private sealed class MountedBackupSession : IDisposable
-		{
-			private bool disposed;
-
-			public required AvailableBackupInfo Backup { get; init; }
-
-			public required RestorePoint RestorePoint { get; init; }
-
-			public required PreparedBackupFile PreparedBackup { get; init; }
-
-			public required string MountPath { get; init; }
-
-			public void Dispose()
-			{
-				if (disposed)
-				{
-					return;
-				}
-
-				PreparedBackup.Dispose();
-				disposed = true;
-			}
-		}
 
 		public MainForm()
 		{
@@ -243,7 +219,7 @@ namespace SecureServerBackup.WinForms
 			using var form = new BackupWindowNewForm(job);
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			LoadMountBackups();
+			LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
@@ -266,7 +242,7 @@ namespace SecureServerBackup.WinForms
 			{
 				jobManager.DeleteJob(job.Id);
 				LoadBackupJobs();
-				LoadMountBackups();
+				LoadMountedBackups();
 				LoadVerifyBackups();
 				LoadRestoreBackups();
 
@@ -510,18 +486,26 @@ namespace SecureServerBackup.WinForms
 			versionStatusLabel.Text = "Version: Loading...";
 			restoreStatusLabel.MaximumSize = new Size(900, 0);
 
-			ConfigurePlaceholderListView(mountBackupsListView);
+			//ConfigurePlaceholderListView(dgAvailableBackups);
+			//ConfigurePlaceholderListView(dgMountedBackups);
 			ConfigurePlaceholderListView(verifyBackupsListView);
 			ConfigurePlaceholderListView(restoreBackupsListView);
-
+/*
 			mountBackupsListView.Columns.Clear();
 			mountBackupsListView.Columns.Add("Backup Name", 200);
 			mountBackupsListView.Columns.Add("Type", 120);
-			mountBackupsListView.Columns.Add("Date", 160);
 			mountBackupsListView.Columns.Add("Encrypted", 110);
-			mountBackupsListView.Columns.Add("Status", 140);
-			mountBackupsListView.Columns.Add("Details", 260);
+			mountBackupsListView.Columns.Add("Date", 160);
 			mountBackupsListView.Columns.Add("Path", 320);
+			mountBackupsListView.Columns.Add("Action", 140);
+
+			mountedBackupsListView.Columns.Clear();
+			mountedBackupsListView.Columns.Add("Mount Path", 220);
+			mountedBackupsListView.Columns.Add("Backup Name", 180);
+			mountedBackupsListView.Columns.Add("Type", 120);
+			mountedBackupsListView.Columns.Add("Mounted At", 150);
+			mountedBackupsListView.Columns.Add("Status", 110);
+			mountedBackupsListView.Columns.Add("Action", 140);*/
 
 			verifyBackupsListView.Columns.Clear();
 			verifyBackupsListView.Columns.Add("Backup Name", 220);
@@ -547,14 +531,12 @@ namespace SecureServerBackup.WinForms
 			restoreActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadRestoreBackups()));
 			restoreActionsPanel.Controls.Add(CreateActionButton("Browse .ssb...", (_, _) => BrowseRestoreBackup()));
 			restoreActionsPanel.Controls.Add(CreateActionButton("Restore Selected", (_, _) => OpenSelectedRestoreBackup()));
-
+			/*
 			mountActionsPanel.Controls.Clear();
-			mountActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadMountBackups()));
-			mountActionsPanel.Controls.Add(CreateActionButton("Browse .ssb...", (_, _) => BrowseMountBackup()));
-			mountActionsPanel.Controls.Add(CreateActionButton("Mount Selected", async (_, _) => await MountSelectedBackupAsync()));
-			mountActionsPanel.Controls.Add(CreateActionButton("Unmount Selected", async (_, _) => await UnmountSelectedBackupAsync()));
-			mountActionsPanel.Controls.Add(CreateActionButton("Open Mounted Folder", (_, _) => OpenSelectedMountedBackupFolder()));
-
+			mountActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadMountedBackups()));
+			mountActionsPanel.Controls.Add(CreateActionButton("Browse...", (_, _) => BrowseMountBackup()));
+			mountActionsPanel.Controls.Add(CreateActionButton("Unmount All", async (_, _) => await UnmountAllBackupsAsync()));
+			*/
 			verifyActionsPanel.Controls.Clear();
 			verifyActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadVerifyBackups()));
 			verifyActionsPanel.Controls.Add(CreateActionButton("Browse .ssb...", (_, _) => BrowseVerifyBackup()));
@@ -599,7 +581,7 @@ namespace SecureServerBackup.WinForms
 			buttonsPanel.Controls.Add(CreateHeaderActionButton("Refresh", (_, _) =>
 			{
 				LoadBackupJobs();
-				LoadMountBackups();
+				LoadMountedBackups();
 				LoadVerifyBackups();
 				LoadRestoreBackups();
 			}, 100));
@@ -628,7 +610,8 @@ namespace SecureServerBackup.WinForms
 			}
 			else if (mainTabControl.SelectedTab == mountBackupsTabPage)
 			{
-				LoadMountBackups();
+				LoadAvailableBackups();
+				LoadMountedBackups();
 			}
 			else if (mainTabControl.SelectedTab == verifyTabPage)
 			{
@@ -959,22 +942,63 @@ namespace SecureServerBackup.WinForms
 
 			return false;
 		}
-
-		private void LoadMountBackups()
+		private void LoadAvailableBackups()
 		{
+			if (dgAvailableBackups == null)
+				return;
+
+			var backups = new System.Collections.Generic.List<AvailableBackupInfo>();
+
 			try
 			{
-				System.Collections.Generic.List<AvailableBackupInfo> backups = GetAvailableBackups();
-				PopulateBackupListView(mountBackupsListView, backups, GetMountStatusText, GetMountDetailsText);
-				mountStatusLabel.Text = backups.Count == 0
-					? "No backups were found. Create a backup first, then return here to mount it."
-					: "Select a backup and click Mount Selected to browse it as read-only storage.";
+				// Scan backup directories for .ssb (WIM) files
+				var jobs = jobManager.GetAllJobs();
+
+				foreach (var job in jobs)
+				{
+					string destPath = job.DestinationPath;
+
+					if (System.IO.Directory.Exists(destPath))
+					{
+						// Find .ssb (WIM backup) files
+						var ssbFiles = System.IO.Directory.GetFiles(destPath, "*.ssb", System.IO.SearchOption.AllDirectories);
+
+						foreach (var ssb in ssbFiles)
+						{
+							var fileInfo = new System.IO.FileInfo(ssb);
+
+							backups.Add(new AvailableBackupInfo
+							{
+								BackupName = job.Name,
+								BackupType = job.Type.ToString(),
+								BackupDate = fileInfo.LastWriteTime,
+								BackupPath = ssb,
+								IsEncrypted = BackupEncryptionService.IsEncryptedBackupFile(ssb),
+								ProtectedEncryptionPassword = job.ProtectedEncryptionPassword
+							});
+						}
+					}
+				}
+
+				dgAvailableBackups.DataSource = backups;
+				/*
+				if (txtNoBackups != null)
+					txtNoBackups.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+					*/
 			}
 			catch (Exception ex)
 			{
-				mountBackupsListView.Items.Clear();
-				mountStatusLabel.Text = $"Error loading mount backups: {ex.Message}";
+				System.Diagnostics.Debug.WriteLine($"Error loading available backups: {ex.Message}");
 			}
+		}
+		private void LoadMountedBackups()
+		{
+
+			if (dgMountedBackups == null)
+				return;
+
+			var mounted = NativeBackupMountManager.GetMountedBackups();
+			dgMountedBackups.DataSource = mounted;
 		}
 
 		private void LoadVerifyBackups()
@@ -993,25 +1017,7 @@ namespace SecureServerBackup.WinForms
 				verifyStatusLabel.Text = $"Error loading verify backups: {ex.Message}";
 			}
 		}
-
-		private string GetMountStatusText(AvailableBackupInfo backup)
-		{
-			ArgumentNullException.ThrowIfNull(backup);
-
-			return mountedBackupSessions.ContainsKey(backup.BackupPath)
-				? "Mounted"
-				: "Not Mounted";
-		}
-
-		private string GetMountDetailsText(AvailableBackupInfo backup)
-		{
-			ArgumentNullException.ThrowIfNull(backup);
-
-			return mountedBackupSessions.TryGetValue(backup.BackupPath, out MountedBackupSession? session)
-				? session.MountPath
-				: string.Empty;
-		}
-
+		/*
 		private void BrowseMountBackup()
 		{
 			using var openFileDialog = new OpenFileDialog
@@ -1031,16 +1037,23 @@ namespace SecureServerBackup.WinForms
 			string selectedFile = openFileDialog.FileName;
 			if (TrySelectBackupByPath(mountBackupsListView, selectedFile))
 			{
-				mountStatusLabel.Text = "Selected the existing backup entry. Click Mount Selected to mount it.";
+				mountStatusLabel.Text = "Selected the existing available backup entry.";
 				return;
 			}
 
 			AvailableBackupInfo backupInfo = CreateAdHocBackupInfo(selectedFile);
-			AddBackupToListView(mountBackupsListView, backupInfo, GetMountStatusText, GetMountDetailsText);
+			var item = new ListViewItem(backupInfo.BackupName);
+			item.SubItems.Add(backupInfo.BackupType);
+			item.SubItems.Add(backupInfo.IsEncrypted ? "Yes" : "No");
+			item.SubItems.Add(backupInfo.BackupDate.ToString("g"));
+			item.SubItems.Add(backupInfo.BackupPath);
+			item.SubItems.Add("Mount");
+			item.Tag = backupInfo;
+			mountBackupsListView.Items.Add(item);
 			TrySelectBackupByPath(mountBackupsListView, selectedFile);
 			mountStatusLabel.Text = $"Backup file added for mount: {Path.GetFileName(selectedFile)}";
 		}
-
+		*/
 		private void BrowseVerifyBackup()
 		{
 			using var openFileDialog = new OpenFileDialog
@@ -1069,7 +1082,7 @@ namespace SecureServerBackup.WinForms
 			TrySelectBackupByPath(verifyBackupsListView, selectedFile);
 			verifyStatusLabel.Text = $"Backup file added for verify: {Path.GetFileName(selectedFile)}";
 		}
-
+		/*
 		private async System.Threading.Tasks.Task MountSelectedBackupAsync()
 		{
 			AvailableBackupInfo? backup = GetSelectedBackup(mountBackupsListView);
@@ -1122,12 +1135,14 @@ namespace SecureServerBackup.WinForms
 					Backup = backup,
 					RestorePoint = restorePoint,
 					PreparedBackup = preparedBackup,
-					MountPath = mountResult.MountPath
+					MountPath = mountResult.MountPath,
+					MountedAt = DateTime.Now
 				};
 
 				mountStatusLabel.Text = $"Mounted {backup.BackupName} at {mountResult.MountPath}.";
 				LoadMountBackups();
 				TrySelectBackupByPath(mountBackupsListView, backup.BackupPath);
+				TrySelectMountedBackupByPath(mountedBackupsListView, backup.BackupPath);
 			}
 			catch (OperationCanceledException)
 			{
@@ -1141,50 +1156,79 @@ namespace SecureServerBackup.WinForms
 				CustomDialogService.ShowError(this, $"Failed to mount backup:{Environment.NewLine}{ex.Message}", "Mount Failed");
 			}
 		}
+		*/
+		/*
+		private static MountedBackupSession? GetSelectedMountedBackupSession(DataGridView dgMountedBackups)
+		{
+			ArgumentNullException.ThrowIfNull(dgMountedBackups);
 
+			return dgMountedBackups.SelectedItems.Count > 0 && dgMountedBackups.SelectedItems[0].Tag is MountedBackupSession session
+				? session
+				: null;
+		}
+		*/
+		/*
 		private async System.Threading.Tasks.Task UnmountSelectedBackupAsync()
 		{
-			AvailableBackupInfo? backup = GetSelectedBackup(mountBackupsListView);
-			if (backup == null)
+			MountedBackupSession? session = GetSelectedMountedBackupSession(mountedBackupsListView);
+			if (session == null)
 			{
 				CustomDialogService.ShowWarning(this, "Please select a mounted backup to unmount.", "No Selection");
 				return;
 			}
 
-			if (!mountedBackupSessions.TryGetValue(backup.BackupPath, out MountedBackupSession? session))
-			{
-				CustomDialogService.ShowWarning(this, "The selected backup is not currently mounted.", "Unmount Backup");
-				return;
-			}
-
-			mountStatusLabel.Text = $"Unmounting {backup.BackupName}...";
+			mountStatusLabel.Text = $"Unmounting {session.Backup.BackupName}...";
 			var unmountResult = await NativeBackupMountManager.UnmountBackupAsync(session.MountPath);
 			if (!unmountResult.Success)
 			{
-				mountStatusLabel.Text = $"Failed to unmount {backup.BackupName}.";
+				mountStatusLabel.Text = $"Failed to unmount {session.Backup.BackupName}.";
 				CustomDialogService.ShowError(this, $"Failed to unmount backup:{Environment.NewLine}{unmountResult.Error}", "Unmount Failed");
 				return;
 			}
 
 			session.Dispose();
-			mountedBackupSessions.Remove(backup.BackupPath);
-			mountStatusLabel.Text = $"Unmounted {backup.BackupName}.";
+			mountedBackupSessions.Remove(session.Backup.BackupPath);
+			mountStatusLabel.Text = $"Unmounted {session.Backup.BackupName}.";
 			LoadMountBackups();
-			TrySelectBackupByPath(mountBackupsListView, backup.BackupPath);
+			TrySelectBackupByPath(dgAvailableBackups, session.Backup.BackupPath);
 		}
-
-		private void OpenSelectedMountedBackupFolder()
+		*/
+		/*
+		private async System.Threading.Tasks.Task UnmountAllBackupsAsync()
 		{
-			AvailableBackupInfo? backup = GetSelectedBackup(mountBackupsListView);
-			if (backup == null)
+			if (mountedBackupSessions.Count == 0)
 			{
-				CustomDialogService.ShowWarning(this, "Please select a mounted backup first.", "No Selection");
+				mountStatusLabel.Text = "There are no mounted backups to unmount.";
 				return;
 			}
 
-			if (!mountedBackupSessions.TryGetValue(backup.BackupPath, out MountedBackupSession? session))
+			mountStatusLabel.Text = "Unmounting all mounted backups...";
+
+			foreach (MountedBackupSession session in mountedBackupSessions.Values.ToArray())
 			{
-				CustomDialogService.ShowWarning(this, "The selected backup is not currently mounted.", "Open Mounted Folder");
+				var unmountResult = await NativeBackupMountManager.UnmountBackupAsync(session.MountPath);
+				if (!unmountResult.Success)
+				{
+					mountStatusLabel.Text = $"Failed to unmount {session.Backup.BackupName}.";
+					CustomDialogService.ShowError(this, $"Failed to unmount backup:{Environment.NewLine}{unmountResult.Error}", "Unmount Failed");
+					return;
+				}
+
+				session.Dispose();
+				mountedBackupSessions.Remove(session.Backup.BackupPath);
+			}
+
+			LoadMountBackups();
+			mountStatusLabel.Text = "All mounted backups were unmounted.";
+		}
+		*/
+		/*
+		private void OpenSelectedMountedBackupFolder()
+		{
+			MountedBackupSession? session = GetSelectedMountedBackupSession(mountedBackupsListView);
+			if (session == null)
+			{
+				CustomDialogService.ShowWarning(this, "Please select a mounted backup first.", "No Selection");
 				return;
 			}
 
@@ -1201,7 +1245,7 @@ namespace SecureServerBackup.WinForms
 				CustomDialogService.ShowError(this, $"Failed to open the mounted backup folder:{Environment.NewLine}{ex.Message}", "Open Mounted Folder");
 			}
 		}
-
+		*/
 		private RestorePoint? PromptForRestorePointSelection(AvailableBackupInfo backup, string operationName)
 		{
 			ArgumentNullException.ThrowIfNull(backup);
@@ -1428,7 +1472,8 @@ namespace SecureServerBackup.WinForms
 			using var form = new BackupWindowNewForm();
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			LoadMountBackups();
+			LoadAvailableBackups();
+			LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
@@ -1823,7 +1868,8 @@ namespace SecureServerBackup.WinForms
 			using var form = new ImportBackupForm();
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			LoadMountBackups();
+			LoadAvailableBackups();
+			LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
@@ -1863,7 +1909,8 @@ namespace SecureServerBackup.WinForms
 		{
 			LoadVersion();
 			LoadBackupJobs();
-			LoadMountBackups();
+			LoadAvailableBackups();
+			LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 			EnsureSelectedTabFits();
@@ -1892,7 +1939,6 @@ namespace SecureServerBackup.WinForms
 
 		protected override void OnFormClosed(FormClosedEventArgs e)
 		{
-			ReleaseMountedBackups();
 			base.OnFormClosed(e);
 		}
 
@@ -1901,51 +1947,339 @@ namespace SecureServerBackup.WinForms
 			OpenSelectedRestoreBackup();
 		}
 
-		private async void MountBackupsListView_DoubleClick(object? sender, EventArgs e)
+		private void RefreshMounts_Click(object sender, EventArgs e)
 		{
-			try
+			LoadAvailableBackups();
+			LoadMountedBackups();
+		}
+
+		private void BrowseBackup_Click(object sender, EventArgs e)
+		{
+			var openFileDialog = new Microsoft.Win32.OpenFileDialog
 			{
-				AvailableBackupInfo? backup = GetSelectedBackup(mountBackupsListView);
-				if (backup == null)
+				Title = "Select Backup File to Mount",
+				Filter = "Secure Server Backup Files (*.ssb)|*.ssb|All Files (*.*)|*.*",
+				DefaultExt = ".ssb",
+				Multiselect = false
+			};
+
+			if (openFileDialog.ShowDialog() == true)
+			{
+				string selectedFile = openFileDialog.FileName;
+				var fileInfo = new System.IO.FileInfo(selectedFile);
+
+				// Add to available backups list
+				var backups = dgAvailableBackups.DataSource as System.Collections.Generic.List<AvailableBackupInfo>;
+				if (backups == null)
 				{
-					return;
+					backups = new System.Collections.Generic.List<AvailableBackupInfo>();
 				}
 
-				if (mountedBackupSessions.ContainsKey(backup.BackupPath))
+				// Check if already in list
+				bool exists = false;
+				foreach (var b in backups)
 				{
-					OpenSelectedMountedBackupFolder();
-					return;
+					if (b.BackupPath.Equals(selectedFile, StringComparison.OrdinalIgnoreCase))
+					{
+						exists = true;
+						break;
+					}
 				}
 
-				await MountSelectedBackupAsync();
-			}
-			catch (Exception ex)
-			{
-				CustomDialogService.ShowError(this, $"Failed to open the selected backup:{Environment.NewLine}{ex.Message}", "Mount Backup");
+				if (!exists)
+				{
+					backups.Add(new AvailableBackupInfo
+					{
+						BackupName = System.IO.Path.GetFileNameWithoutExtension(selectedFile),
+						BackupType = GetBackupTypeFromFilename(System.IO.Path.GetFileNameWithoutExtension(selectedFile)),
+						BackupDate = fileInfo.LastWriteTime,
+						BackupPath = selectedFile,
+						IsEncrypted = BackupEncryptionService.IsEncryptedBackupFile(selectedFile)
+					});
+
+					dgAvailableBackups.DataSource = null; // Force refresh
+					dgAvailableBackups.DataSource = backups;
+					/*
+					if (txtNoBackups != null)
+						txtNoBackups.Visibility = Visibility.Collapsed;*/
+
+					CustomDialogService.ShowSuccess(this, $"Backup file added: {System.IO.Path.GetFileName(selectedFile)}",
+								  "Backup Added");
+				}
+				else
+				{
+					CustomDialogService.ShowInfo(this, "This backup is already in the list.",
+								  "Already Added");
+				}
 			}
 		}
 
-		private void ReleaseMountedBackups()
+		private void UnmountAll_Click(object sender, EventArgs e)
 		{
-			foreach (System.Collections.Generic.KeyValuePair<string, MountedBackupSession> entry in mountedBackupSessions.ToArray())
+			var mounted = NativeBackupMountManager.GetMountedBackups();
+
+			if (mounted.Count == 0)
+			{
+				CustomDialogService.ShowInfo(this, "No mounted backups to unmount.",
+							  "No Mounted Backups");
+				return;
+			}
+
+			var result = CustomDialogService.ShowQuestion(this,
+				$"Unmount all {mounted.Count} mounted backup(s)?\n\nIMPORTANT: Please close all Windows Explorer windows that are browsing mounted files before proceeding.",
+				"Unmount All");
+
+			if (result == CustomDialogResult.Yes)
+			{
+				NativeBackupMountManager.UnmountAll();
+				LoadMountedBackups();
+				CustomDialogService.ShowSuccess(this, "All backups unmounted successfully.",
+							  "Success");
+			}
+		}
+		//For buttons in the available & mounted backups datagridss mdail 9-23-2026
+		/*
+		private async void MountBackup_Click(object sender, RoutedEventArgs e)
+		{
+			if (sender is System.Windows.Controls.Button btn && btn.Tag is AvailableBackupInfo backup)
 			{
 				try
 				{
-					var unmountResult = NativeBackupMountManager.UnmountBackupAsync(entry.Value.MountPath).GetAwaiter().GetResult();
-					if (!unmountResult.Success)
+					// Get selected backup point if Inc/Diff
+					string ssbPath = GetBackupPointPath(backup);
+
+					if (string.IsNullOrEmpty(ssbPath))
 					{
-						BackupLogger.LogWarning(entry.Value.Backup.BackupName, $"Failed to unmount mounted backup during MainForm close: {entry.Value.MountPath}");
+						CustomDialogService.ShowWarning(this, "Please select a backup point to mount.",
+									  "No Backup Point Selected");
+						return;
+					}
+
+					// Check if backup has multiple images/restore points
+					System.Diagnostics.Debug.WriteLine($"[Mount] Checking image count for: {ssbPath}");
+					var (countSuccess, imageCount, countError) = NativeBackupMountManager.GetImageCount(ssbPath);
+
+					int selectedImageIndex = 1; // Default to first image
+
+					if (!countSuccess)
+					{
+						CustomDialogService.ShowError(this, $"Failed to check backup images:\n{countError}",
+									  "Error");
+						return;
+					}
+
+					// If backup has multiple images, show selection dialog
+					if (imageCount > 1)
+					{
+						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} images - showing selection dialog");
+
+						// Get detailed image information
+						var (infoSuccess, images, infoError) = NativeBackupMountManager.GetImageInfo(ssbPath);
+
+						if (!infoSuccess || images.Count == 0)
+						{
+							CustomDialogService.ShowError(this, $"Failed to get image details:\n{infoError}",
+										  "Error");
+							return;
+						}
+
+						// Show image selection dialog
+						var imageDialog = new SecureServerBackup.Windows.ImageSelectionDialog(images)
+						{
+							Owner = this
+						};
+
+						if (imageDialog.ShowDialog() != true)
+						{
+							System.Diagnostics.Debug.WriteLine("[Mount] User cancelled image selection");
+							return;
+						}
+
+						selectedImageIndex = imageDialog.SelectedImageIndex;
+						System.Diagnostics.Debug.WriteLine($"[Mount] User selected image index: {selectedImageIndex}");
+					}
+					else
+					{
+						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} image(s) - using first image");
+					}
+
+					// Show temp path selection dialog
+					var tempPathDialog = new SecureServerBackup.Windows.TempPathSelectionDialog
+					{
+						Owner = this
+					};
+
+					System.Diagnostics.Debug.WriteLine("[Mount] Showing TempPathSelectionDialog...");
+
+					if (tempPathDialog.ShowDialog() != true)
+					{
+						System.Diagnostics.Debug.WriteLine("[Mount] User cancelled temp path selection");
+						// User cancelled
+						return;
+					}
+
+					string selectedTempPath = tempPathDialog.SelectedTempPath;
+
+					// Diagnostic: Log selected temp path
+					System.Diagnostics.Debug.WriteLine($"[Mount] User selected temp path: '{selectedTempPath}'");
+					System.Diagnostics.Debug.WriteLine($"[Mount] Path length: {selectedTempPath?.Length ?? 0}");
+					System.Diagnostics.Debug.WriteLine($"[Mount] Path is null or empty: {string.IsNullOrEmpty(selectedTempPath)}");
+					System.Diagnostics.Debug.WriteLine($"[Mount] About to create progress window...");
+
+					// Create and show progress window
+					var progressWindow = new SecureServerBackup.Windows.MountProgressWindow
+					{
+						Owner = this
+					};
+
+					System.Diagnostics.Debug.WriteLine($"[Mount] Progress window created, setting backup name: {backup.BackupName}");
+					progressWindow.SetBackupName(backup.BackupName);
+
+					System.Diagnostics.Debug.WriteLine($"[Mount] Showing progress window...");
+					progressWindow.Show();
+
+					System.Diagnostics.Debug.WriteLine($"[Mount] Progress window shown, about to call MountBackupAsync...");
+
+					try
+					{
+						// Mount asynchronously with progress updates
+						System.Diagnostics.Debug.WriteLine($"[Mount] Calling NativeBackupMountManager.MountBackupAsync...");
+						System.Diagnostics.Debug.WriteLine($"[Mount] Parameters: ssbPath={ssbPath}, backupName={backup.BackupName}, backupType={backup.BackupType}, imageIndex={selectedImageIndex}, tempPath={selectedTempPath}");
+
+						using var preparedBackup = EncryptedBackupFileService.PrepareForRead(
+							this,
+							ssbPath,
+							backup.BackupName,
+							backup.ProtectedEncryptionPassword);
+
+						var (success, mountPath, error) = await NativeBackupMountManager.MountBackupAsync(
+							preparedBackup.WorkingPath,
+							backup.BackupName,
+							backup.BackupType,
+							selectedImageIndex,
+							(percentage, message) =>
+							{
+								progressWindow.SetStatus(message, percentage);
+							},
+							selectedTempPath);
+
+						// Close progress window
+						progressWindow.CloseProgress();
+
+						if (success)
+						{
+							CustomDialogService.ShowSuccess(this, $"Backup mounted successfully!\n\n" +
+										  $"Mount Path: {mountPath}\n\n" +
+										  $"You can now browse the backup in Windows Explorer.\n" +
+										  $"Backup is READ-ONLY to prevent modifications.",
+										  "Backup Mounted");
+
+							LoadMountedBackups();
+							OpenExplorer(mountPath);
+						}
+						else
+						{
+							CustomDialogService.ShowError(this, $"Failed to mount backup:\n{error}",
+										  "Mount Error");
+						}
+					}
+					catch (Exception ex)
+					{
+						progressWindow.CloseProgress();
+						CustomDialogService.ShowError(this, $"Error mounting backup:\n{ex.Message}",
+									  "Error");
 					}
 				}
 				catch (Exception ex)
 				{
-					BackupLogger.LogWarning(entry.Value.Backup.BackupName, $"Failed to release mounted backup during MainForm close: {ex.Message}");
+					CustomDialogService.ShowError(this, $"Error initializing mount:\n{ex.Message}",
+								  "Error");
 				}
-
-				entry.Value.Dispose();
 			}
-
-			mountedBackupSessions.Clear();
 		}
+
+		private async void UnmountBackup_Click(object sender, RoutedEventArgs e)
+		{
+			if (sender is System.Windows.Controls.Button btn && btn.Tag is string mountPath)
+			{
+				var result = CustomDialogService.ShowQuestion(this,
+					$"Unmount backup from {mountPath}?\n\nIMPORTANT: Please close all Windows Explorer windows that are browsing mounted files before proceeding.",
+					"Unmount Backup");
+
+				if (result == CustomDialogResult.Yes)
+				{
+					// Create and show progress window
+					var progressWindow = new SecureServerBackup.Windows.MountProgressWindow
+					{
+						Owner = this,
+						Title = "Unmounting Backup"
+					};
+
+					progressWindow.SetBackupName("Unmounting...");
+					progressWindow.Show();
+
+					try
+					{
+						// Unmount asynchronously with progress updates
+						var (success, error) = await NativeBackupMountManager.UnmountBackupAsync(
+							mountPath,
+							(percentage, message) =>
+							{
+								progressWindow.SetStatus(message, percentage);
+							});
+
+						// Close progress window
+						progressWindow.CloseProgress();
+
+						if (success)
+						{
+							LoadMountedBackups();
+							CustomDialogService.ShowSuccess($"Backup unmounted successfully from {mountPath}",
+										  "Success");
+						}
+						else
+						{
+							CustomDialogService.ShowError($"Failed to unmount:\n{error}",
+										  "Unmount Error");
+						}
+					}
+					catch (Exception ex)
+					{
+						progressWindow.CloseProgress();
+						CustomDialogService.ShowError($"Error unmounting backup:\n{ex.Message}",
+									  "Error");
+					}
+				}
+			}
+		}
+
+		private void OpenExplorer(string driveLetter)
+		{
+			try
+			{
+				System.Diagnostics.Process.Start("explorer.exe", driveLetter);
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Failed to open Explorer: {ex.Message}");
+			}
+		}
+
+		private string GetBackupPointPath(AvailableBackupInfo backup)
+		{
+			if (backup.BackupType == "Incremental" || backup.BackupType == "Differential")
+			{
+				if (cmbBackupPoints?.SelectedItem is BackupPoint point)
+				{
+					return point.VhdxPath;
+				}
+				return "";
+			}
+			else
+			{
+				return backup.BackupPath;
+			}
+		}
+		*/
 	}
 }
