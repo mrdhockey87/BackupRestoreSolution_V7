@@ -99,7 +99,7 @@ namespace SecureServerBackup.WinForms
 			var nameLabel = new Label
 			{
 				Text = job.Name,
-				Font = new Font(Font, FontStyle.Bold),
+				Font = new Font(Font, System.Drawing.FontStyle.Bold),
 				AutoSize = true,
 				Margin = new Padding(0, 0, 0, 10)
 			};
@@ -115,7 +115,7 @@ namespace SecureServerBackup.WinForms
 			var actionsPanel = new FlowLayoutPanel
 			{
 				Dock = DockStyle.Top,
-				FlowDirection = FlowDirection.TopDown,
+				FlowDirection = System.Windows.Forms.FlowDirection.TopDown,
 				WrapContents = false,
 				AutoSize = true,
 				Margin = new Padding(10, 18, 0, 0)
@@ -138,7 +138,7 @@ namespace SecureServerBackup.WinForms
 			{
 				Text = labelText,
 				AutoSize = true,
-				Font = CreateMessageBoxFont(FontStyle.Regular),
+				Font = CreateMessageBoxFont(System.Drawing.FontStyle.Regular),
 				Margin = new Padding(0, 0, 8, 8)
 			};
 
@@ -146,9 +146,9 @@ namespace SecureServerBackup.WinForms
 			{
 				Text = valueText,
 				AutoSize = true,
-				Font = CreateMessageBoxFont(FontStyle.Bold),
+				Font = CreateMessageBoxFont(System.Drawing.FontStyle.Bold),
 				Margin = new Padding(0, 0, 0, 8),
-				MaximumSize = allowWrap ? new Size(560, 0) : Size.Empty
+				MaximumSize = allowWrap ? new System.Drawing.Size(560, 0) : System.Drawing.Size.Empty
 			};
 
 			layout.Controls.Add(label, 0, rowIndex);
@@ -168,15 +168,15 @@ namespace SecureServerBackup.WinForms
 			{
 				AutoSize = true,
 				WrapContents = false,
-				FlowDirection = FlowDirection.LeftToRight,
+				FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight,
 				Margin = new Padding(0)
 			};
-
+					
 			flow.Controls.Add(new Label
 			{
 				Text = GetNextRunSummary(job),
 				AutoSize = true,
-				Font = CreateMessageBoxFont(FontStyle.Bold),
+				Font = CreateMessageBoxFont(System.Drawing.FontStyle.Bold),
 				Margin = new Padding(0, 0, 18, 0)
 			});
 
@@ -199,7 +199,7 @@ namespace SecureServerBackup.WinForms
 
 		private static Font GetMessageBoxFont()
 		{
-			Font? font = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+			Font? font = System.Drawing.SystemFonts.MessageBoxFont ?? System.Drawing.SystemFonts.DefaultFont;
 			if (font is null)
 			{
 				throw new InvalidOperationException("A default system font is required.");
@@ -208,7 +208,7 @@ namespace SecureServerBackup.WinForms
 			return font;
 		}
 
-		private static Font CreateMessageBoxFont(FontStyle style)
+		private static Font CreateMessageBoxFont(System.Drawing.FontStyle style)
 		{
 			Font font = GetMessageBoxFont();
 			return new Font(font.FontFamily, font.Size, style, font.Unit, font.GdiCharSet, font.GdiVerticalFont);
@@ -484,28 +484,12 @@ namespace SecureServerBackup.WinForms
 			activityTabPanel.BackColor = WinFormsThemeManager.PanelBackground;
 			restoreRootLayout.BackColor = WinFormsThemeManager.PanelBackground;
 			versionStatusLabel.Text = "Version: Loading...";
-			restoreStatusLabel.MaximumSize = new Size(900, 0);
+			restoreStatusLabel.MaximumSize = new System.Drawing.Size(900, 0);
 
 			//ConfigurePlaceholderListView(dgAvailableBackups);
 			//ConfigurePlaceholderListView(dgMountedBackups);
 			ConfigurePlaceholderListView(verifyBackupsListView);
 			ConfigurePlaceholderListView(restoreBackupsListView);
-/*
-			mountBackupsListView.Columns.Clear();
-			mountBackupsListView.Columns.Add("Backup Name", 200);
-			mountBackupsListView.Columns.Add("Type", 120);
-			mountBackupsListView.Columns.Add("Encrypted", 110);
-			mountBackupsListView.Columns.Add("Date", 160);
-			mountBackupsListView.Columns.Add("Path", 320);
-			mountBackupsListView.Columns.Add("Action", 140);
-
-			mountedBackupsListView.Columns.Clear();
-			mountedBackupsListView.Columns.Add("Mount Path", 220);
-			mountedBackupsListView.Columns.Add("Backup Name", 180);
-			mountedBackupsListView.Columns.Add("Type", 120);
-			mountedBackupsListView.Columns.Add("Mounted At", 150);
-			mountedBackupsListView.Columns.Add("Status", 110);
-			mountedBackupsListView.Columns.Add("Action", 140);*/
 
 			verifyBackupsListView.Columns.Clear();
 			verifyBackupsListView.Columns.Add("Backup Name", 220);
@@ -561,7 +545,7 @@ namespace SecureServerBackup.WinForms
 			var titleLabel = new Label
 			{
 				Text = "Backup Jobs",
-				Font = new Font(Font, FontStyle.Bold),
+				Font = new Font(Font, System.Drawing.FontStyle.Bold),
 				AutoSize = true,
 				Anchor = AnchorStyles.Left,
 				Margin = new Padding(0, 8, 18, 0)
@@ -571,7 +555,7 @@ namespace SecureServerBackup.WinForms
 			{
 				AutoSize = true,
 				WrapContents = false,
-				FlowDirection = FlowDirection.LeftToRight,
+				FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight,
 				Anchor = AnchorStyles.Left,
 				Margin = new Padding(0)
 			};
@@ -673,7 +657,7 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			Size requiredContentSize = GetRequiredSelectedTabContentSize();
+			System.Drawing.Size requiredContentSize = GetRequiredSelectedTabContentSize();
 			if (requiredContentSize.Width <= 0 || requiredContentSize.Height <= 0)
 			{
 				return;
@@ -686,18 +670,18 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			Size targetClientSize = new(
+			System.Drawing.Size targetClientSize = new(
 				ClientSize.Width + additionalWidth,
 				ClientSize.Height + additionalHeight);
 
-			Size targetFormSize = SizeFromClientSize(targetClientSize);
-			MinimumSize = new Size(
+			System.Drawing.Size targetFormSize = SizeFromClientSize(targetClientSize);
+			MinimumSize = new System.Drawing.Size(
 				Math.Max(MinimumSize.Width, targetFormSize.Width),
 				Math.Max(MinimumSize.Height, targetFormSize.Height));
 
 			if (Width < targetFormSize.Width || Height < targetFormSize.Height)
 			{
-				Size = new Size(
+				Size = new System.Drawing.Size(
 					Math.Max(Width, targetFormSize.Width),
 					Math.Max(Height, targetFormSize.Height));
 			}
@@ -733,23 +717,23 @@ namespace SecureServerBackup.WinForms
 			}
 		}
 
-		private Size GetRequiredSelectedTabContentSize()
+		private	System.Drawing.Size GetRequiredSelectedTabContentSize()
 		{
 			if (mainTabControl.SelectedTab == activityTabPage && activityManagementView != null && !activityManagementView.IsDisposed)
 			{
-				return new Size(
+				return new System.Drawing.Size(
 					activityManagementView.MinimumSize.Width + activityTabPanel.Padding.Horizontal + activityTabPage.Padding.Horizontal,
 					activityManagementView.MinimumSize.Height + activityTabPanel.Padding.Vertical + activityTabPage.Padding.Vertical);
 			}
 
 			if (mainTabControl.SelectedTab == schedulesTabPage && scheduleManagementView != null && !scheduleManagementView.IsDisposed)
 			{
-				return new Size(
+				return new System.Drawing.Size(
 					scheduleManagementView.MinimumSize.Width + schedulesTabPanel.Padding.Horizontal + schedulesTabPage.Padding.Horizontal,
 					scheduleManagementView.MinimumSize.Height + schedulesTabPanel.Padding.Vertical + schedulesTabPage.Padding.Vertical);
 			}
 
-			return Size.Empty;
+			return System.Drawing.Size.Empty;
 		}
 
 		private static Label CreatePlaceholderLabel(string text)
@@ -780,7 +764,7 @@ namespace SecureServerBackup.WinForms
 			{
 				Text = text,
 				AutoSize = true,
-				MinimumSize = new Size(130, 32),
+				MinimumSize = new System.Drawing.Size(130, 32),
 				Margin = new Padding(0, 0, 8, 8)
 			};
 
@@ -1362,7 +1346,7 @@ namespace SecureServerBackup.WinForms
 
 			using var backBrush = new SolidBrush(isSelected ? WinFormsThemeManager.MediumTurquoise : WinFormsThemeManager.VeryLightTurquoise);
 			using var borderPen = new Pen(WinFormsThemeManager.BorderColor);
-			Font tabFont = isSelected ? new Font(Font, FontStyle.Bold) : Font;
+			Font tabFont = isSelected ? new Font(Font, System.Drawing.FontStyle.Bold) : Font;
 
 			e.Graphics.FillRectangle(backBrush, bounds);
 			e.Graphics.DrawRectangle(borderPen, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);

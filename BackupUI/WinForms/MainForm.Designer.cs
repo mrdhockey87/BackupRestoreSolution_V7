@@ -442,17 +442,6 @@ namespace SecureServerBackup.WinForms
 			mountedBackupsGroupBox.TabStop = false;
 			mountedBackupsGroupBox.Text = "Mounted Backups";
 			// 
-			// mountedBackupsListView
-			// 
-			mountedBackupsListView.Dock = DockStyle.Fill;
-			mountedBackupsListView.Location = new Point(6, 22);
-			mountedBackupsListView.Margin = new Padding(0);
-			mountedBackupsListView.Name = "mountedBackupsListView";
-			mountedBackupsListView.Size = new Size(751, 167);
-			mountedBackupsListView.TabIndex = 0;
-			mountedBackupsListView.UseCompatibleStateImageBehavior = false;
-			mountedBackupsListView.DoubleClick += MountedBackupsListView_DoubleClick;
-			// 
 			// mountStatusLabel
 			// 
 			mountStatusLabel.AutoSize = true;
