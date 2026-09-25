@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.7.43";
+        private static readonly string version_fallback_number = "7.3.7.44";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,7 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.3.7.44 Set up the Coulmn Names and Headers for the Available & Mounted Backups DataGridView mdail 9/26/2026
  *  Version 7.3.7.43 Fix the MainForm Mounted Backups tab not showing the dgAvailableBackups properly and already 
  *  			     having a control by that name, Also fixed TrySelectBackupByPath so it works for both ListView
  *  			     and a DataGridView. I need to figure out how to handle the columns for the DataGridView so

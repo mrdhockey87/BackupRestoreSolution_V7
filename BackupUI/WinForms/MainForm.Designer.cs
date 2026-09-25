@@ -92,6 +92,18 @@ namespace SecureServerBackup.WinForms
 			verifyRootLayout = new TableLayoutPanel();
 			verifyActionsPanel = new FlowLayoutPanel();
 			verifyStatusLabel = new Label();
+			BackupName = new DataGridViewTextBoxColumn();
+			BackupType = new DataGridViewTextBoxColumn();
+			IsEncrypted = new DataGridViewCheckBoxColumn();
+			BackupDate = new DataGridViewTextBoxColumn();
+			BackupPath = new DataGridViewTextBoxColumn();
+			Mount = new DataGridViewButtonColumn();
+			MountedBackupName = new DataGridViewTextBoxColumn();
+			MountedBackupType = new DataGridViewTextBoxColumn();
+			MountedIsEncrypted = new DataGridViewCheckBoxColumn();
+			MountedBackupDate = new DataGridViewCheckBoxColumn();
+			MountedBackupPath = new DataGridViewTextBoxColumn();
+			Unmount = new DataGridViewButtonColumn();
 			mainStatusStrip.SuspendLayout();
 			mainTabControl.SuspendLayout();
 			backupTabPage.SuspendLayout();
@@ -308,6 +320,7 @@ namespace SecureServerBackup.WinForms
 			// dgMountedBackups
 			// 
 			dgMountedBackups.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+			dgMountedBackups.Columns.AddRange(new DataGridViewColumn[] { MountedBackupName, MountedBackupType, MountedIsEncrypted, MountedBackupDate, MountedBackupPath, Unmount });
 			dgMountedBackups.Dock = DockStyle.Fill;
 			dgMountedBackups.Location = new Point(3, 297);
 			dgMountedBackups.Name = "dgMountedBackups";
@@ -327,6 +340,7 @@ namespace SecureServerBackup.WinForms
 			// dgAvailableBackups
 			// 
 			dgAvailableBackups.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+			dgAvailableBackups.Columns.AddRange(new DataGridViewColumn[] { BackupName, BackupType, IsEncrypted, BackupDate, BackupPath, Mount });
 			dgAvailableBackups.Dock = DockStyle.Fill;
 			dgAvailableBackups.Location = new Point(3, 61);
 			dgAvailableBackups.Name = "dgAvailableBackups";
@@ -576,6 +590,94 @@ namespace SecureServerBackup.WinForms
 			verifyStatusLabel.Size = new Size(100, 23);
 			verifyStatusLabel.TabIndex = 0;
 			// 
+			// BackupName
+			// 
+			BackupName.HeaderText = "Backup Name";
+			BackupName.MinimumWidth = 6;
+			BackupName.Name = "BackupName";
+			BackupName.Width = 110;
+			// 
+			// BackupType
+			// 
+			BackupType.HeaderText = "Backup Type";
+			BackupType.MinimumWidth = 6;
+			BackupType.Name = "BackupType";
+			BackupType.Width = 110;
+			// 
+			// IsEncrypted
+			// 
+			IsEncrypted.HeaderText = "Encrypted";
+			IsEncrypted.MinimumWidth = 6;
+			IsEncrypted.Name = "IsEncrypted";
+			IsEncrypted.Resizable = DataGridViewTriState.True;
+			IsEncrypted.SortMode = DataGridViewColumnSortMode.Automatic;
+			IsEncrypted.Width = 110;
+			// 
+			// BackupDate
+			// 
+			BackupDate.HeaderText = "Backup Date";
+			BackupDate.MinimumWidth = 6;
+			BackupDate.Name = "BackupDate";
+			BackupDate.Width = 110;
+			// 
+			// BackupPath
+			// 
+			BackupPath.HeaderText = "Backup Path";
+			BackupPath.MinimumWidth = 6;
+			BackupPath.Name = "BackupPath";
+			BackupPath.Width = 110;
+			// 
+			// Mount
+			// 
+			Mount.HeaderText = "Mount";
+			Mount.MinimumWidth = 6;
+			Mount.Name = "Mount";
+			Mount.Resizable = DataGridViewTriState.True;
+			Mount.SortMode = DataGridViewColumnSortMode.Automatic;
+			Mount.Width = 110;
+			// 
+			// MountedBackupName
+			// 
+			MountedBackupName.HeaderText = "BackupName";
+			MountedBackupName.MinimumWidth = 6;
+			MountedBackupName.Name = "MountedBackupName";
+			MountedBackupName.Width = 110;
+			// 
+			// MountedBackupType
+			// 
+			MountedBackupType.HeaderText = "MountedBackupType";
+			MountedBackupType.MinimumWidth = 6;
+			MountedBackupType.Name = "MountedBackupType";
+			MountedBackupType.Width = 110;
+			// 
+			// MountedIsEncrypted
+			// 
+			MountedIsEncrypted.HeaderText = "Encrypted";
+			MountedIsEncrypted.MinimumWidth = 6;
+			MountedIsEncrypted.Name = "MountedIsEncrypted";
+			MountedIsEncrypted.Width = 110;
+			// 
+			// MountedBackupDate
+			// 
+			MountedBackupDate.HeaderText = "Backup Date";
+			MountedBackupDate.MinimumWidth = 6;
+			MountedBackupDate.Name = "MountedBackupDate";
+			MountedBackupDate.Width = 110;
+			// 
+			// MountedBackupPath
+			// 
+			MountedBackupPath.HeaderText = "Backup Path";
+			MountedBackupPath.MinimumWidth = 6;
+			MountedBackupPath.Name = "MountedBackupPath";
+			MountedBackupPath.Width = 110;
+			// 
+			// Unmount
+			// 
+			Unmount.HeaderText = "Unmount";
+			Unmount.MinimumWidth = 6;
+			Unmount.Name = "Unmount";
+			Unmount.Width = 110;
+			// 
 			// MainForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 17F);
@@ -630,5 +732,17 @@ namespace SecureServerBackup.WinForms
 		private Button UnmountAll;
 		private Label label3;
 		private DataGridView dgAvailableBackups;
+		private DataGridViewTextBoxColumn BackupName;
+		private DataGridViewTextBoxColumn BackupType;
+		private DataGridViewCheckBoxColumn IsEncrypted;
+		private DataGridViewTextBoxColumn BackupDate;
+		private DataGridViewTextBoxColumn BackupPath;
+		private DataGridViewButtonColumn Mount;
+		private DataGridViewTextBoxColumn MountedBackupName;
+		private DataGridViewTextBoxColumn MountedBackupType;
+		private DataGridViewCheckBoxColumn MountedIsEncrypted;
+		private DataGridViewCheckBoxColumn MountedBackupDate;
+		private DataGridViewTextBoxColumn MountedBackupPath;
+		private DataGridViewButtonColumn Unmount;
 	}
 }
