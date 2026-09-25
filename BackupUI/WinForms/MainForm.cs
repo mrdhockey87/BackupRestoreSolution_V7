@@ -926,6 +926,23 @@ namespace SecureServerBackup.WinForms
 
 			return false;
 		}
+		private static bool TrySelectBackupByPath(DataGridView dataGridView, string backupPath)
+		{
+			ArgumentNullException.ThrowIfNull(dataGridView);
+			ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
+
+			foreach (DataGridViewRow item in dataGridView.Rows)
+			{
+				if (item.Tag is AvailableBackupInfo backup && string.Equals(backup.BackupPath, backupPath, StringComparison.OrdinalIgnoreCase))
+				{
+					item.Selected = true;
+					item.Visible = true;
+					return true;
+				}
+			}
+
+			return false;
+		}
 		private void LoadAvailableBackups()
 		{
 			if (dgAvailableBackups == null)
@@ -1001,7 +1018,7 @@ namespace SecureServerBackup.WinForms
 				verifyStatusLabel.Text = $"Error loading verify backups: {ex.Message}";
 			}
 		}
-		/*
+		
 		private void BrowseMountBackup()
 		{
 			using var openFileDialog = new OpenFileDialog
@@ -1019,25 +1036,25 @@ namespace SecureServerBackup.WinForms
 			}
 
 			string selectedFile = openFileDialog.FileName;
-			if (TrySelectBackupByPath(mountBackupsListView, selectedFile))
+			if (TrySelectBackupByPath(dgAvailableBackups, selectedFile))
 			{
 				mountStatusLabel.Text = "Selected the existing available backup entry.";
 				return;
 			}
 
 			AvailableBackupInfo backupInfo = CreateAdHocBackupInfo(selectedFile);
-			var item = new ListViewItem(backupInfo.BackupName);
-			item.SubItems.Add(backupInfo.BackupType);
-			item.SubItems.Add(backupInfo.IsEncrypted ? "Yes" : "No");
-			item.SubItems.Add(backupInfo.BackupDate.ToString("g"));
-			item.SubItems.Add(backupInfo.BackupPath);
-			item.SubItems.Add("Mount");
-			item.Tag = backupInfo;
-			mountBackupsListView.Items.Add(item);
-			TrySelectBackupByPath(mountBackupsListView, selectedFile);
+			int rowIndex = dgAvailableBackups.Rows.Add();
+			dgAvailableBackups.Rows[rowIndex].Cells[0].Value = backupInfo.BackupName;
+			dgAvailableBackups.Rows[rowIndex].Cells[1].Value = backupInfo.BackupType;
+			dgAvailableBackups.Rows[rowIndex].Cells[2].Value = backupInfo.IsEncrypted ? "Yes" : "No";
+			dgAvailableBackups.Rows[rowIndex].Cells[3].Value = backupInfo.BackupDate.ToString("g");
+			dgAvailableBackups.Rows[rowIndex].Cells[4].Value = backupInfo.BackupPath;
+			dgAvailableBackups.Rows[rowIndex].Cells[5].Value = "Mount";
+			dgAvailableBackups.Rows[rowIndex].Tag = backupInfo;
+			TrySelectBackupByPath(dgAvailableBackups, selectedFile);
 			mountStatusLabel.Text = $"Backup file added for mount: {Path.GetFileName(selectedFile)}";
 		}
-		*/
+		
 		private void BrowseVerifyBackup()
 		{
 			using var openFileDialog = new OpenFileDialog

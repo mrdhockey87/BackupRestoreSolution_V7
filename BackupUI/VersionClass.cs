@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.7.42";
+        private static readonly string version_fallback_number = "7.3.7.43";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,10 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.3.7.43 Fix the MainForm Mounted Backups tab not showing the dgAvailableBackups properly and already 
+ *  			     having a control by that name, Also fixed TrySelectBackupByPath so it works for both ListView
+ *  			     and a DataGridView. I need to figure out how to handle the columns for the DataGridView so
+ *  			     it binds properly and has the buttons where I need them. mdail 9/26/2026
  *  Version 7.3.7.42 Fix several ambiguous references to .net framework types in the MainForm mdail 9/25/2026
  *  Version 7.3.7.41 Try to fix the Mount backup tab after the AI messed it up badly. I have most of it so it 
  *                   looks ok, except I havn't fixed to datagridview's rows so they know what data to expect
