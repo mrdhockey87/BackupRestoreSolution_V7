@@ -5,6 +5,7 @@ using System.Windows.Interop;
 using SecureServerBackupCommon;
 using SecureServerBackup.WinForms;
 using Forms = System.Windows.Forms;
+using System.Windows.Forms;
 
 namespace SecureServerBackup.Services
 {
@@ -45,15 +46,15 @@ namespace SecureServerBackup.Services
 
     public static class EncryptedBackupFileService
     {
-        public static PreparedBackupFile PrepareForRead(Window? owner, string backupPath, string backupName, string? protectedPassword = null)
+        public static PreparedBackupFile PrepareForRead(Form? owner, string backupPath, string backupName, string? protectedPassword = null)
         {
             Forms.IWin32Window? formsOwner = null;
             if (owner != null)
             {
-                var helper = new WindowInteropHelper(owner);
-                if (helper.Handle != IntPtr.Zero)
+                var helper = owner.Handle;
+                if (helper != IntPtr.Zero)
                 {
-                    formsOwner = new NativeWindowOwner(helper.Handle);
+                    formsOwner = new NativeWindowOwner(helper);
                 }
             }
 

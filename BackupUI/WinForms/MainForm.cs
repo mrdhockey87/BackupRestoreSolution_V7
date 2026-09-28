@@ -5,6 +5,7 @@ using SecureServerBackup.Windows; // Keep for remaining staged WPF windows still
 using SecureServerBackupCommon;
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -171,7 +172,7 @@ namespace SecureServerBackup.WinForms
 				FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight,
 				Margin = new Padding(0)
 			};
-					
+
 			flow.Controls.Add(new Label
 			{
 				Text = GetNextRunSummary(job),
@@ -717,7 +718,7 @@ namespace SecureServerBackup.WinForms
 			}
 		}
 
-		private	System.Drawing.Size GetRequiredSelectedTabContentSize()
+		private System.Drawing.Size GetRequiredSelectedTabContentSize()
 		{
 			if (mainTabControl.SelectedTab == activityTabPage && activityManagementView != null && !activityManagementView.IsDisposed)
 			{
@@ -1018,7 +1019,7 @@ namespace SecureServerBackup.WinForms
 				verifyStatusLabel.Text = $"Error loading verify backups: {ex.Message}";
 			}
 		}
-		
+
 		private void BrowseMountBackup()
 		{
 			using var openFileDialog = new OpenFileDialog
@@ -1054,7 +1055,7 @@ namespace SecureServerBackup.WinForms
 			TrySelectBackupByPath(dgAvailableBackups, selectedFile);
 			mountStatusLabel.Text = $"Backup file added for mount: {Path.GetFileName(selectedFile)}";
 		}
-		
+
 		private void BrowseVerifyBackup()
 		{
 			using var openFileDialog = new OpenFileDialog
@@ -2037,6 +2038,182 @@ namespace SecureServerBackup.WinForms
 				CustomDialogService.ShowSuccess(this, "All backups unmounted successfully.",
 							  "Success");
 			}
+		}
+		private string GetBackupPointPath(AvailableBackupInfo backup)
+		{
+			if (backup.BackupType == "Incremental" || backup.BackupType == "Differential")
+			{
+			/*
+				if (cmbBackupPoints?.SelectedItem is BackupPoint point)
+				{
+					return point.VhdxPath;
+				}
+				*/
+				return "";
+			}
+			else
+			{
+				return backup.BackupPath;
+			}
+		}
+		private void MountBackup_Click(object sender, DataGridViewCellEventArgs e)
+		{
+
+			if (sender is System.Windows.Controls.Button btn && btn.Tag is AvailableBackupInfo backup)
+			{
+				try
+				{
+					// Get selected backup point if Inc/Diff
+					string ssbPath = GetBackupPointPath(backup);
+
+					if (string.IsNullOrEmpty(ssbPath))
+					{
+						CustomDialogService.ShowWarning(this, "Please select a backup point to mount.",
+									  "No Backup Point Selected");
+						return;
+					}
+
+					// Check if backup has multiple images/restore points
+					System.Diagnostics.Debug.WriteLine($"[Mount] Checking image count for: {ssbPath}");
+					var (countSuccess, imageCount, countError) = NativeBackupMountManager.GetImageCount(ssbPath);
+
+					int selectedImageIndex = 1; // Default to first image
+
+					if (!countSuccess)
+					{
+						CustomDialogService.ShowError(this, $"Failed to check backup images:\n{countError}",
+									  "Error");
+						return;
+					}
+
+					// If backup has multiple images, show selection dialog
+					if (imageCount > 1)
+					{
+						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} images - showing selection dialog");
+						
+						// Get detailed image information
+						var (infoSuccess, images, infoError) = NativeBackupMountManager.GetImageInfo(ssbPath);
+
+						if (!infoSuccess || images.Count == 0)
+						{
+							CustomDialogService.ShowError(this, $"Failed to get image details:\n{infoError}",
+										  "Error");
+							return;
+						}
+						using var imageDialog = new ImageSelectionDialog(images, "Mount Selected");
+						if (imageDialog.ShowDialog(this) == DialogResult.OK) // pass owner if you have one
+						{
+							int selected = imageDialog.SelectedImageIndex;
+						}
+						/*
+						if (imageDialog.ShowDialog() != true)
+						{
+							System.Diagnostics.Debug.WriteLine("[Mount] User cancelled image selection");
+							return;
+						}
+						*/
+						selectedImageIndex = imageDialog.SelectedImageIndex;
+						System.Diagnostics.Debug.WriteLine($"[Mount] User selected image index: {selectedImageIndex}");
+					}
+					else
+					{
+						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} image(s) - using first image");
+					}
+
+					// Show temp path selection dialog
+					var tempPathDialog = new SecureServerBackup.Windows.TempPathSelectionDialog
+					{
+						Owner = this
+					};
+
+					System.Diagnostics.Debug.WriteLine("[Mount] Showing TempPathSelectionDialog...");
+
+					if (tempPathDialog.ShowDialog() != true)
+					{
+						System.Diagnostics.Debug.WriteLine("[Mount] User cancelled temp path selection");
+						// User cancelled
+						return;
+					}
+
+					string selectedTempPath = tempPathDialog.SelectedTempPath;
+
+					// Diagnostic: Log selected temp path
+					System.Diagnostics.Debug.WriteLine($"[Mount] User selected temp path: '{selectedTempPath}'");
+					System.Diagnostics.Debug.WriteLine($"[Mount] Path length: {selectedTempPath?.Length ?? 0}");
+					System.Diagnostics.Debug.WriteLine($"[Mount] Path is null or empty: {string.IsNullOrEmpty(selectedTempPath)}");
+					System.Diagnostics.Debug.WriteLine($"[Mount] About to create progress window...");
+
+					// Create and show progress window
+					var progressWindow = new SecureServerBackup.Windows.MountProgressWindow
+					{
+						Owner = this
+					};
+
+					System.Diagnostics.Debug.WriteLine($"[Mount] Progress window created, setting backup name: {backup.BackupName}");
+					progressWindow.SetBackupName(backup.BackupName);
+
+					System.Diagnostics.Debug.WriteLine($"[Mount] Showing progress window...");
+					progressWindow.Show();
+
+					System.Diagnostics.Debug.WriteLine($"[Mount] Progress window shown, about to call MountBackupAsync...");
+
+					try
+					{
+						// Mount asynchronously with progress updates
+						System.Diagnostics.Debug.WriteLine($"[Mount] Calling NativeBackupMountManager.MountBackupAsync...");
+						System.Diagnostics.Debug.WriteLine($"[Mount] Parameters: ssbPath={ssbPath}, backupName={backup.BackupName}, backupType={backup.BackupType}, imageIndex={selectedImageIndex}, tempPath={selectedTempPath}");
+
+						using var preparedBackup = EncryptedBackupFileService.PrepareForRead(
+							this,
+							ssbPath,
+							backup.BackupName,
+							backup.ProtectedEncryptionPassword);
+
+						var (success, mountPath, error) = await NativeBackupMountManager.MountBackupAsync(
+							preparedBackup.WorkingPath,
+							backup.BackupName,
+							backup.BackupType,
+							selectedImageIndex,
+							(percentage, message) =>
+							{
+								progressWindow.SetStatus(message, percentage);
+							},
+							selectedTempPath);
+
+						// Close progress window
+						progressWindow.CloseProgress();
+
+						if (success)
+						{
+							CustomDialogService.ShowSuccess(this, $"Backup mounted successfully!\n\n" +
+										  $"Mount Path: {mountPath}\n\n" +
+										  $"You can now browse the backup in Windows Explorer.\n" +
+										  $"Backup is READ-ONLY to prevent modifications.",
+										  "Backup Mounted");
+
+							LoadMountedBackups();
+							OpenExplorer(mountPath);
+						}
+						else
+						{
+							CustomDialogService.ShowError(this, $"Failed to mount backup:\n{error}",
+										  "Mount Error");
+						}
+					}
+					catch (Exception ex)
+					{
+						progressWindow.CloseProgress();
+						CustomDialogService.ShowError(this, $"Error mounting backup:\n{ex.Message}",
+									  "Error");
+					}
+				}
+				catch (Exception ex)
+				{
+					CustomDialogService.ShowError(this, $"Error initializing mount:\n{ex.Message}",
+								  "Error");
+				}
+			}
+
 		}
 		//For buttons in the available & mounted backups datagridss mdail 9-23-2026
 		/*

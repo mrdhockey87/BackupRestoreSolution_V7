@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SecureServerBackupCommon;
+using SecureServerBackup.Models; 
 
 namespace SecureServerBackup.Services
 {
@@ -783,7 +784,7 @@ namespace SecureServerBackup.Services
         /// <summary>
         /// Get detailed information about all images in an SSB backup file
         /// </summary>
-        public static (bool Success, List<Windows.BackupImageInfo> Images, string Error) GetImageInfo(string ssbPath)
+        public static (bool Success, List<BackupImageInfo> Images, string Error) GetImageInfo(string ssbPath)
         {
             try
             {
@@ -791,10 +792,10 @@ namespace SecureServerBackup.Services
                 var (success, imageCount, error) = GetImageCount(ssbPath);
                 if (!success)
                 {
-                    return (false, new List<Windows.BackupImageInfo>(), error);
+                    return (false, new List<BackupImageInfo>(), error);
                 }
 
-                var images = new List<Windows.BackupImageInfo>();
+                var images = new List<BackupImageInfo>();
 
                 // Get info for each image (1-based indexing)
                 for (int i = 1; i <= imageCount; i++)
@@ -850,7 +851,7 @@ namespace SecureServerBackup.Services
                             }
                         }
 
-                        images.Add(new Windows.BackupImageInfo
+                        images.Add(new BackupImageInfo
                         {
                             ImageIndex = i,
                             ImageDate = imageDate,
@@ -865,7 +866,7 @@ namespace SecureServerBackup.Services
             }
             catch (Exception ex)
             {
-                return (false, new List<Windows.BackupImageInfo>(), ex.Message);
+                return (false, new List<BackupImageInfo>(), ex.Message);
             }
         }
 
