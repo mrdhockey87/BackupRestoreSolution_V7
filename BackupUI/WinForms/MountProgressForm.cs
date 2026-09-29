@@ -16,7 +16,7 @@ namespace SecureServerBackup.WinForms
 			this.Paint += MountProgressForm_Paint;
 		}
 
-		private void MountProgressForm_Paint(object sender, PaintEventArgs e)
+		private void MountProgressForm_Paint(object? sender, PaintEventArgs e)
 		{
 			using var pen = new Pen(BorderColor, 1);
 			e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);

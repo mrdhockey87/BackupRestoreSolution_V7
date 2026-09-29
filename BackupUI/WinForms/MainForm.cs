@@ -6,12 +6,14 @@ using SecureServerBackupCommon;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Shell;
 
 namespace SecureServerBackup.WinForms
 {
@@ -2119,32 +2121,25 @@ namespace SecureServerBackup.WinForms
 					{
 						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} image(s) - using first image");
 					}
-
-					// Show temp path selection dialog
-					var tempPathDialog = new SecureServerBackup.Windows.TempPathSelectionDialog
+					string tempPath = "";
+					using (var dialog = new TempPathSelectionDialog())
 					{
-						Owner = this
-					};
-
-					System.Diagnostics.Debug.WriteLine("[Mount] Showing TempPathSelectionDialog...");
-
-					if (tempPathDialog.ShowDialog() != true)
-					{
-						System.Diagnostics.Debug.WriteLine("[Mount] User cancelled temp path selection");
-						// User cancelled
-						return;
+						if (dialog.ShowDialog(this) == DialogResult.OK)
+						{
+							tempPath = dialog.SelectedTempPath;
+							// proceed with mount operation
+						}
 					}
-
-					string selectedTempPath = tempPathDialog.SelectedTempPath;
-
+					string selectedTempPath = "";
+					if (tempPath != null && tempPath != "")
+					{
+						selectedTempPath = tempPath;
+					}
 					// Diagnostic: Log selected temp path
-					System.Diagnostics.Debug.WriteLine($"[Mount] User selected temp path: '{selectedTempPath}'");
-					System.Diagnostics.Debug.WriteLine($"[Mount] Path length: {selectedTempPath?.Length ?? 0}");
-					System.Diagnostics.Debug.WriteLine($"[Mount] Path is null or empty: {string.IsNullOrEmpty(selectedTempPath)}");
 					System.Diagnostics.Debug.WriteLine($"[Mount] About to create progress window...");
 
 					// Create and show progress window
-					var progressWindow = new SecureServerBackup.Windows.MountProgressWindow
+					var progressWindow = new MountProgressForm
 					{
 						Owner = this
 					};
@@ -2214,6 +2209,23 @@ namespace SecureServerBackup.WinForms
 				}
 			}
 
+		}
+		private void OpenExplorer(string folderPath)
+		{
+			if (Directory.Exists(folderPath))
+			{
+				ProcessStartInfo startInfo = new ProcessStartInfo
+				{
+					FileName = folderPath,
+					UseShellExecute = true // Required in .NET Core/.NET 5+ to open paths via OS shell
+				};
+
+				Process.Start(startInfo);
+			}
+			else
+			{
+				 System.Windows.Forms.MessageBox.Show("The specified folder does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 		}
 		//For buttons in the available & mounted backups datagridss mdail 9-23-2026
 		/*
