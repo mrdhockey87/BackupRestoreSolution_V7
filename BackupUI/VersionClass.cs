@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.7.45";
+        private static readonly string version_fallback_number = "7.3.7.46";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,7 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.3.7.46 Added more of the Forms that were missing from the windows that were converted from WPF to WinForms mdail 9/29/2026
  *  Version 7.3.7.45 More work trying to convert the Mount Backup tab to a WinForms layout, I have the Available Backups 
  *                  and Mounted Backups sections working, but there are still several places the it is using calls to WPF 
  *                  windows that did not get converted to WinForms yet. mdail 9/28/2026
