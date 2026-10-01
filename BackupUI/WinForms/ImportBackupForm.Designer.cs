@@ -126,7 +126,7 @@ namespace SecureServerBackup.WinForms
 			rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			rootLayout.RowStyles.Add(new RowStyle());
 			rootLayout.RowStyles.Add(new RowStyle());
-			rootLayout.Size = new Size(700, 575);
+			rootLayout.Size = new Size(706, 738);
 			rootLayout.TabIndex = 0;
 			// 
 			// headerLabel
@@ -147,7 +147,7 @@ namespace SecureServerBackup.WinForms
 			fileGroupBox.Location = new Point(18, 56);
 			fileGroupBox.Margin = new Padding(3, 3, 3, 17);
 			fileGroupBox.Name = "fileGroupBox";
-			fileGroupBox.Size = new Size(664, 275);
+			fileGroupBox.Size = new Size(670, 438);
 			fileGroupBox.TabIndex = 1;
 			fileGroupBox.TabStop = false;
 			fileGroupBox.Text = "Select Backup File";
@@ -160,7 +160,7 @@ namespace SecureServerBackup.WinForms
 			fileLayout.Controls.Add(fileBrowsePanel, 0, 1);
 			fileLayout.Controls.Add(validationPanel, 0, 2);
 			fileLayout.Controls.Add(backupInfoGroupBox, 0, 3);
-			fileLayout.Dock = DockStyle.Fill;
+			fileLayout.Dock = DockStyle.Top;
 			fileLayout.Location = new Point(3, 21);
 			fileLayout.Name = "fileLayout";
 			fileLayout.Padding = new Padding(10, 11, 10, 11);
@@ -169,7 +169,7 @@ namespace SecureServerBackup.WinForms
 			fileLayout.RowStyles.Add(new RowStyle());
 			fileLayout.RowStyles.Add(new RowStyle());
 			fileLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-			fileLayout.Size = new Size(658, 251);
+			fileLayout.Size = new Size(664, 432);
 			fileLayout.TabIndex = 0;
 			// 
 			// backupFileLabel
@@ -195,7 +195,7 @@ namespace SecureServerBackup.WinForms
 			fileBrowsePanel.Margin = new Padding(3, 0, 3, 17);
 			fileBrowsePanel.Name = "fileBrowsePanel";
 			fileBrowsePanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			fileBrowsePanel.Size = new Size(632, 20);
+			fileBrowsePanel.Size = new Size(638, 20);
 			fileBrowsePanel.TabIndex = 1;
 			// 
 			// filePathTextBox
@@ -204,13 +204,15 @@ namespace SecureServerBackup.WinForms
 			filePathTextBox.Location = new Point(3, 3);
 			filePathTextBox.Margin = new Padding(3, 3, 10, 3);
 			filePathTextBox.Name = "filePathTextBox";
-			filePathTextBox.Size = new Size(513, 25);
+			filePathTextBox.Size = new Size(519, 25);
 			filePathTextBox.TabIndex = 0;
 			// 
 			// browseButton
 			// 
 			browseButton.AutoSize = true;
-			browseButton.Location = new Point(529, 3);
+			browseButton.Dock = DockStyle.Top;
+			browseButton.Location = new Point(535, 3);
+			browseButton.MaximumSize = new Size(100, 34);
 			browseButton.MinimumSize = new Size(100, 34);
 			browseButton.Name = "browseButton";
 			browseButton.Size = new Size(100, 34);
@@ -229,7 +231,7 @@ namespace SecureServerBackup.WinForms
 			validationPanel.Margin = new Padding(3, 0, 3, 17);
 			validationPanel.Name = "validationPanel";
 			validationPanel.Padding = new Padding(10, 11, 10, 11);
-			validationPanel.Size = new Size(632, 69);
+			validationPanel.Size = new Size(638, 69);
 			validationPanel.TabIndex = 2;
 			validationPanel.Visible = false;
 			// 
@@ -242,7 +244,7 @@ namespace SecureServerBackup.WinForms
 			validationLayout.FlowDirection = FlowDirection.TopDown;
 			validationLayout.Location = new Point(10, 11);
 			validationLayout.Name = "validationLayout";
-			validationLayout.Size = new Size(612, 47);
+			validationLayout.Size = new Size(618, 47);
 			validationLayout.TabIndex = 0;
 			validationLayout.WrapContents = false;
 			// 
@@ -269,10 +271,10 @@ namespace SecureServerBackup.WinForms
 			// backupInfoGroupBox
 			// 
 			backupInfoGroupBox.Controls.Add(infoLayout);
-			backupInfoGroupBox.Dock = DockStyle.Fill;
+			backupInfoGroupBox.Dock = DockStyle.Bottom;
 			backupInfoGroupBox.Location = new Point(13, 160);
 			backupInfoGroupBox.Name = "backupInfoGroupBox";
-			backupInfoGroupBox.Size = new Size(632, 77);
+			backupInfoGroupBox.Size = new Size(638, 258);
 			backupInfoGroupBox.TabIndex = 3;
 			backupInfoGroupBox.TabStop = false;
 			backupInfoGroupBox.Text = "Backup Information";
@@ -309,7 +311,7 @@ namespace SecureServerBackup.WinForms
 			infoLayout.RowStyles.Add(new RowStyle());
 			infoLayout.RowStyles.Add(new RowStyle());
 			infoLayout.RowStyles.Add(new RowStyle());
-			infoLayout.Size = new Size(626, 53);
+			infoLayout.Size = new Size(632, 234);
 			infoLayout.TabIndex = 0;
 			// 
 			// formatCaptionLabel
@@ -464,10 +466,10 @@ namespace SecureServerBackup.WinForms
 			optionsGroupBox.AutoSize = true;
 			optionsGroupBox.Controls.Add(optionsLayout);
 			optionsGroupBox.Dock = DockStyle.Top;
-			optionsGroupBox.Location = new Point(18, 351);
+			optionsGroupBox.Location = new Point(18, 514);
 			optionsGroupBox.Margin = new Padding(3, 3, 3, 17);
 			optionsGroupBox.Name = "optionsGroupBox";
-			optionsGroupBox.Size = new Size(664, 138);
+			optionsGroupBox.Size = new Size(670, 138);
 			optionsGroupBox.TabIndex = 2;
 			optionsGroupBox.TabStop = false;
 			optionsGroupBox.Text = "Import Options";
@@ -482,7 +484,7 @@ namespace SecureServerBackup.WinForms
 			optionsLayout.Location = new Point(3, 21);
 			optionsLayout.Name = "optionsLayout";
 			optionsLayout.Padding = new Padding(10, 11, 10, 11);
-			optionsLayout.Size = new Size(658, 114);
+			optionsLayout.Size = new Size(664, 114);
 			optionsLayout.TabIndex = 0;
 			optionsLayout.WrapContents = false;
 			// 
@@ -533,16 +535,16 @@ namespace SecureServerBackup.WinForms
 			buttonsPanel.Controls.Add(importButton);
 			buttonsPanel.Dock = DockStyle.Fill;
 			buttonsPanel.FlowDirection = FlowDirection.RightToLeft;
-			buttonsPanel.Location = new Point(18, 509);
+			buttonsPanel.Location = new Point(18, 672);
 			buttonsPanel.Name = "buttonsPanel";
-			buttonsPanel.Size = new Size(664, 46);
+			buttonsPanel.Size = new Size(670, 46);
 			buttonsPanel.TabIndex = 3;
 			// 
 			// cancelButton
 			// 
 			cancelButton.AutoSize = true;
 			cancelButton.DialogResult = DialogResult.Cancel;
-			cancelButton.Location = new Point(561, 3);
+			cancelButton.Location = new Point(567, 3);
 			cancelButton.MinimumSize = new Size(100, 40);
 			cancelButton.Name = "cancelButton";
 			cancelButton.Size = new Size(100, 40);
@@ -554,7 +556,7 @@ namespace SecureServerBackup.WinForms
 			// 
 			importButton.AutoSize = true;
 			importButton.Enabled = false;
-			importButton.Location = new Point(448, 3);
+			importButton.Location = new Point(454, 3);
 			importButton.Margin = new Padding(0, 3, 10, 3);
 			importButton.MinimumSize = new Size(100, 40);
 			importButton.Name = "importButton";
@@ -570,7 +572,7 @@ namespace SecureServerBackup.WinForms
 			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
 			CancelButton = cancelButton;
-			ClientSize = new Size(700, 575);
+			ClientSize = new Size(706, 738);
 			Controls.Add(rootLayout);
 			FormBorderStyle = FormBorderStyle.FixedDialog;
 			MaximizeBox = false;

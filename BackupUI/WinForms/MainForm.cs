@@ -1,19 +1,18 @@
 using SecureServerBackup.Models;
 using SecureServerBackup.Services;
-using SecureServerBackup.Windows; // Keep for remaining staged WPF windows still launched from this WinForms shell.
+using SecureServerBackup.Enums; // Keep for remaining staged WPF windows still launched from this WinForms shell.
+using SecureServerBackup.Helpers;
 
 using SecureServerBackupCommon;
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Windows;
 using System.Windows.Forms;
-using System.Windows.Shell;
+
 
 namespace SecureServerBackup.WinForms
 {
@@ -297,7 +296,7 @@ namespace SecureServerBackup.WinForms
 				{
 					BackupLogger.LogInfo(job.Name, "Service accepted backup request - backup is starting");
 
-					var progressWindow = new BackupProgressWindow(job.Id, job.Name);
+					var progressWindow = new BackupProgressForm(job.Id, job.Name);
 					progressWindow.Show();
 					return;
 				}

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using SecureServerBackup.Windows;
 
 namespace SecureServerBackup.Models
 {
@@ -8,7 +7,7 @@ namespace SecureServerBackup.Models
 	{
 		public AvailableBackupInfo Backup { get; init; } = new();
 
-		public SecureServerBackup.Windows.RestorePoint RestorePoint { get; init; } = new();
+		public RestorePoint RestorePoint { get; init; } = new();
 
 		public bool RequireAlternateDestination { get; init; }
 

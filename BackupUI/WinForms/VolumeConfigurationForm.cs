@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using SecureServerBackup.Models;
+using SecureServerBackup.Helpers;
 using SecureServerBackup.WinForms.Controls;
 
 namespace SecureServerBackup.WinForms
@@ -18,8 +19,7 @@ namespace SecureServerBackup.WinForms
 		private readonly int sourceAllocationUnitSize;
 		private readonly int targetAllocationUnitSize;
 
-		public VolumeConfigurationForm()
-			: this(
+		public VolumeConfigurationForm() : this(
 			[
 				new VolumeInfo { Label = "Windows", Size = 240L * 1024 * 1024 * 1024, UsedSpace = 120L * 1024 * 1024 * 1024, FileSystem = "NTFS", AllocationUnitSize = 4096 },
 				new VolumeInfo { Label = "Data", Size = 180L * 1024 * 1024 * 1024, UsedSpace = 80L * 1024 * 1024 * 1024, FileSystem = "NTFS", AllocationUnitSize = 4096 }

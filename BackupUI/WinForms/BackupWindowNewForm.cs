@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Svg;
 using SecureServerBackup.Services;
-using SecureServerBackup.Windows;
+using SecureServerBackup.Models;
+using SecureServerBackup.Enums;
+
 using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
@@ -32,30 +34,8 @@ namespace SecureServerBackup.WinForms
 		private Control[] settingsWidthControls = [];
 		private const int VolumeAnimationFrameCount = 6;
 
-		private enum SourceTreeNodeKind
-		{
-			Disk,
-			Volume,
-			Directory,
-			File,
-			Partition
-		}
 
-		private sealed class SourceTreeNodeData
-		{
-			public required SourceTreeNodeKind Kind { get; init; }
-			public int DiskNumber { get; init; }
-			public string SelectionPath { get; init; } = string.Empty;
-			public string FileSystemPath { get; init; } = string.Empty;
-		}
-
-		private sealed class FileSystemNodeEntry
-		{
-			public required SourceTreeNodeKind Kind { get; init; }
-			public required string Text { get; init; }
-			public required string SelectionPath { get; init; }
-			public required string FileSystemPath { get; init; }
-		}
+		
 
 		public BackupWindowNewForm()
 			: this(null)

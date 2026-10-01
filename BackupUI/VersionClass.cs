@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.3.7.47";
+        private static readonly string version_fallback_number = "7.4.8.48";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,10 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.8.48 Removed all of the WPF windows and code from the project since they are no longer needed, and the app is 
+ *                   now fully WinForms. Also removed the use WPF from the project file. ALso converted WPF control to winform control
+ *                   also made several edited to move modles, enums, helpersand services to there proper places, Also several edits to try
+ *                   and get the project to complie. mdail 10/1/2026
  *  Version 7.3.7.47 Added the temp path selection dialog to the Mount Backup tab, so the user can select a temporary path for mounting
  *                   backups. Fix the code in main form that was calling the temp path window. mdail 9/30/2026
  *  Version 7.3.7.46 Added more of the Forms that were missing from the windows that were converted from WPF to WinForms mdail 9/29/2026

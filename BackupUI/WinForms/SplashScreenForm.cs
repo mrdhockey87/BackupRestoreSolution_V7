@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using SecureServerBackup.Models;
+
 namespace SecureServerBackup.WinForms
 {
 	internal sealed partial class SplashScreenForm : Form
@@ -179,12 +181,5 @@ namespace SecureServerBackup.WinForms
 			Top = primaryScreen.WorkingArea.Top + (primaryScreen.WorkingArea.Height - Height) / 2;
 		}
 
-		private sealed class SavedWindowPosition
-		{
-			public double Left { get; set; }
-			public double Top { get; set; }
-			public double Width { get; set; }
-			public double Height { get; set; }
-		}
 	}
 }

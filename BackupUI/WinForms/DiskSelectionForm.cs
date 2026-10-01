@@ -4,23 +4,13 @@ using System.Linq;
 using System.Management;
 using System.Windows.Forms;
 
+using SecureServerBackup.Models;
+
 namespace SecureServerBackup.WinForms
 {
 	public partial class DiskSelectionForm : Form
 	{
-		public class DiskInfo
-		{
-			public int DiskIndex { get; set; }
-			public string DisplayName { get; set; } = string.Empty;
-			public string Details { get; set; } = string.Empty;
-			public long SizeBytes { get; set; }
-			public string Model { get; set; } = string.Empty;
-			public string DeviceId { get; set; } = string.Empty;
-			public List<string> VolumeLetters { get; set; } = new();
-
-			// Fallback text (accessibility / keyboard-search); actual rendering is owner-drawn.
-			public override string ToString() => DisplayName;
-		}
+		
 
 		public DiskInfo? SelectedDisk { get; private set; }
 		private List<int> excludedDiskIndexes = new();

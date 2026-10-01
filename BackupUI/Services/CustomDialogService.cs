@@ -1,6 +1,8 @@
 using System;
 using System.Windows;
 using Forms = System.Windows.Forms;
+using SecureServerBackup.Enums;
+using SecureServerBackup.WinForms;
 
 namespace SecureServerBackup
 {

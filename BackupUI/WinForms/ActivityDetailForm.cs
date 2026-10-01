@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 
 using SecureServerBackup.Helpers;
+using SecureServerBackup.Enums;
 
 using SecureServerBackupCommon;
 

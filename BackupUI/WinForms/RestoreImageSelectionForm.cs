@@ -9,9 +9,12 @@ using System.Management;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+
+using SecureServerBackup.Helpers;
 using SecureServerBackup.Models;
 using SecureServerBackup.Services;
-using SecureServerBackup.Windows;
+using SecureServerBackup.Enums;
+
 using SecureServerBackupCommon;
 using BackupEngineInterop = SecureServerBackup.Services.BackupEngineInterop;
 
@@ -240,7 +243,7 @@ namespace SecureServerBackup.WinForms
 
 		private async Task LoadBackupStateAsync()
 		{
-			isHyperVBackupPoint = RestoreWindowNew.HyperVRestorePointHelper.IsHyperVBackupPoint(restoreSelection.RestorePoint.FilePath);
+			isHyperVBackupPoint = HyperVRestorePointHelper.IsHyperVBackupPoint(restoreSelection.RestorePoint.FilePath);
 
 			await Task.Run(() =>
 			{
@@ -726,7 +729,7 @@ namespace SecureServerBackup.WinForms
 			}
 			if (string.IsNullOrWhiteSpace(newHyperVVmPathTextBox.Text) && !string.IsNullOrWhiteSpace(virtualDiskPath))
 			{
-				newHyperVVmPathTextBox.Text = RestoreWindowNew.RegularHyperVRestoreHelper.GetDefaultHyperVVmStoragePath(virtualDiskPath);
+				newHyperVVmPathTextBox.Text = HyperVBackupTreeHelper.RegularHyperVRestoreHelper.GetDefaultHyperVVmStoragePath(virtualDiskPath);
 			}
 		}
 
@@ -1413,7 +1416,7 @@ namespace SecureServerBackup.WinForms
 
 			if (hyperVDiskAttachModeComboBox.SelectedIndex == 1)
 			{
-				string vmName = RestoreWindowNew.RegularHyperVRestoreHelper.NormalizeHyperVVmName(existingHyperVVmComboBox.SelectedItem?.ToString() ?? string.Empty);
+				string vmName = RegularHyperVRestoreHelper.NormalizeHyperVVmName(existingHyperVVmComboBox.SelectedItem?.ToString() ?? string.Empty);
 				if (string.IsNullOrWhiteSpace(vmName))
 				{
 					throw new InvalidOperationException("No Hyper-V virtual machine was selected for disk attachment.");

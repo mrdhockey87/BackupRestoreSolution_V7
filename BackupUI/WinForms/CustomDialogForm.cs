@@ -2,6 +2,8 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
+using SecureServerBackup.Enums;
+
 namespace SecureServerBackup.WinForms
 {
 	internal sealed partial class CustomDialogForm : Form
