@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace SecureServerBackup.Helpers
 {
 	public sealed record MountedHyperVGuestExecutionPartition(int PartitionNumber, string MountPath, bool CreatedMountDirectory);
@@ -27,6 +28,11 @@ namespace SecureServerBackup.Helpers
 		public string VirtualDiskPath { get; }
 
 		public IReadOnlyList<MountedHyperVGuestExecutionPartition> Partitions => _partitions;
+
+		private static string EscapePowerShellSingleQuotedString(string value)
+		{
+			return (value ?? string.Empty).Replace("'", "''", StringComparison.Ordinal);
+		}
 
 		public void Dispose()
 		{

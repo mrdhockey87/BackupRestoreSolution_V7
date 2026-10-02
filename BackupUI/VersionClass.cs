@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.8.48";
+        private static readonly string version_fallback_number = "7.4.8.50";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,10 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.8.50 Now I am getting errors from the test project that it can't find the Window classes, so I will have to fix that next. 
+ *                   I am not sure if this is going to be close to working. mdail 10/2/2026
+ *  Version 7.4.8.49 had to add the 2 restore windows that were missing the restore form & restore form new. There is still a lot
+ *                   of code missing from the restore new windows. Also fixing more of the errors that show when building the solution mdail 10/2/2026
  *  Version 7.4.8.48 Removed all of the WPF windows and code from the project since they are no longer needed, and the app is 
  *                   now fully WinForms. Also removed the use WPF from the project file. ALso converted WPF control to winform control
  *                   also made several edited to move modles, enums, helpersand services to there proper places, Also several edits to try

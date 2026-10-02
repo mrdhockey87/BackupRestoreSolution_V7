@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.IO;
 using SecureServerBackupCommon;
-using SecureServerBackup.Windows;
 using Xunit;
 
 namespace SecureServerBackup.Tests;

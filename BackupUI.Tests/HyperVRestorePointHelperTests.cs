@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using SecureServerBackup.Windows;
 using Xunit;
 
 namespace SecureServerBackup.Tests;

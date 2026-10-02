@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using SecureServerBackup.Services;
-using SecureServerBackup.Windows;
 using Xunit;
 
 namespace SecureServerBackup.Tests;

@@ -2057,7 +2057,7 @@ namespace SecureServerBackup.WinForms
 				return backup.BackupPath;
 			}
 		}
-		private void MountBackup_Click(object sender, DataGridViewCellEventArgs e)
+		private async void MountBackup_Click(object sender, DataGridViewCellEventArgs e)
 		{
 
 			if (sender is System.Windows.Controls.Button btn && btn.Tag is AvailableBackupInfo backup)

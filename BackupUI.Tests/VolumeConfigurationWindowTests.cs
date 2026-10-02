@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using SecureServerBackup.Models;
-using SecureServerBackup.Windows;
 using Xunit;
 
 namespace SecureServerBackup.Tests;

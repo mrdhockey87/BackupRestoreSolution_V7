@@ -1,3 +1,11 @@
+using SecureServerBackup.Enums;
+using SecureServerBackup.Helpers;
+using SecureServerBackup.Models;
+using SecureServerBackup.Services;
+using SecureServerBackup.WinForm;
+
+using SecureServerBackupCommon;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,12 +18,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using SecureServerBackup.Helpers;
-using SecureServerBackup.Models;
-using SecureServerBackup.Services;
-using SecureServerBackup.Enums;
-
-using SecureServerBackupCommon;
 using BackupEngineInterop = SecureServerBackup.Services.BackupEngineInterop;
 
 namespace SecureServerBackup.WinForms
@@ -713,23 +715,23 @@ namespace SecureServerBackup.WinForms
 		{
 			if (isHyperVBackupPoint)
 			{
-				hyperVVmNameTextBox.Text = RestoreWindowNew.HyperVRestorePointHelper.ResolveVmName(restoreSelection.RestorePoint.FilePath);
+				hyperVVmNameTextBox.Text = HyperVRestorePointHelper.ResolveVmName(restoreSelection.RestorePoint.FilePath);
 			}
 
 			if (string.IsNullOrWhiteSpace(hyperVVirtualDiskPathTextBox.Text))
 			{
 				string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-				hyperVVirtualDiskPathTextBox.Text = RestoreWindowNew.RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(defaultDirectory, restoreSelection.Backup.BackupName);
+				hyperVVirtualDiskPathTextBox.Text = RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(defaultDirectory, restoreSelection.Backup.BackupName);
 			}
 
 			string virtualDiskPath = hyperVVirtualDiskPathTextBox.Text.Trim();
 			if (string.IsNullOrWhiteSpace(newHyperVVmNameTextBox.Text) && !string.IsNullOrWhiteSpace(virtualDiskPath))
 			{
-				newHyperVVmNameTextBox.Text = RestoreWindowNew.RegularHyperVRestoreHelper.GetDefaultHyperVVmName(virtualDiskPath);
+				newHyperVVmNameTextBox.Text = RegularHyperVRestoreHelper.GetDefaultHyperVVmName(virtualDiskPath);
 			}
 			if (string.IsNullOrWhiteSpace(newHyperVVmPathTextBox.Text) && !string.IsNullOrWhiteSpace(virtualDiskPath))
 			{
-				newHyperVVmPathTextBox.Text = HyperVBackupTreeHelper.RegularHyperVRestoreHelper.GetDefaultHyperVVmStoragePath(virtualDiskPath);
+				newHyperVVmPathTextBox.Text = RegularHyperVRestoreHelper.GetDefaultHyperVVmStoragePath(virtualDiskPath);
 			}
 		}
 
@@ -857,7 +859,7 @@ namespace SecureServerBackup.WinForms
 			}
 
 			if (isHyperVBackupPoint && (restoreTargetKind == RestoreTargetKind.Disk || restoreTargetKind == RestoreTargetKind.Volume) &&
-				RestoreWindowNew.HyperVRestorePointHelper.FindPrimaryVirtualDisk(restoreSelection.RestorePoint.FilePath) == null)
+				HyperVRestorePointHelper.FindPrimaryVirtualDisk(restoreSelection.RestorePoint.FilePath) == null)
 			{
 				MessageBox.Show(this, "The selected Hyper-V backup point does not contain a guest VHD or VHDX file that can be restored to a disk or volume target.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 				return false;
@@ -1482,7 +1484,7 @@ namespace SecureServerBackup.WinForms
 			if (orderedVolumes.Count == 1 && targetVolumes.Count == 1)
 			{
 				long requestedSize = GetRequestedRestoreSize(orderedVolumes[0]);
-				if (RestoreWindowNew.ShouldReuseExistingTargetVolumeLayout(requestedSize, targetVolumes[0].Size, targetDiskSize))
+				if (RestoreFormNew.ShouldReuseExistingTargetVolumeLayout(requestedSize, targetVolumes[0].Size, targetDiskSize))
 				{
 					string targetPath = EnsureTrailingSlash(targetVolumes[0].Path);
 					FormatTargetVolume(targetPath, GetSupportedRestoreFileSystem(orderedVolumes[0]), orderedVolumes[0].Label);
@@ -1525,7 +1527,8 @@ namespace SecureServerBackup.WinForms
 			string[] partitionTypes = orderedVolumes.Select(volume => volume.PartitionType ?? string.Empty).ToArray();
 			long targetDiskCapacityBytes = GetTargetDiskCapacityBytes(targetDiskNumber);
 			long requestedTotalBytes = targetSizes.Sum();
-			bool expandLastPartition = RestoreWindowNew.ShouldExpandLastPartition(requestedTotalBytes, targetDiskCapacityBytes);
+			//need to fix ShouldExpandLastPartition missing , so for now just set to false mdail 10-2-2026
+			bool expandLastPartition = false;// RestoreFormNew.ShouldExpandLastPartition(requestedTotalBytes, targetDiskCapacityBytes);
 
 			string sizeArray = string.Join(",", targetSizes.Select(size => $"{size}L"));
 			string fileSystemArray = string.Join(",", fileSystems.Select(value => $"'{EscapePowerShellSingleQuotedString(value)}'"));
@@ -1684,7 +1687,7 @@ namespace SecureServerBackup.WinForms
 
 		private MountedVirtualDiskScope MountPrimaryHyperVVirtualDisk(string backupPointPath)
 		{
-			string? virtualDiskPath = RestoreWindowNew.HyperVRestorePointHelper.FindPrimaryVirtualDisk(backupPointPath);
+			string? virtualDiskPath = HyperVRestorePointHelper.FindPrimaryVirtualDisk(backupPointPath);
 			if (string.IsNullOrWhiteSpace(virtualDiskPath))
 			{
 				throw new InvalidOperationException("No VHD or VHDX guest disk was found in the selected Hyper-V backup point.");
@@ -1934,7 +1937,7 @@ namespace SecureServerBackup.WinForms
 
 		private static void CreateNewHyperVVm(string vmName, string vmStoragePath, string virtualDiskPath, int generation, bool startAfterCreate)
 		{
-			string script = RestoreWindowNew.RegularHyperVRestoreHelper.BuildCreateVirtualMachineScript(vmName, vmStoragePath, virtualDiskPath, generation, startAfterCreate);
+			string script = RegularHyperVRestoreHelper.BuildCreateVirtualMachineScript(vmName, vmStoragePath, virtualDiskPath, generation, startAfterCreate);
 			var process = Process.Start(new ProcessStartInfo
 			{
 				FileName = "powershell.exe",
@@ -2019,7 +2022,7 @@ namespace SecureServerBackup.WinForms
 				: Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 			string initialFileName = !string.IsNullOrWhiteSpace(currentPath)
 				? Path.GetFileName(currentPath)
-				: Path.GetFileName(RestoreWindowNew.RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(initialDirectory, restoreSelection.Backup.BackupName));
+				: Path.GetFileName(RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(initialDirectory, restoreSelection.Backup.BackupName));
 
 			using var dialog = new SaveFileDialog
 			{

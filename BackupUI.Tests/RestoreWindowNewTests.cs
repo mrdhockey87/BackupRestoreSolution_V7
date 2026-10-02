@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using SecureServerBackupCommon;
-using SecureServerBackup.Windows;
 using SecureServerBackup.Models;
 using SecureServerBackup.WinForms;
 using Xunit;

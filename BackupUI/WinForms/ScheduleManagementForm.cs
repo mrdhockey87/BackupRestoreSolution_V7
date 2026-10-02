@@ -7,6 +7,8 @@ using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using SecureServerBackup.Services;
+using SecureServerBackup.Enums;
+
 using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
