@@ -11,7 +11,6 @@ namespace SecureServerBackup.Helpers
 	internal sealed record CloneHyperVPaths(string RootDirectory, string HyperVSystemDirectory, string HyperVDiskDirectory, string VirtualDiskPath, string VmName);
 
 	public sealed record HyperVVirtualDiskInfo(string VirtualMachineName, string VirtualMachineDisplayName, string VirtualDiskPath);
-/*
 	public static class HyperVBackupTreeHelper
 	{
 		public static string NormalizeSavedHyperVSystemName(string? value)
@@ -28,7 +27,7 @@ namespace SecureServerBackup.Helpers
 				normalizedValue = normalizedValue[hyperVPrefix.Length..].Trim();
 			}
 
-			return NormalizeHyperVVmName(normalizedValue);
+			return RegularHyperVRestoreHelper.NormalizeHyperVVmName(normalizedValue);
 		}
 
 		public static IReadOnlyList<HyperVVirtualDiskInfo> ParseVirtualDiskEnumeration(string? output)
@@ -47,7 +46,7 @@ namespace SecureServerBackup.Helpers
 					continue;
 				}
 
-				string vmName = RestoreWindowNew.RegularHyperVRestoreHelper.NormalizeHyperVVmName(parts[0].Trim());
+				string vmName = RegularHyperVRestoreHelper.NormalizeHyperVVmName(parts[0].Trim());
 				string vmDisplayName = string.IsNullOrWhiteSpace(parts[1]) ? vmName : parts[1].Trim();
 				string virtualDiskPath = parts[2].Trim().Trim('"');
 
@@ -180,5 +179,5 @@ namespace SecureServerBackup.Helpers
 			string suffix = path[(prefixIndex + physicalDrivePrefix.Length)..].Trim();
 			return int.TryParse(suffix, out diskNumber);
 		}
-	}*/
+	}
 }

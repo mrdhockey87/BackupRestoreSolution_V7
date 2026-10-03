@@ -2,10 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using SecureServerBackup.Enums;
 using SecureServerBackupCommon;
 using SecureServerBackup.Models;
 using SecureServerBackup.WinForms;
 using Xunit;
+
+using BackupWindowNew = SecureServerBackup.WinForms.BackupWindowNewForm;
+using RestoreWindowNew = SecureServerBackup.WinForm.RestoreFormNew;
 
 namespace SecureServerBackup.Tests;
 

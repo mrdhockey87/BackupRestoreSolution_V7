@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.8.50";
+        private static readonly string version_fallback_number = "7.4.8.54";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,10 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.8.54 Fixed the BackupUI tests for the renamed WinForms restore and backup windows and restored the helper methods they cover mdail 10/3/2026
+ *  Version 7.4.8.53 Fixed RestoreFormNew so lstRestorePoints is created in the designer and wired to the restore point list handlers mdail 10/3/2026
+ *  Version 7.4.8.52 Added the ToggleSelectListBox to the controls and had Claude fix it so it working in designer mdail 10/3/2026
+ *  Version 7.4.8.51 Replaced the RestoreFormNew with the one that Claude online generated for me, so it should be working properly now. mdail 10/3/2026
  *  Version 7.4.8.50 Now I am getting errors from the test project that it can't find the Window classes, so I will have to fix that next. 
  *                   I am not sure if this is going to be close to working. mdail 10/2/2026
  *  Version 7.4.8.49 had to add the 2 restore windows that were missing the restore form & restore form new. There is still a lot

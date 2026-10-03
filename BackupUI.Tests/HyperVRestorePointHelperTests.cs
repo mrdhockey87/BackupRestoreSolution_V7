@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using SecureServerBackup.Helpers;
 using Xunit;
 
 namespace SecureServerBackup.Tests;
@@ -19,7 +20,7 @@ public sealed class HyperVRestorePointHelperTests : IDisposable
     {
         string backupPoint = CreateBackupPointDirectory();
 
-        bool result = RestoreWindowNew.HyperVRestorePointHelper.IsHyperVBackupPoint(backupPoint);
+        bool result = HyperVRestorePointHelper.IsHyperVBackupPoint(backupPoint);
 
         Assert.True(result);
     }
@@ -32,7 +33,7 @@ public sealed class HyperVRestorePointHelperTests : IDisposable
         Directory.CreateDirectory(exportPath);
         File.WriteAllText(Path.Combine(backupPoint, "hyperv_backup_info.txt"), $"ExportPath={exportPath}{Environment.NewLine}");
 
-        string? result = RestoreWindowNew.HyperVRestorePointHelper.ResolveExportPath(backupPoint);
+        string? result = HyperVRestorePointHelper.ResolveExportPath(backupPoint);
 
         Assert.Equal(exportPath, result);
     }
@@ -47,7 +48,7 @@ public sealed class HyperVRestorePointHelperTests : IDisposable
         File.WriteAllBytes(smallerDisk, new byte[32]);
         File.WriteAllBytes(largerDisk, new byte[128]);
 
-        string? result = RestoreWindowNew.HyperVRestorePointHelper.FindPrimaryVirtualDisk(backupPoint);
+        string? result = HyperVRestorePointHelper.FindPrimaryVirtualDisk(backupPoint);
 
         Assert.Equal(largerDisk, result);
     }
@@ -65,7 +66,7 @@ public sealed class HyperVRestorePointHelperTests : IDisposable
         File.WriteAllBytes(smallerDisk, new byte[8]);
         File.WriteAllBytes(largerDisk, new byte[64]);
 
-        string? result = RestoreWindowNew.HyperVRestorePointHelper.FindPrimaryVirtualDisk(backupPoint);
+        string? result = HyperVRestorePointHelper.FindPrimaryVirtualDisk(backupPoint);
 
         Assert.Equal(largerDisk, result);
     }
@@ -75,7 +76,7 @@ public sealed class HyperVRestorePointHelperTests : IDisposable
     {
         string backupPoint = CreateBackupPointDirectory();
 
-        string result = RestoreWindowNew.HyperVRestorePointHelper.ResolveVmName(backupPoint);
+        string result = HyperVRestorePointHelper.ResolveVmName(backupPoint);
 
         Assert.Equal("Full_20260429_120000", result);
     }
@@ -88,7 +89,7 @@ public sealed class HyperVRestorePointHelperTests : IDisposable
             Path.Combine(backupPoint, "hyperv_backup_info.txt"),
             $"Type=Full{Environment.NewLine}PointId=20260429_120000{Environment.NewLine}VmName=Win10OEM{Environment.NewLine}");
 
-        string result = RestoreWindowNew.HyperVRestorePointHelper.ResolveVmName(backupPoint);
+        string result = HyperVRestorePointHelper.ResolveVmName(backupPoint);
 
         Assert.Equal("Win10OEM", result);
     }
@@ -99,7 +100,7 @@ public sealed class HyperVRestorePointHelperTests : IDisposable
         string backupFile = Path.Combine(_tempDirectory, "Win10OEM.ssb");
         File.WriteAllText(backupFile, string.Empty);
 
-        bool result = RestoreWindowNew.HyperVRestorePointHelper.IsHyperVBackupPoint(backupFile);
+        bool result = HyperVRestorePointHelper.IsHyperVBackupPoint(backupFile);
 
         Assert.False(result);
     }

@@ -1232,6 +1232,209 @@ namespace SecureServerBackup.WinForms
 			return entries;
 		}
 
+		internal static List<DriveTreeItem> BuildDirectoryChildItems(DriveTreeItem parentItem, string rootPath)
+		{
+			ArgumentNullException.ThrowIfNull(parentItem);
+			ArgumentException.ThrowIfNullOrWhiteSpace(rootPath);
+
+			List<DriveTreeItem> children = [];
+
+			foreach (string directoryPath in Directory.EnumerateDirectories(rootPath))
+			{
+				DirectoryInfo directoryInfo = new(directoryPath);
+				children.Add(CreateDirectoryChildItem(parentItem, directoryInfo.FullName, directoryInfo.Name, DriveTreeItemType.Folder));
+			}
+
+			foreach (string filePath in Directory.EnumerateFiles(rootPath))
+			{
+				FileInfo fileInfo = new(filePath);
+				children.Add(CreateDirectoryChildItem(parentItem, fileInfo.FullName, fileInfo.Name, DriveTreeItemType.File));
+			}
+
+			return children;
+		}
+
+		internal static bool IsSelectedFilesAndFoldersSelectionAllowed(IEnumerable<DriveTreeItem> selectedItems)
+		{
+			ArgumentNullException.ThrowIfNull(selectedItems);
+
+			foreach (DriveTreeItem item in selectedItems)
+			{
+				if (item.ItemType is not DriveTreeItemType.File and not DriveTreeItemType.Folder)
+				{
+					return false;
+				}
+
+				if (HyperVGuestSelectionPath.IsEncodedPath(item.FullPath) &&
+					!HyperVGuestSelectionPath.TryParse(item.FullPath, out HyperVGuestSelectionInfo? selection))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		internal static bool IsValidWindowsComputerName(string? name)
+		{
+			if (string.IsNullOrWhiteSpace(name) || name.Length > 15)
+			{
+				return false;
+			}
+
+			if (name.StartsWith("-", StringComparison.Ordinal) || name.EndsWith("-", StringComparison.Ordinal))
+			{
+				return false;
+			}
+
+			return name.All(ch => char.IsLetterOrDigit(ch) || ch == '-');
+		}
+
+		internal static IReadOnlyList<string> GetReplayPathsForJob(BackupJob job)
+		{
+			ArgumentNullException.ThrowIfNull(job);
+
+			if ((job.Type == BackupType.CloneHyperVSystem || job.Type == BackupType.ExportHyperVSystem) &&
+				job.HyperVMachines.Count > 0)
+			{
+				return job.HyperVMachines
+					.Where(name => !string.IsNullOrWhiteSpace(name))
+					.Select(NormalizeHyperVDisplayName)
+					.Where(name => !string.IsNullOrWhiteSpace(name))
+					.Distinct(StringComparer.OrdinalIgnoreCase)
+					.ToArray();
+			}
+
+			return job.SourcePaths
+				.Where(path => !string.IsNullOrWhiteSpace(path))
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.ToArray();
+		}
+
+		internal static SecureServerBackup.Helpers.CloneHyperVPaths CreateCloneHyperVPaths(BackupJob job)
+		{
+			ArgumentNullException.ThrowIfNull(job);
+
+			if (string.IsNullOrWhiteSpace(job.DestinationPath))
+			{
+				throw new InvalidOperationException("Clone Hyper-V System requires a destination folder.");
+			}
+
+			bool renameRequested = job.RenameHyperVSystem && !string.IsNullOrWhiteSpace(job.RenameHyperVSystemName);
+			bool diskClone = job.Target == BackupTarget.Disk && job.SourcePaths.Count > 0;
+			string vmName = renameRequested
+				? job.RenameHyperVSystemName!.Trim()
+				: diskClone
+					? Environment.MachineName
+					: job.Name;
+			string rootDirectoryName = renameRequested ? vmName : job.Name;
+			string rootDirectory = Path.Combine(job.DestinationPath, rootDirectoryName);
+
+			Directory.CreateDirectory(rootDirectory);
+
+			string virtualDiskPath = Path.Combine(rootDirectory, $"{vmName}.vhdx");
+			return new SecureServerBackup.Helpers.CloneHyperVPaths(rootDirectory, rootDirectory, rootDirectory, virtualDiskPath, vmName);
+		}
+
+		internal static string BuildMissingSavedSelectionsWarningMessage(BackupType backupType, IReadOnlyCollection<string> missingSelections)
+		{
+			ArgumentNullException.ThrowIfNull(missingSelections);
+
+			string joinedSelections = string.Join(Environment.NewLine, missingSelections.Where(selection => !string.IsNullOrWhiteSpace(selection)));
+			bool preserveRemainingSelections = backupType == BackupType.SelectedFilesAndFolders;
+
+			string prefix = preserveRemainingSelections
+				? "The following saved selections were removed from the current selection list:"
+				: "The following saved selections were missing, so the current selection list was cleared:";
+
+			return string.IsNullOrWhiteSpace(joinedSelections)
+				? prefix
+				: prefix + Environment.NewLine + joinedSelections;
+		}
+
+		private static DriveTreeItem CreateDirectoryChildItem(DriveTreeItem parentItem, string resolvedPath, string name, DriveTreeItemType itemType)
+		{
+			ArgumentNullException.ThrowIfNull(parentItem);
+			ArgumentException.ThrowIfNullOrWhiteSpace(resolvedPath);
+			ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+			string fullPath = resolvedPath;
+			if (parentItem.ItemType == DriveTreeItemType.HyperVVolume &&
+				HyperVGuestSelectionPath.TryParse(parentItem.FullPath, out HyperVGuestSelectionInfo? parentSelection))
+			{
+				string relativePath = Path.GetRelativePath(parentItem.ResolvedPath, resolvedPath)
+					.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+
+				fullPath = HyperVGuestSelectionPath.Encode(
+					itemType == DriveTreeItemType.File ? HyperVGuestSelectionKind.File : HyperVGuestSelectionKind.Folder,
+					parentSelection!.VirtualMachineName,
+					parentSelection.VirtualDiskPath,
+					parentSelection.PartitionNumber,
+					relativePath);
+			}
+
+			return new DriveTreeItem
+			{
+				Name = name,
+				FullPath = fullPath,
+				ResolvedPath = resolvedPath,
+				VirtualMachineName = parentItem.VirtualMachineName,
+				VirtualDiskPath = parentItem.VirtualDiskPath,
+				PartitionNumber = parentItem.PartitionNumber,
+				ItemType = itemType,
+				Parent = parentItem
+			};
+		}
+
+		private static string NormalizeHyperVDisplayName(string name)
+		{
+			ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+			string normalized = name.Trim();
+			const string hyperVPrefix = "Hyper-V:";
+			if (normalized.StartsWith(hyperVPrefix, StringComparison.OrdinalIgnoreCase))
+			{
+				normalized = normalized[hyperVPrefix.Length..].Trim();
+			}
+
+			int statusIndex = normalized.LastIndexOf(" (", StringComparison.Ordinal);
+			if (statusIndex > 0 && normalized.EndsWith(")", StringComparison.Ordinal))
+			{
+				normalized = normalized[..statusIndex].TrimEnd();
+			}
+
+			return normalized;
+		}
+
+		private static bool HasBackupArchive(string directoryPath, string archiveName)
+		{
+			if (string.IsNullOrWhiteSpace(directoryPath) || string.IsNullOrWhiteSpace(archiveName))
+			{
+				return false;
+			}
+
+			string filePath = Path.Combine(directoryPath, archiveName + ".ssb");
+			string folderPath = Path.Combine(directoryPath, archiveName + ".ssb");
+			return File.Exists(filePath) || Directory.Exists(folderPath);
+		}
+
+		private static bool RequiresLazyLoad(DriveTreeItem item)
+		{
+			ArgumentNullException.ThrowIfNull(item);
+
+			if (item.ChildrenLoaded)
+			{
+				return false;
+			}
+
+			return item.ItemType switch
+			{
+				DriveTreeItemType.Volume or DriveTreeItemType.Folder or DriveTreeItemType.HyperVVolume => !string.IsNullOrWhiteSpace(item.ResolvedPath),
+				DriveTreeItemType.HyperVVirtualDisk => !string.IsNullOrWhiteSpace(item.VirtualDiskPath) || !string.IsNullOrWhiteSpace(item.ResolvedPath),
+				_ => false
+			};
+		}
+
 		private static TreeNode CreatePlaceholderNode() => new("Loading...");
 
 		private static bool IsPlaceholderNode(TreeNode node)

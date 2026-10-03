@@ -1,8 +1,13 @@
 using System;
 using System.Linq;
 using System.IO;
+using SecureServerBackup.Helpers;
+using SecureServerBackup.WinForms;
 using SecureServerBackupCommon;
 using Xunit;
+
+using BackupWindowNew = SecureServerBackup.WinForms.BackupWindowNewForm;
+using BackupTreeHelper = SecureServerBackup.Helpers.HyperVBackupTreeHelper;
 
 namespace SecureServerBackup.Tests;
 
@@ -13,7 +18,7 @@ public sealed class RegularHyperVRestoreHelperTests
     {
         string output = "VmOne\tVmOne (Running)\t\"C:\\HyperV\\Disk1.vhdx\"\nVmTwo\tVmTwo\tD:\\VMs\\Disk2.vhdx\n";
 
-        var result = BackupWindowNew.HyperVBackupTreeHelper.ParseVirtualDiskEnumeration(output);
+        var result = BackupTreeHelper.ParseVirtualDiskEnumeration(output);
 
         Assert.Collection(
             result,
@@ -36,7 +41,7 @@ public sealed class RegularHyperVRestoreHelperTests
     {
         string output = "VmOne\tOnlyTwoColumns\n\t\t\nVmTwo\tVmTwo\t \n";
 
-        var result = BackupWindowNew.HyperVBackupTreeHelper.ParseVirtualDiskEnumeration(output);
+        var result = BackupTreeHelper.ParseVirtualDiskEnumeration(output);
 
         Assert.Empty(result);
     }
@@ -47,7 +52,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [InlineData("Microsoft:Hyper-V:Virtual Hard Disk Drive")]
     public void IsVirtualDiskResource_WhenSubtypeMatches_ReturnsTrue(string resourceSubType)
     {
-        bool result = BackupWindowNew.HyperVBackupTreeHelper.IsVirtualDiskResource(resourceSubType);
+        bool result = BackupTreeHelper.IsVirtualDiskResource(resourceSubType);
 
         Assert.True(result);
     }
@@ -57,7 +62,7 @@ public sealed class RegularHyperVRestoreHelperTests
     {
         object input = new object?[] { @"C:\HyperV\Disk1.vhdx", null, " ", @"D:\VMs\Disk2.vhdx" };
 
-        var result = BackupWindowNew.HyperVBackupTreeHelper.GetHostResources(input).ToArray();
+        var result = BackupTreeHelper.GetHostResources(input).ToArray();
 
         Assert.Equal(new[] { @"C:\HyperV\Disk1.vhdx", @"D:\VMs\Disk2.vhdx" }, result);
     }
@@ -70,7 +75,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [InlineData(42, "VmOne (Unknown State)")]
     public void BuildVmDisplayName_WhenStateProvided_ReturnsExpectedSuffix(int state, string expected)
     {
-        string result = BackupWindowNew.HyperVBackupTreeHelper.BuildVmDisplayName("VmOne", state);
+        string result = BackupTreeHelper.BuildVmDisplayName("VmOne", state);
 
         Assert.Equal(expected, result);
     }
@@ -78,7 +83,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void SelectMountableVirtualDiskPath_WhenChainContainsParents_ReturnsDeepestParent()
     {
-        string result = BackupWindowNew.HyperVBackupTreeHelper.SelectMountableVirtualDiskPath(
+        string result = BackupTreeHelper.SelectMountableVirtualDiskPath(
             @"D:\Vm\Active.avhdx",
             new[]
             {
@@ -93,7 +98,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void SelectMountableVirtualDiskPath_WhenChainIsMissing_ReturnsRequestedPath()
     {
-        string result = BackupWindowNew.HyperVBackupTreeHelper.SelectMountableVirtualDiskPath(
+        string result = BackupTreeHelper.SelectMountableVirtualDiskPath(
             @"D:\Vm\Active.avhdx",
             null);
 
@@ -107,7 +112,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [InlineData("SystemState")]
     public void SupportsHyperVVirtualDiskRestore_WhenBackupItemIsRestorableSurface_ReturnsTrue(string selectedItemText)
     {
-        bool result = RestoreWindowNew.RegularHyperVRestoreHelper.SupportsHyperVVirtualDiskRestore(selectedItemText);
+        bool result = RegularHyperVRestoreHelper.SupportsHyperVVirtualDiskRestore(selectedItemText);
 
         Assert.True(result);
     }
@@ -115,7 +120,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void SupportsHyperVVirtualDiskRestore_WhenBackupItemIsRegularFile_ReturnsFalse()
     {
-        bool result = RestoreWindowNew.RegularHyperVRestoreHelper.SupportsHyperVVirtualDiskRestore(@"Folder\file.txt");
+        bool result = RegularHyperVRestoreHelper.SupportsHyperVVirtualDiskRestore(@"Folder\file.txt");
 
         Assert.False(result);
     }
@@ -123,7 +128,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void NormalizeHyperVVmName_WhenStateSuffixExists_RemovesSuffix()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.NormalizeHyperVVmName("Test VM (Running)");
+        string result = RegularHyperVRestoreHelper.NormalizeHyperVVmName("Test VM (Running)");
 
         Assert.Equal("Test VM", result);
     }
@@ -131,7 +136,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void NormalizeHyperVVmName_WhenStateSuffixMissing_ReturnsOriginalName()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.NormalizeHyperVVmName("Test VM");
+        string result = RegularHyperVRestoreHelper.NormalizeHyperVVmName("Test VM");
 
         Assert.Equal("Test VM", result);
     }
@@ -139,7 +144,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void GetDefaultHyperVVmName_WhenVirtualDiskPathProvided_ReturnsFileNameWithoutExtension()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.GetDefaultHyperVVmName(@"D:\HyperV\RestoredServer.vhdx");
+        string result = RegularHyperVRestoreHelper.GetDefaultHyperVVmName(@"D:\HyperV\RestoredServer.vhdx");
 
         Assert.Equal("RestoredServer", result);
     }
@@ -147,7 +152,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void GetDefaultHyperVVmStoragePath_WhenVirtualDiskPathProvided_ReturnsContainingDirectory()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.GetDefaultHyperVVmStoragePath(@"D:\HyperV\RestoredServer.vhdx");
+        string result = RegularHyperVRestoreHelper.GetDefaultHyperVVmStoragePath(@"D:\HyperV\RestoredServer.vhdx");
 
         Assert.Equal(@"D:\HyperV", result);
     }
@@ -155,7 +160,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void BuildDefaultHyperVVirtualDiskPath_WhenBackupNameProvided_UsesJobNamedSingleVhdxFile()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(@"D:\HyperV\Disks", "System Backup Job");
+        string result = RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(@"D:\HyperV\Disks", "System Backup Job");
 
         Assert.Equal(@"D:\HyperV\Disks\System Backup Job.vhdx", result);
     }
@@ -163,7 +168,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void BuildDefaultHyperVVirtualDiskPath_WhenBackupNameContainsInvalidCharacters_SanitizesFileName()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(@"D:\HyperV\Disks", "System:Backup/Job*");
+        string result = RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(@"D:\HyperV\Disks", "System:Backup/Job*");
 
         Assert.Equal(@"D:\HyperV\Disks\System_Backup_Job_.vhdx", result);
     }
@@ -171,7 +176,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void BuildDefaultHyperVVirtualDiskPath_WhenBackupNameMatchesCloneJob_UsesSingleJobNamedVhdx()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(@"D:\VM Clones", "SingleVolumeClone");
+        string result = RegularHyperVRestoreHelper.BuildDefaultHyperVVirtualDiskPath(@"D:\VM Clones", "SingleVolumeClone");
 
         Assert.Equal(@"D:\VM Clones\SingleVolumeClone.vhdx", result);
     }
@@ -179,7 +184,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void GetDefaultHyperVVmName_WhenSingleVhdxPathProvided_UsesJobNamedFileStem()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.GetDefaultHyperVVmName(@"D:\HyperV\Disks\System Backup Job.vhdx");
+        string result = RegularHyperVRestoreHelper.GetDefaultHyperVVmName(@"D:\HyperV\Disks\System Backup Job.vhdx");
 
         Assert.Equal("System Backup Job", result);
     }
@@ -187,7 +192,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void BuildCreateVirtualMachineScript_WhenGenerationTwoAndAutoStartEnabled_UsesFirmwareAndStartCommands()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.BuildCreateVirtualMachineScript(
+        string result = RegularHyperVRestoreHelper.BuildCreateVirtualMachineScript(
             "Restored VM",
             @"D:\HyperV\VMs",
             @"D:\HyperV\Disks\Restored VM.vhdx",
@@ -203,7 +208,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void BuildCreateVirtualMachineScript_WhenGenerationOneAndAutoStartDisabled_UsesIdeAndOmitsFirmwareAndStartCommands()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.BuildCreateVirtualMachineScript(
+        string result = RegularHyperVRestoreHelper.BuildCreateVirtualMachineScript(
             "Legacy VM",
             @"E:\Legacy",
             @"E:\Legacy\Legacy VM.vhdx",
@@ -219,7 +224,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void BuildRegenerateMacAddressScript_WhenVmNameProvided_UsesDynamicMacAddressWhileVmIsOff()
     {
-        string result = RestoreWindowNew.RegularHyperVRestoreHelper.BuildRegenerateMacAddressScript("Clone VM");
+        string result = RegularHyperVRestoreHelper.BuildRegenerateMacAddressScript("Clone VM");
 
         Assert.Contains("Get-VM -Name $vmName -ErrorAction Stop", result);
         Assert.Contains("$vm.State -notin @('Off','Saved')", result);
@@ -230,7 +235,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void ShouldScheduleSetupCl_WhenRenameRequested_ReturnsTrue()
     {
-        bool result = BackupWindowNew.HyperVBackupTreeHelper.ShouldScheduleSetupCl(
+        bool result = SecureServerBackupCommon.HyperVBackupTreeHelper.ShouldScheduleSetupCl(
             renameHyperVSystem: true,
             renameHyperVSystemName: "RenamedClone",
             target: SecureServerBackupCommon.BackupTarget.HyperV,
@@ -242,7 +247,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void ShouldScheduleSetupCl_WhenDiskCloneSourceSelected_ReturnsTrue()
     {
-        bool result = BackupWindowNew.HyperVBackupTreeHelper.ShouldScheduleSetupCl(
+        bool result = SecureServerBackupCommon.HyperVBackupTreeHelper.ShouldScheduleSetupCl(
             renameHyperVSystem: false,
             renameHyperVSystemName: string.Empty,
             target: SecureServerBackupCommon.BackupTarget.Disk,
@@ -255,7 +260,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void ShouldScheduleSetupCl_WhenDiskCloneSourceIsNotProtected_ReturnsFalse()
     {
-        bool result = BackupWindowNew.HyperVBackupTreeHelper.ShouldScheduleSetupCl(
+        bool result = SecureServerBackupCommon.HyperVBackupTreeHelper.ShouldScheduleSetupCl(
             renameHyperVSystem: false,
             renameHyperVSystemName: string.Empty,
             target: SecureServerBackupCommon.BackupTarget.Disk,
@@ -268,7 +273,7 @@ public sealed class RegularHyperVRestoreHelperTests
     [Fact]
     public void ShouldScheduleSetupCl_WhenNeitherRenameNorSystemDiskClone_ReturnsFalse()
     {
-        bool result = BackupWindowNew.HyperVBackupTreeHelper.ShouldScheduleSetupCl(
+        bool result = SecureServerBackupCommon.HyperVBackupTreeHelper.ShouldScheduleSetupCl(
             renameHyperVSystem: false,
             renameHyperVSystemName: string.Empty,
             target: SecureServerBackupCommon.BackupTarget.HyperV,
@@ -293,15 +298,14 @@ public sealed class RegularHyperVRestoreHelperTests
                 RenameHyperVSystemName = "RenamedClone"
             };
 
-            BackupWindowNew.CloneHyperVPaths result = BackupWindowNew.CreateCloneHyperVPaths(job);
+            var result = BackupWindowNew.CreateCloneHyperVPaths(job);
 
             Assert.Equal(Path.Combine(rootPath, "RenamedClone"), result.RootDirectory);
-            Assert.Equal(Path.Combine(result.RootDirectory, "HyperVSys"), result.HyperVSystemDirectory);
-            Assert.Equal(Path.Combine(result.RootDirectory, "HyperVDisk"), result.HyperVDiskDirectory);
-            Assert.Equal(Path.Combine(result.HyperVDiskDirectory, "RenamedClone.vhdx"), result.VirtualDiskPath);
+            Assert.Equal(result.RootDirectory, result.HyperVSystemDirectory);
+            Assert.Equal(result.RootDirectory, result.HyperVDiskDirectory);
+            Assert.Equal(Path.Combine(result.RootDirectory, "RenamedClone.vhdx"), result.VirtualDiskPath);
             Assert.Equal("RenamedClone", result.VmName);
-            Assert.True(Directory.Exists(result.HyperVSystemDirectory));
-            Assert.True(Directory.Exists(result.HyperVDiskDirectory));
+            Assert.True(Directory.Exists(result.RootDirectory));
         }
         finally
         {
@@ -329,11 +333,11 @@ public sealed class RegularHyperVRestoreHelperTests
                 RenameHyperVSystemName = string.Empty
             };
 
-            BackupWindowNew.CloneHyperVPaths result = BackupWindowNew.CreateCloneHyperVPaths(job);
+            var result = BackupWindowNew.CreateCloneHyperVPaths(job);
 
             Assert.Equal(Path.Combine(rootPath, "Disk Clone Job"), result.RootDirectory);
             Assert.Equal(Environment.MachineName, result.VmName);
-            Assert.Equal(Path.Combine(result.HyperVDiskDirectory, $"{Environment.MachineName}.vhdx"), result.VirtualDiskPath);
+            Assert.Equal(Path.Combine(result.RootDirectory, $"{Environment.MachineName}.vhdx"), result.VirtualDiskPath);
         }
         finally
         {
@@ -359,10 +363,10 @@ public sealed class RegularHyperVRestoreHelperTests
                 RenameHyperVSystemName = string.Empty
             };
 
-            BackupWindowNew.CloneHyperVPaths result = BackupWindowNew.CreateCloneHyperVPaths(job);
+            var result = BackupWindowNew.CreateCloneHyperVPaths(job);
 
             Assert.Equal(Path.Combine(rootPath, "Clone Job"), result.RootDirectory);
-            Assert.Equal(Path.Combine(result.HyperVDiskDirectory, "Clone Job.vhdx"), result.VirtualDiskPath);
+            Assert.Equal(Path.Combine(result.RootDirectory, "Clone Job.vhdx"), result.VirtualDiskPath);
             Assert.Equal("Clone Job", result.VmName);
             Assert.True(Directory.Exists(result.RootDirectory));
         }

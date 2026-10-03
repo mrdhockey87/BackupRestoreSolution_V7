@@ -3,6 +3,8 @@ using System.IO;
 using SecureServerBackup.Services;
 using Xunit;
 
+using BackupWindowNew = SecureServerBackup.WinForms.BackupWindowNewForm;
+
 namespace SecureServerBackup.Tests;
 
 public sealed class PreparedBackupFileTests : IDisposable
