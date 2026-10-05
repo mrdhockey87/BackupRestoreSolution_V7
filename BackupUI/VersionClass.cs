@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.8.54";
+        private static readonly string version_fallback_number = "7.4.8.56";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,9 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.8.56 Renamed BackupWindowNewForm to BackupNewForm to make it more consistent with the other BackupUI forms, and updated all references to the 
+ *                   renamed form. mdail 10/5/2026
+ *  Version 7.4.8.55 Fixed RestoreFormNew layout sizing so restore fields and buttons no longer overlap or clip in the WinForms restore window mdail 10/5/2026
  *  Version 7.4.8.54 Fixed the BackupUI tests for the renamed WinForms restore and backup windows and restored the helper methods they cover mdail 10/3/2026
  *  Version 7.4.8.53 Fixed RestoreFormNew so lstRestorePoints is created in the designer and wired to the restore point list handlers mdail 10/3/2026
  *  Version 7.4.8.52 Added the ToggleSelectListBox to the controls and had Claude fix it so it working in designer mdail 10/3/2026

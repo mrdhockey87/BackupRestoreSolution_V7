@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 using Xunit;
 
-using BackupWindowNew = SecureServerBackup.WinForms.BackupWindowNewForm;
+using BackupWindowNew = SecureServerBackup.WinForms.BackupNewForm;
 
 namespace SecureServerBackup.Tests;
 

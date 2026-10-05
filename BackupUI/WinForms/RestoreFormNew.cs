@@ -85,6 +85,7 @@ namespace SecureServerBackup.WinForm
 		public RestoreFormNew()
 		{
 			InitializeComponent();
+			ConfigureResponsiveLayout();
 			//RefreshRestorePointList();
 			BuildCheckStateImages();
 
@@ -103,6 +104,116 @@ namespace SecureServerBackup.WinForm
 			: this(restoreSelection?.Backup ?? throw new ArgumentNullException(nameof(restoreSelection)), restoreSelection.RequireAlternateDestination)
 		{
 			_preselectedRestore = restoreSelection;
+		}
+
+		/// <summary>Creates the checkbox bitmaps used as TreeView state images.</summary>
+		private void ConfigureResponsiveLayout()
+		{
+			SuspendLayout();
+
+			try
+			{
+				ConfigureAutoSizeTable(tlpSelectBackup);
+				ConfigureAutoSizeTable(tlpBackupSourceRow);
+				ConfigureAutoSizeTable(pnlBackupInfo);
+				ConfigureAutoSizeTable(tlpOptions);
+				ConfigureAutoSizeTable(pnlHyperVRestoreMode);
+				ConfigureAutoSizeTable(pnlHyperVVmOptions);
+				ConfigureAutoSizeTable(pnlHyperVReplaceExistingOptions);
+				ConfigureAutoSizeTable(pnlHyperVDirectoryOptions);
+				ConfigureAutoSizeTable(tlpHyperVDirRow);
+				ConfigureAutoSizeTable(pnlRegularHyperVRestore);
+				ConfigureAutoSizeTable(tlpHyperVDiskRow);
+				ConfigureAutoSizeTable(pnlExistingHyperVVmOptions);
+				ConfigureAutoSizeTable(pnlNewHyperVVmOptions);
+				ConfigureAutoSizeTable(tlpNewVmPathRow);
+				ConfigureAutoSizeTable(pnlLocationChoice);
+				ConfigureAutoSizeTable(pnlHyperVCloneDestination);
+				ConfigureAutoSizeTable(pnlHyperVCloneAlternate);
+				ConfigureAutoSizeTable(tlpCloneVmRow);
+				ConfigureAutoSizeTable(tlpCloneDiskRow);
+				ConfigureAutoSizeTable(tlpTargetFooter);
+
+				ConfigureMinimumHeight(txtBackupSource, txtBackupSource.PreferredHeight);
+				ConfigureMinimumHeight(txtHyperVRestoreDirectory, txtHyperVRestoreDirectory.PreferredHeight);
+				ConfigureMinimumHeight(txtHyperVVmName, txtHyperVVmName.PreferredHeight);
+				ConfigureMinimumHeight(txtHyperVVirtualDiskPath, txtHyperVVirtualDiskPath.PreferredHeight);
+				ConfigureMinimumHeight(txtNewHyperVVmName, txtNewHyperVVmName.PreferredHeight);
+				ConfigureMinimumHeight(txtNewHyperVVmPath, txtNewHyperVVmPath.PreferredHeight);
+				ConfigureMinimumHeight(txtFolderRestoreDestination, txtFolderRestoreDestination.PreferredHeight);
+				ConfigureMinimumHeight(txtHyperVCloneVmFolder, txtHyperVCloneVmFolder.PreferredHeight);
+				ConfigureMinimumHeight(txtHyperVCloneDiskFolder, txtHyperVCloneDiskFolder.PreferredHeight);
+
+				ConfigureComboBox(cmbHyperVRestoreTarget);
+				ConfigureComboBox(cmbHyperVVmToReplace);
+				ConfigureComboBox(cmbExistingHyperVVm);
+				ConfigureComboBox(cmbNewHyperVGeneration);
+
+				ConfigureButton(btnBrowseBackup, 84);
+				ConfigureButton(btnScanBackup, 140);
+				ConfigureButton(btnBrowseHyperVDir, 84);
+				ConfigureButton(btnBrowseHyperVDisk, 84);
+				ConfigureButton(btnBrowseNewVmPath, 84);
+				ConfigureButton(btnBrowseRestoreDestination, 110);
+				ConfigureButton(btnBrowseCloneVm, 84);
+				ConfigureButton(btnBrowseCloneDisk, 84);
+
+				pnlItemSelection.MinimumSize = new Size(0, 150);
+				lstBackupItems.MinimumSize = new Size(0, Math.Max(140, lstBackupItems.ItemHeight * 6));
+				lstRestorePoints.MinimumSize = new Size(0, Math.Max(120, lstRestorePoints.ItemHeight * 3));
+
+				pnlHyperVCloneAlternate.AutoSize = true;
+				pnlHyperVCloneAlternate.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+				if (pnlHyperVCloneAlternate.ColumnStyles.Count > 0)
+				{
+					pnlHyperVCloneAlternate.ColumnStyles[0].SizeType = SizeType.Percent;
+					pnlHyperVCloneAlternate.ColumnStyles[0].Width = 100F;
+				}
+			}
+			finally
+			{
+				ResumeLayout(true);
+			}
+		}
+
+		private static void ConfigureAutoSizeTable(TableLayoutPanel table)
+		{
+			ArgumentNullException.ThrowIfNull(table);
+
+			table.AutoSize = true;
+			table.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+			for (int index = 0; index < table.RowStyles.Count; index++)
+			{
+				RowStyle style = table.RowStyles[index];
+				style.SizeType = SizeType.AutoSize;
+				style.Height = 0F;
+			}
+		}
+
+		private static void ConfigureButton(Button button, int minimumWidth)
+		{
+			ArgumentNullException.ThrowIfNull(button);
+
+			button.AutoSize = true;
+			button.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+			button.MinimumSize = new Size(minimumWidth, 32);
+		}
+
+		private static void ConfigureComboBox(ComboBox comboBox)
+		{
+			ArgumentNullException.ThrowIfNull(comboBox);
+
+			comboBox.Dock = DockStyle.Top;
+			comboBox.MinimumSize = new Size(0, comboBox.PreferredHeight);
+		}
+
+		private static void ConfigureMinimumHeight(Control control, int minimumHeight)
+		{
+			ArgumentNullException.ThrowIfNull(control);
+
+			control.MinimumSize = new Size(control.MinimumSize.Width, minimumHeight);
 		}
 
 		/// <summary>Creates the checkbox bitmaps used as TreeView state images.</summary>

@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace SecureServerBackup.WinForms
 {
-	partial class BackupWindowNewForm
+	partial class BackupNewForm
 	{
 		private IContainer components;
 		private Label headerLabel;

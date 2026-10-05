@@ -16,7 +16,7 @@ using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
-	public sealed partial class BackupWindowNewForm : Form
+	public sealed partial class BackupNewForm : Form
 	{
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 		private readonly BackupJob? existingJob;
@@ -37,12 +37,12 @@ namespace SecureServerBackup.WinForms
 
 		
 
-		public BackupWindowNewForm()
+		public BackupNewForm()
 			: this(null)
 		{
 		}
 
-		public BackupWindowNewForm(BackupJob? job)
+		public BackupNewForm(BackupJob? job)
 		{
 			existingJob = job;
 			currentJob = job;

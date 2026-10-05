@@ -6,7 +6,7 @@ using SecureServerBackup.WinForms;
 using SecureServerBackupCommon;
 using Xunit;
 
-using BackupWindowNew = SecureServerBackup.WinForms.BackupWindowNewForm;
+using BackupWindowNew = SecureServerBackup.WinForms.BackupNewForm;
 using BackupTreeHelper = SecureServerBackup.Helpers.HyperVBackupTreeHelper;
 
 namespace SecureServerBackup.Tests;

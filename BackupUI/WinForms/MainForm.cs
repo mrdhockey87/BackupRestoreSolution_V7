@@ -218,7 +218,7 @@ namespace SecureServerBackup.WinForms
 
 		private void EditBackupJob(BackupJob job)
 		{
-			using var form = new BackupWindowNewForm(job);
+			using var form = new BackupNewForm(job);
 			form.ShowDialog(this);
 			LoadBackupJobs();
 			LoadMountedBackups();
@@ -1472,7 +1472,7 @@ namespace SecureServerBackup.WinForms
 
 		private void OpenNewBackup()
 		{
-			using var form = new BackupWindowNewForm();
+			using var form = new BackupNewForm();
 			form.ShowDialog(this);
 			LoadBackupJobs();
 			LoadAvailableBackups();

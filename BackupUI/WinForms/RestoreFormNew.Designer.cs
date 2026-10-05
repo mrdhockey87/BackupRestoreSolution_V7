@@ -190,12 +190,11 @@ namespace SecureServerBackup.WinForm
 			tlpRoot.RowStyles.Add(new RowStyle());
 			tlpRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			tlpRoot.RowStyles.Add(new RowStyle());
-			tlpRoot.Size = new Size(1080, 806);
+			tlpRoot.Size = new Size(1080, 937);
 			tlpRoot.TabIndex = 0;
 			// 
 			// lblTitle
 			// 
-			lblTitle.AutoSize = true;
 			lblTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
 			lblTitle.Location = new Point(3, 0);
 			lblTitle.Margin = new Padding(3, 0, 3, 11);
@@ -217,7 +216,7 @@ namespace SecureServerBackup.WinForm
 			tlpBody.Name = "tlpBody";
 			tlpBody.RowCount = 1;
 			tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-			tlpBody.Size = new Size(1074, 713);
+			tlpBody.Size = new Size(1074, 844);
 			tlpBody.TabIndex = 1;
 			// 
 			// tlpLeft
@@ -232,12 +231,11 @@ namespace SecureServerBackup.WinForm
 			tlpLeft.RowCount = 2;
 			tlpLeft.RowStyles.Add(new RowStyle());
 			tlpLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-			tlpLeft.Size = new Size(526, 707);
+			tlpLeft.Size = new Size(526, 838);
 			tlpLeft.TabIndex = 0;
 			// 
 			// grpSelectBackup
 			// 
-			grpSelectBackup.AutoSize = true;
 			grpSelectBackup.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 			grpSelectBackup.Controls.Add(tlpSelectBackup);
 			grpSelectBackup.Dock = DockStyle.Fill;
@@ -252,7 +250,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// tlpSelectBackup
 			// 
-			tlpSelectBackup.AutoSize = true;
 			tlpSelectBackup.ColumnCount = 1;
 			tlpSelectBackup.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpSelectBackup.Controls.Add(lblBackupSource, 0, 0);
@@ -267,12 +264,11 @@ namespace SecureServerBackup.WinForm
 			tlpSelectBackup.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			tlpSelectBackup.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			tlpSelectBackup.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			tlpSelectBackup.Size = new Size(506, 80);
+			tlpSelectBackup.Size = new Size(506, 149);
 			tlpSelectBackup.TabIndex = 0;
 			// 
 			// lblBackupSource
 			// 
-			lblBackupSource.AutoSize = true;
 			lblBackupSource.Location = new Point(3, 0);
 			lblBackupSource.Name = "lblBackupSource";
 			lblBackupSource.Size = new Size(96, 17);
@@ -281,7 +277,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// tlpBackupSourceRow
 			// 
-			tlpBackupSourceRow.AutoSize = true;
 			tlpBackupSourceRow.ColumnCount = 2;
 			tlpBackupSourceRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpBackupSourceRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90F));
@@ -327,7 +322,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlBackupInfo
 			// 
-			pnlBackupInfo.AutoSize = true;
 			pnlBackupInfo.ColumnCount = 1;
 			pnlBackupInfo.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			pnlBackupInfo.Controls.Add(flpBackupCounts, 0, 0);
@@ -342,13 +336,12 @@ namespace SecureServerBackup.WinForm
 			pnlBackupInfo.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			pnlBackupInfo.RowStyles.Add(new RowStyle(SizeType.Absolute, 100F));
 			pnlBackupInfo.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			pnlBackupInfo.Size = new Size(500, 14);
+			pnlBackupInfo.Size = new Size(500, 83);
 			pnlBackupInfo.TabIndex = 3;
 			pnlBackupInfo.Visible = false;
 			// 
 			// flpBackupCounts
 			// 
-			flpBackupCounts.AutoSize = true;
 			flpBackupCounts.Controls.Add(txtBackupFileCount);
 			flpBackupCounts.Controls.Add(lblCountSep1);
 			flpBackupCounts.Controls.Add(txtBackupTotalSize);
@@ -362,7 +355,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// txtBackupFileCount
 			// 
-			txtBackupFileCount.AutoSize = true;
 			txtBackupFileCount.ForeColor = Color.FromArgb(96, 96, 96);
 			txtBackupFileCount.Location = new Point(0, 0);
 			txtBackupFileCount.Margin = new Padding(0);
@@ -372,7 +364,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblCountSep1
 			// 
-			lblCountSep1.AutoSize = true;
 			lblCountSep1.ForeColor = Color.FromArgb(96, 96, 96);
 			lblCountSep1.Location = new Point(0, 0);
 			lblCountSep1.Margin = new Padding(0, 0, 4, 0);
@@ -383,7 +374,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// txtBackupTotalSize
 			// 
-			txtBackupTotalSize.AutoSize = true;
 			txtBackupTotalSize.ForeColor = Color.FromArgb(96, 96, 96);
 			txtBackupTotalSize.Location = new Point(15, 0);
 			txtBackupTotalSize.Margin = new Padding(0);
@@ -393,7 +383,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblCountSep2
 			// 
-			lblCountSep2.AutoSize = true;
 			lblCountSep2.ForeColor = Color.FromArgb(96, 96, 96);
 			lblCountSep2.Location = new Point(15, 0);
 			lblCountSep2.Margin = new Padding(0, 0, 4, 0);
@@ -404,7 +393,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// txtBackupRestorePointCount
 			// 
-			txtBackupRestorePointCount.AutoSize = true;
 			txtBackupRestorePointCount.ForeColor = Color.FromArgb(96, 96, 96);
 			txtBackupRestorePointCount.Location = new Point(30, 0);
 			txtBackupRestorePointCount.Margin = new Padding(0);
@@ -414,7 +402,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// txtRestorePointPrompt
 			// 
-			txtRestorePointPrompt.AutoSize = true;
 			txtRestorePointPrompt.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 			txtRestorePointPrompt.Location = new Point(3, 28);
 			txtRestorePointPrompt.Margin = new Padding(3, 8, 3, 6);
@@ -455,7 +442,7 @@ namespace SecureServerBackup.WinForm
 			grpRestoreOptions.Location = new Point(3, 132);
 			grpRestoreOptions.Name = "grpRestoreOptions";
 			grpRestoreOptions.Padding = new Padding(10, 11, 10, 11);
-			grpRestoreOptions.Size = new Size(520, 572);
+			grpRestoreOptions.Size = new Size(520, 703);
 			grpRestoreOptions.TabIndex = 1;
 			grpRestoreOptions.TabStop = false;
 			grpRestoreOptions.Text = "Restore Options";
@@ -467,11 +454,12 @@ namespace SecureServerBackup.WinForm
 			pnlOptionsScroll.Dock = DockStyle.Fill;
 			pnlOptionsScroll.Location = new Point(10, 29);
 			pnlOptionsScroll.Name = "pnlOptionsScroll";
-			pnlOptionsScroll.Size = new Size(500, 532);
+			pnlOptionsScroll.Size = new Size(500, 663);
 			pnlOptionsScroll.TabIndex = 0;
 			// 
 			// tlpOptions
 			// 
+			tlpOptions.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			tlpOptions.ColumnCount = 1;
 			tlpOptions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpOptions.Controls.Add(txtWhatToRestoreLabel, 0, 0);
@@ -487,14 +475,15 @@ namespace SecureServerBackup.WinForm
 			tlpOptions.Controls.Add(pnlRegularHyperVRestore, 0, 10);
 			tlpOptions.Controls.Add(pnlLocationChoice, 0, 11);
 			tlpOptions.Controls.Add(pnlHyperVCloneDestination, 0, 12);
-			tlpOptions.Controls.Add(chkOverwrite, 0, 13);
 			tlpOptions.Controls.Add(chkPreservePermissions, 0, 14);
 			tlpOptions.Controls.Add(chkVerifyAfterRestore, 0, 15);
-			tlpOptions.Dock = DockStyle.Top;
+			tlpOptions.Controls.Add(chkOverwrite, 0, 13);
 			tlpOptions.Location = new Point(0, 0);
 			tlpOptions.Name = "tlpOptions";
 			tlpOptions.RowCount = 16;
 			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 8F));
+			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
 			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
@@ -502,20 +491,17 @@ namespace SecureServerBackup.WinForm
 			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
+			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 115F));
+			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 213F));
 			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 201F));
-			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
-			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
-			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 13F));
-			tlpOptions.Size = new Size(483, 546);
+			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+			tlpOptions.RowStyles.Add(new RowStyle(SizeType.Absolute, 8F));
+			tlpOptions.Size = new Size(483, 663);
 			tlpOptions.TabIndex = 0;
 			// 
 			// txtWhatToRestoreLabel
 			// 
-			txtWhatToRestoreLabel.AutoSize = true;
 			txtWhatToRestoreLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 			txtWhatToRestoreLabel.Location = new Point(3, 0);
 			txtWhatToRestoreLabel.Name = "txtWhatToRestoreLabel";
@@ -529,17 +515,16 @@ namespace SecureServerBackup.WinForm
 			txtPreselectedScopeSummary.ForeColor = Color.FromArgb(96, 96, 96);
 			txtPreselectedScopeSummary.Location = new Point(3, 20);
 			txtPreselectedScopeSummary.Name = "txtPreselectedScopeSummary";
-			txtPreselectedScopeSummary.Size = new Size(477, 20);
+			txtPreselectedScopeSummary.Size = new Size(477, 8);
 			txtPreselectedScopeSummary.TabIndex = 1;
 			txtPreselectedScopeSummary.Visible = false;
 			// 
 			// rbRestoreAll
 			// 
-			rbRestoreAll.AutoSize = true;
 			rbRestoreAll.Checked = true;
-			rbRestoreAll.Location = new Point(3, 43);
+			rbRestoreAll.Location = new Point(3, 31);
 			rbRestoreAll.Name = "rbRestoreAll";
-			rbRestoreAll.Size = new Size(213, 14);
+			rbRestoreAll.Size = new Size(213, 26);
 			rbRestoreAll.TabIndex = 2;
 			rbRestoreAll.TabStop = true;
 			rbRestoreAll.Text = "Restore everything from backup";
@@ -547,7 +532,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// rbRestoreSelected
 			// 
-			rbRestoreSelected.AutoSize = true;
 			rbRestoreSelected.Location = new Point(3, 63);
 			rbRestoreSelected.Name = "rbRestoreSelected";
 			rbRestoreSelected.Size = new Size(204, 14);
@@ -581,7 +565,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblRestoreDestination
 			// 
-			lblRestoreDestination.AutoSize = true;
 			lblRestoreDestination.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 			lblRestoreDestination.Location = new Point(3, 109);
 			lblRestoreDestination.Margin = new Padding(3, 9, 3, 3);
@@ -602,7 +585,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlHyperVRestoreMode
 			// 
-			pnlHyperVRestoreMode.AutoSize = true;
 			pnlHyperVRestoreMode.ColumnCount = 1;
 			pnlHyperVRestoreMode.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			pnlHyperVRestoreMode.Controls.Add(lblHyperVRestoreTarget, 0, 0);
@@ -619,7 +601,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblHyperVRestoreTarget
 			// 
-			lblHyperVRestoreTarget.AutoSize = true;
 			lblHyperVRestoreTarget.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 			lblHyperVRestoreTarget.Location = new Point(3, 0);
 			lblHyperVRestoreTarget.Name = "lblHyperVRestoreTarget";
@@ -639,7 +620,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlHyperVVmOptions
 			// 
-			pnlHyperVVmOptions.AutoSize = true;
 			pnlHyperVVmOptions.ColumnCount = 1;
 			pnlHyperVVmOptions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			pnlHyperVVmOptions.Controls.Add(lblRestoreMode, 0, 0);
@@ -668,7 +648,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblRestoreMode
 			// 
-			lblRestoreMode.AutoSize = true;
 			lblRestoreMode.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 			lblRestoreMode.Location = new Point(3, 9);
 			lblRestoreMode.Margin = new Padding(3, 9, 3, 3);
@@ -679,7 +658,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// rbHyperVReplaceExisting
 			// 
-			rbHyperVReplaceExisting.AutoSize = true;
 			rbHyperVReplaceExisting.Checked = true;
 			rbHyperVReplaceExisting.Location = new Point(3, 23);
 			rbHyperVReplaceExisting.Name = "rbHyperVReplaceExisting";
@@ -692,7 +670,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// rbHyperVRestoreToDirectory
 			// 
-			rbHyperVRestoreToDirectory.AutoSize = true;
 			rbHyperVRestoreToDirectory.Location = new Point(3, 43);
 			rbHyperVRestoreToDirectory.Name = "rbHyperVRestoreToDirectory";
 			rbHyperVRestoreToDirectory.Size = new Size(201, 14);
@@ -703,7 +680,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlHyperVReplaceExistingOptions
 			// 
-			pnlHyperVReplaceExistingOptions.AutoSize = true;
 			pnlHyperVReplaceExistingOptions.ColumnCount = 1;
 			pnlHyperVReplaceExistingOptions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			pnlHyperVReplaceExistingOptions.Controls.Add(lblReplaceVm, 0, 0);
@@ -720,7 +696,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblReplaceVm
 			// 
-			lblReplaceVm.AutoSize = true;
 			lblReplaceVm.Location = new Point(3, 0);
 			lblReplaceVm.Name = "lblReplaceVm";
 			lblReplaceVm.Size = new Size(285, 17);
@@ -737,7 +712,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlHyperVDirectoryOptions
 			// 
-			pnlHyperVDirectoryOptions.AutoSize = true;
 			pnlHyperVDirectoryOptions.ColumnCount = 1;
 			pnlHyperVDirectoryOptions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			pnlHyperVDirectoryOptions.Controls.Add(lblRestoreDir, 0, 0);
@@ -755,7 +729,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblRestoreDir
 			// 
-			lblRestoreDir.AutoSize = true;
 			lblRestoreDir.Location = new Point(3, 0);
 			lblRestoreDir.Name = "lblRestoreDir";
 			lblRestoreDir.Size = new Size(279, 17);
@@ -764,7 +737,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// tlpHyperVDirRow
 			// 
-			tlpHyperVDirRow.AutoSize = true;
 			tlpHyperVDirRow.ColumnCount = 2;
 			tlpHyperVDirRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpHyperVDirRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
@@ -799,7 +771,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblVmNameAfter
 			// 
-			lblVmNameAfter.AutoSize = true;
 			lblVmNameAfter.Location = new Point(3, 100);
 			lblVmNameAfter.Name = "lblVmNameAfter";
 			lblVmNameAfter.Size = new Size(213, 17);
@@ -816,7 +787,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// chkStartHyperVVm
 			// 
-			chkStartHyperVVm.AutoSize = true;
 			chkStartHyperVVm.Location = new Point(3, 143);
 			chkStartHyperVVm.Name = "chkStartHyperVVm";
 			chkStartHyperVVm.Size = new Size(244, 14);
@@ -826,7 +796,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// chkRestoreToHyperVDisk
 			// 
-			chkRestoreToHyperVDisk.AutoSize = true;
 			chkRestoreToHyperVDisk.Location = new Point(3, 183);
 			chkRestoreToHyperVDisk.Name = "chkRestoreToHyperVDisk";
 			chkRestoreToHyperVDisk.Size = new Size(269, 14);
@@ -838,10 +807,9 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlRegularHyperVRestore
 			// 
-			pnlRegularHyperVRestore.AutoSize = true;
+			pnlRegularHyperVRestore.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			pnlRegularHyperVRestore.ColumnCount = 1;
 			pnlRegularHyperVRestore.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-			pnlRegularHyperVRestore.Controls.Add(lblVhdPath, 0, 0);
 			pnlRegularHyperVRestore.Controls.Add(tlpHyperVDiskRow, 0, 1);
 			pnlRegularHyperVRestore.Controls.Add(lblAfterRestore, 0, 2);
 			pnlRegularHyperVRestore.Controls.Add(rbLeaveHyperVDiskDetached, 0, 3);
@@ -849,8 +817,8 @@ namespace SecureServerBackup.WinForm
 			pnlRegularHyperVRestore.Controls.Add(rbCreateNewHyperVVm, 0, 5);
 			pnlRegularHyperVRestore.Controls.Add(pnlExistingHyperVVmOptions, 0, 6);
 			pnlRegularHyperVRestore.Controls.Add(pnlNewHyperVVmOptions, 0, 7);
-			pnlRegularHyperVRestore.Dock = DockStyle.Fill;
-			pnlRegularHyperVRestore.Location = new Point(3, 203);
+			pnlRegularHyperVRestore.Controls.Add(lblVhdPath, 0, 0);
+			pnlRegularHyperVRestore.Location = new Point(3, 211);
 			pnlRegularHyperVRestore.Name = "pnlRegularHyperVRestore";
 			pnlRegularHyperVRestore.RowCount = 8;
 			pnlRegularHyperVRestore.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
@@ -861,13 +829,12 @@ namespace SecureServerBackup.WinForm
 			pnlRegularHyperVRestore.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			pnlRegularHyperVRestore.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			pnlRegularHyperVRestore.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			pnlRegularHyperVRestore.Size = new Size(477, 14);
+			pnlRegularHyperVRestore.Size = new Size(477, 31);
 			pnlRegularHyperVRestore.TabIndex = 10;
 			pnlRegularHyperVRestore.Visible = false;
 			// 
 			// lblVhdPath
 			// 
-			lblVhdPath.AutoSize = true;
 			lblVhdPath.Location = new Point(3, 0);
 			lblVhdPath.Name = "lblVhdPath";
 			lblVhdPath.Size = new Size(146, 17);
@@ -876,7 +843,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// tlpHyperVDiskRow
 			// 
-			tlpHyperVDiskRow.AutoSize = true;
 			tlpHyperVDiskRow.ColumnCount = 2;
 			tlpHyperVDiskRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpHyperVDiskRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
@@ -911,7 +877,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblAfterRestore
 			// 
-			lblAfterRestore.AutoSize = true;
 			lblAfterRestore.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 			lblAfterRestore.Location = new Point(3, 49);
 			lblAfterRestore.Margin = new Padding(3, 9, 3, 3);
@@ -922,7 +887,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// rbLeaveHyperVDiskDetached
 			// 
-			rbLeaveHyperVDiskDetached.AutoSize = true;
 			rbLeaveHyperVDiskDetached.Checked = true;
 			rbLeaveHyperVDiskDetached.Location = new Point(3, 63);
 			rbLeaveHyperVDiskDetached.Name = "rbLeaveHyperVDiskDetached";
@@ -935,7 +899,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// chkAttachToExistingHyperVVm
 			// 
-			chkAttachToExistingHyperVVm.AutoSize = true;
 			chkAttachToExistingHyperVVm.Location = new Point(3, 83);
 			chkAttachToExistingHyperVVm.Name = "chkAttachToExistingHyperVVm";
 			chkAttachToExistingHyperVVm.Size = new Size(364, 14);
@@ -946,7 +909,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// rbCreateNewHyperVVm
 			// 
-			rbCreateNewHyperVVm.AutoSize = true;
 			rbCreateNewHyperVVm.Location = new Point(3, 103);
 			rbCreateNewHyperVVm.Name = "rbCreateNewHyperVVm";
 			rbCreateNewHyperVVm.Size = new Size(422, 14);
@@ -957,7 +919,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlExistingHyperVVmOptions
 			// 
-			pnlExistingHyperVVmOptions.AutoSize = true;
 			pnlExistingHyperVVmOptions.ColumnCount = 1;
 			pnlExistingHyperVVmOptions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			pnlExistingHyperVVmOptions.Controls.Add(lblExistingVm, 0, 0);
@@ -974,7 +935,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblExistingVm
 			// 
-			lblExistingVm.AutoSize = true;
 			lblExistingVm.Location = new Point(3, 0);
 			lblExistingVm.Name = "lblExistingVm";
 			lblExistingVm.Size = new Size(198, 17);
@@ -991,7 +951,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlNewHyperVVmOptions
 			// 
-			pnlNewHyperVVmOptions.AutoSize = true;
 			pnlNewHyperVVmOptions.ColumnCount = 1;
 			pnlNewHyperVVmOptions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			pnlNewHyperVVmOptions.Controls.Add(lblNewVmName, 0, 0);
@@ -1018,7 +977,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblNewVmName
 			// 
-			lblNewVmName.AutoSize = true;
 			lblNewVmName.Location = new Point(3, 0);
 			lblNewVmName.Name = "lblNewVmName";
 			lblNewVmName.Size = new Size(216, 17);
@@ -1035,7 +993,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblNewVmFolder
 			// 
-			lblNewVmFolder.AutoSize = true;
 			lblNewVmFolder.Location = new Point(3, 40);
 			lblNewVmFolder.Name = "lblNewVmFolder";
 			lblNewVmFolder.Size = new Size(188, 17);
@@ -1044,7 +1001,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// tlpNewVmPathRow
 			// 
-			tlpNewVmPathRow.AutoSize = true;
 			tlpNewVmPathRow.ColumnCount = 2;
 			tlpNewVmPathRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpNewVmPathRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
@@ -1079,7 +1035,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblNewVmGen
 			// 
-			lblNewVmGen.AutoSize = true;
 			lblNewVmGen.Location = new Point(3, 80);
 			lblNewVmGen.Name = "lblNewVmGen";
 			lblNewVmGen.Size = new Size(167, 17);
@@ -1097,7 +1052,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// chkStartCreatedHyperVVm
 			// 
-			chkStartCreatedHyperVVm.AutoSize = true;
 			chkStartCreatedHyperVVm.Checked = true;
 			chkStartCreatedHyperVVm.CheckState = CheckState.Checked;
 			chkStartCreatedHyperVVm.Location = new Point(3, 123);
@@ -1109,28 +1063,26 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlLocationChoice
 			// 
-			pnlLocationChoice.AutoSize = true;
+			pnlLocationChoice.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			pnlLocationChoice.ColumnCount = 1;
 			pnlLocationChoice.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			pnlLocationChoice.Controls.Add(lblFileFolderTarget, 0, 0);
 			pnlLocationChoice.Controls.Add(btnBrowseRestoreDestination, 0, 1);
 			pnlLocationChoice.Controls.Add(lblTargetLocation, 0, 2);
 			pnlLocationChoice.Controls.Add(txtFolderRestoreDestination, 0, 3);
-			pnlLocationChoice.Dock = DockStyle.Fill;
-			pnlLocationChoice.Location = new Point(3, 223);
+			pnlLocationChoice.Location = new Point(3, 248);
 			pnlLocationChoice.Name = "pnlLocationChoice";
 			pnlLocationChoice.RowCount = 4;
-			pnlLocationChoice.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			pnlLocationChoice.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			pnlLocationChoice.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			pnlLocationChoice.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			pnlLocationChoice.Size = new Size(477, 29);
+			pnlLocationChoice.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+			pnlLocationChoice.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+			pnlLocationChoice.RowStyles.Add(new RowStyle(SizeType.Absolute, 23F));
+			pnlLocationChoice.RowStyles.Add(new RowStyle(SizeType.Absolute, 8F));
+			pnlLocationChoice.Size = new Size(477, 109);
 			pnlLocationChoice.TabIndex = 11;
 			pnlLocationChoice.Visible = false;
 			// 
 			// lblFileFolderTarget
 			// 
-			lblFileFolderTarget.AutoSize = true;
 			lblFileFolderTarget.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 			lblFileFolderTarget.Location = new Point(3, 0);
 			lblFileFolderTarget.Name = "lblFileFolderTarget";
@@ -1140,9 +1092,9 @@ namespace SecureServerBackup.WinForm
 			// 
 			// btnBrowseRestoreDestination
 			// 
-			btnBrowseRestoreDestination.Location = new Point(3, 23);
+			btnBrowseRestoreDestination.Location = new Point(3, 33);
 			btnBrowseRestoreDestination.Name = "btnBrowseRestoreDestination";
-			btnBrowseRestoreDestination.Size = new Size(48, 14);
+			btnBrowseRestoreDestination.Size = new Size(72, 25);
 			btnBrowseRestoreDestination.TabIndex = 1;
 			btnBrowseRestoreDestination.Text = "Browse...";
 			btnBrowseRestoreDestination.UseVisualStyleBackColor = true;
@@ -1150,8 +1102,7 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblTargetLocation
 			// 
-			lblTargetLocation.AutoSize = true;
-			lblTargetLocation.Location = new Point(3, 40);
+			lblTargetLocation.Location = new Point(3, 61);
 			lblTargetLocation.Name = "lblTargetLocation";
 			lblTargetLocation.Size = new Size(98, 17);
 			lblTargetLocation.TabIndex = 2;
@@ -1159,8 +1110,8 @@ namespace SecureServerBackup.WinForm
 			// 
 			// txtFolderRestoreDestination
 			// 
-			txtFolderRestoreDestination.Dock = DockStyle.Fill;
-			txtFolderRestoreDestination.Location = new Point(3, 63);
+			txtFolderRestoreDestination.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+			txtFolderRestoreDestination.Location = new Point(3, 87);
 			txtFolderRestoreDestination.Name = "txtFolderRestoreDestination";
 			txtFolderRestoreDestination.Size = new Size(471, 25);
 			txtFolderRestoreDestination.TabIndex = 3;
@@ -1168,29 +1119,29 @@ namespace SecureServerBackup.WinForm
 			// 
 			// pnlHyperVCloneDestination
 			// 
+			pnlHyperVCloneDestination.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			pnlHyperVCloneDestination.ColumnCount = 1;
 			pnlHyperVCloneDestination.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-			pnlHyperVCloneDestination.Controls.Add(lblCloneDestination, 0, 0);
 			pnlHyperVCloneDestination.Controls.Add(rbHyperVCloneDefault, 0, 1);
 			pnlHyperVCloneDestination.Controls.Add(rbHyperVCloneAlternate, 0, 2);
 			pnlHyperVCloneDestination.Controls.Add(pnlHyperVCloneAlternate, 0, 3);
-			pnlHyperVCloneDestination.Dock = DockStyle.Fill;
-			pnlHyperVCloneDestination.Location = new Point(3, 258);
+			pnlHyperVCloneDestination.Controls.Add(lblCloneDestination, 0, 0);
+			pnlHyperVCloneDestination.Location = new Point(3, 363);
 			pnlHyperVCloneDestination.Name = "pnlHyperVCloneDestination";
 			pnlHyperVCloneDestination.RowCount = 4;
-			pnlHyperVCloneDestination.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
-			pnlHyperVCloneDestination.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
-			pnlHyperVCloneDestination.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
-			pnlHyperVCloneDestination.RowStyles.Add(new RowStyle(SizeType.Absolute, 14F));
-			pnlHyperVCloneDestination.Size = new Size(477, 195);
+			pnlHyperVCloneDestination.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+			pnlHyperVCloneDestination.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+			pnlHyperVCloneDestination.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+			pnlHyperVCloneDestination.RowStyles.Add(new RowStyle(SizeType.Absolute, 111F));
+			pnlHyperVCloneDestination.Size = new Size(477, 207);
 			pnlHyperVCloneDestination.TabIndex = 12;
 			pnlHyperVCloneDestination.Visible = false;
 			// 
 			// lblCloneDestination
 			// 
-			lblCloneDestination.AutoSize = true;
+			lblCloneDestination.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			lblCloneDestination.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-			lblCloneDestination.Location = new Point(3, 0);
+			lblCloneDestination.Location = new Point(3, 12);
 			lblCloneDestination.Name = "lblCloneDestination";
 			lblCloneDestination.Size = new Size(143, 19);
 			lblCloneDestination.TabIndex = 0;
@@ -1198,9 +1149,8 @@ namespace SecureServerBackup.WinForm
 			// 
 			// rbHyperVCloneDefault
 			// 
-			rbHyperVCloneDefault.AutoSize = true;
 			rbHyperVCloneDefault.Checked = true;
-			rbHyperVCloneDefault.Location = new Point(3, 29);
+			rbHyperVCloneDefault.Location = new Point(3, 34);
 			rbHyperVCloneDefault.Name = "rbHyperVCloneDefault";
 			rbHyperVCloneDefault.Size = new Size(243, 21);
 			rbHyperVCloneDefault.TabIndex = 1;
@@ -1211,8 +1161,7 @@ namespace SecureServerBackup.WinForm
 			// 
 			// rbHyperVCloneAlternate
 			// 
-			rbHyperVCloneAlternate.AutoSize = true;
-			rbHyperVCloneAlternate.Location = new Point(3, 57);
+			rbHyperVCloneAlternate.Location = new Point(3, 66);
 			rbHyperVCloneAlternate.Name = "rbHyperVCloneAlternate";
 			rbHyperVCloneAlternate.Size = new Size(128, 18);
 			rbHyperVCloneAlternate.TabIndex = 2;
@@ -1230,7 +1179,7 @@ namespace SecureServerBackup.WinForm
 			pnlHyperVCloneAlternate.Controls.Add(tlpCloneVmRow, 0, 1);
 			pnlHyperVCloneAlternate.Controls.Add(lblCloneDiskFolder, 0, 2);
 			pnlHyperVCloneAlternate.Controls.Add(tlpCloneDiskRow, 0, 3);
-			pnlHyperVCloneAlternate.Location = new Point(10, 78);
+			pnlHyperVCloneAlternate.Location = new Point(10, 94);
 			pnlHyperVCloneAlternate.Margin = new Padding(10, 0, 0, 0);
 			pnlHyperVCloneAlternate.Name = "pnlHyperVCloneAlternate";
 			pnlHyperVCloneAlternate.RowCount = 4;
@@ -1238,13 +1187,12 @@ namespace SecureServerBackup.WinForm
 			pnlHyperVCloneAlternate.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
 			pnlHyperVCloneAlternate.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			pnlHyperVCloneAlternate.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-			pnlHyperVCloneAlternate.Size = new Size(467, 117);
+			pnlHyperVCloneAlternate.Size = new Size(467, 113);
 			pnlHyperVCloneAlternate.TabIndex = 3;
 			pnlHyperVCloneAlternate.Visible = false;
 			// 
 			// lblCloneVmFolder
 			// 
-			lblCloneVmFolder.AutoSize = true;
 			lblCloneVmFolder.Location = new Point(3, 0);
 			lblCloneVmFolder.Name = "lblCloneVmFolder";
 			lblCloneVmFolder.Size = new Size(179, 17);
@@ -1253,7 +1201,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// tlpCloneVmRow
 			// 
-			tlpCloneVmRow.AutoSize = true;
 			tlpCloneVmRow.ColumnCount = 2;
 			tlpCloneVmRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpCloneVmRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
@@ -1288,7 +1235,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// lblCloneDiskFolder
 			// 
-			lblCloneDiskFolder.AutoSize = true;
 			lblCloneDiskFolder.Location = new Point(3, 63);
 			lblCloneDiskFolder.Name = "lblCloneDiskFolder";
 			lblCloneDiskFolder.Size = new Size(144, 17);
@@ -1297,7 +1243,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// tlpCloneDiskRow
 			// 
-			tlpCloneDiskRow.AutoSize = true;
 			tlpCloneDiskRow.ColumnCount = 2;
 			tlpCloneDiskRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpCloneDiskRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
@@ -1332,21 +1277,19 @@ namespace SecureServerBackup.WinForm
 			// 
 			// chkOverwrite
 			// 
-			chkOverwrite.AutoSize = true;
-			chkOverwrite.Location = new Point(3, 467);
+			chkOverwrite.Location = new Point(3, 584);
 			chkOverwrite.Margin = new Padding(3, 11, 3, 3);
 			chkOverwrite.Name = "chkOverwrite";
-			chkOverwrite.Size = new Size(158, 17);
+			chkOverwrite.Size = new Size(158, 21);
 			chkOverwrite.TabIndex = 13;
 			chkOverwrite.Text = "Overwrite existing files";
 			chkOverwrite.UseVisualStyleBackColor = true;
 			// 
 			// chkPreservePermissions
 			// 
-			chkPreservePermissions.AutoSize = true;
 			chkPreservePermissions.Checked = true;
 			chkPreservePermissions.CheckState = CheckState.Checked;
-			chkPreservePermissions.Location = new Point(3, 490);
+			chkPreservePermissions.Location = new Point(3, 611);
 			chkPreservePermissions.Name = "chkPreservePermissions";
 			chkPreservePermissions.Size = new Size(257, 19);
 			chkPreservePermissions.TabIndex = 14;
@@ -1355,10 +1298,9 @@ namespace SecureServerBackup.WinForm
 			// 
 			// chkVerifyAfterRestore
 			// 
-			chkVerifyAfterRestore.AutoSize = true;
 			chkVerifyAfterRestore.Checked = true;
 			chkVerifyAfterRestore.CheckState = CheckState.Checked;
-			chkVerifyAfterRestore.Location = new Point(3, 515);
+			chkVerifyAfterRestore.Location = new Point(3, 639);
 			chkVerifyAfterRestore.Name = "chkVerifyAfterRestore";
 			chkVerifyAfterRestore.Size = new Size(163, 21);
 			chkVerifyAfterRestore.TabIndex = 15;
@@ -1372,7 +1314,7 @@ namespace SecureServerBackup.WinForm
 			grpRestoreTarget.Location = new Point(545, 3);
 			grpRestoreTarget.Name = "grpRestoreTarget";
 			grpRestoreTarget.Padding = new Padding(10, 11, 10, 11);
-			grpRestoreTarget.Size = new Size(526, 707);
+			grpRestoreTarget.Size = new Size(526, 838);
 			grpRestoreTarget.TabIndex = 1;
 			grpRestoreTarget.TabStop = false;
 			grpRestoreTarget.Text = "Select Restore Target";
@@ -1391,7 +1333,7 @@ namespace SecureServerBackup.WinForm
 			tlpTarget.RowStyles.Add(new RowStyle());
 			tlpTarget.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			tlpTarget.RowStyles.Add(new RowStyle());
-			tlpTarget.Size = new Size(506, 667);
+			tlpTarget.Size = new Size(506, 798);
 			tlpTarget.TabIndex = 0;
 			// 
 			// txtDriveTreeHelp
@@ -1411,7 +1353,7 @@ namespace SecureServerBackup.WinForm
 			pnlTargetTreeHost.Dock = DockStyle.Fill;
 			pnlTargetTreeHost.Location = new Point(3, 66);
 			pnlTargetTreeHost.Name = "pnlTargetTreeHost";
-			pnlTargetTreeHost.Size = new Size(500, 549);
+			pnlTargetTreeHost.Size = new Size(500, 680);
 			pnlTargetTreeHost.TabIndex = 1;
 			// 
 			// loadingTargetOverlay
@@ -1421,16 +1363,16 @@ namespace SecureServerBackup.WinForm
 			loadingTargetOverlay.Dock = DockStyle.Fill;
 			loadingTargetOverlay.Location = new Point(0, 0);
 			loadingTargetOverlay.Name = "loadingTargetOverlay";
-			loadingTargetOverlay.Size = new Size(500, 549);
+			loadingTargetOverlay.Size = new Size(500, 680);
 			loadingTargetOverlay.TabIndex = 0;
 			loadingTargetOverlay.Visible = false;
 			// 
 			// tlpLoadingCenter
 			// 
+			tlpLoadingCenter.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			tlpLoadingCenter.ColumnCount = 1;
 			tlpLoadingCenter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpLoadingCenter.Controls.Add(pnlLoadingContent, 0, 0);
-			tlpLoadingCenter.Dock = DockStyle.Fill;
 			tlpLoadingCenter.Location = new Point(0, 0);
 			tlpLoadingCenter.Name = "tlpLoadingCenter";
 			tlpLoadingCenter.RowCount = 1;
@@ -1474,7 +1416,7 @@ namespace SecureServerBackup.WinForm
 			treeViewRestoreTarget.HideSelection = false;
 			treeViewRestoreTarget.Location = new Point(0, 0);
 			treeViewRestoreTarget.Name = "treeViewRestoreTarget";
-			treeViewRestoreTarget.Size = new Size(500, 549);
+			treeViewRestoreTarget.Size = new Size(500, 680);
 			treeViewRestoreTarget.StateImageList = imgCheckStates;
 			treeViewRestoreTarget.TabIndex = 1;
 			treeViewRestoreTarget.AfterCollapse += treeViewRestoreTarget_AfterCollapse;
@@ -1490,13 +1432,12 @@ namespace SecureServerBackup.WinForm
 			// 
 			// tlpTargetFooter
 			// 
-			tlpTargetFooter.AutoSize = true;
 			tlpTargetFooter.ColumnCount = 1;
 			tlpTargetFooter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			tlpTargetFooter.Controls.Add(flpTargetButtons, 0, 0);
 			tlpTargetFooter.Controls.Add(txtSelectedTargetLabel, 0, 1);
 			tlpTargetFooter.Dock = DockStyle.Fill;
-			tlpTargetFooter.Location = new Point(3, 627);
+			tlpTargetFooter.Location = new Point(3, 758);
 			tlpTargetFooter.Margin = new Padding(3, 9, 3, 0);
 			tlpTargetFooter.Name = "tlpTargetFooter";
 			tlpTargetFooter.RowCount = 2;
@@ -1507,7 +1448,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// flpTargetButtons
 			// 
-			flpTargetButtons.AutoSize = true;
 			flpTargetButtons.Controls.Add(btnRefreshTarget);
 			flpTargetButtons.Controls.Add(btnExpandAllTarget);
 			flpTargetButtons.Controls.Add(btnCollapseAllTarget);
@@ -1551,7 +1491,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// chkShowHiddenPartitionsTarget
 			// 
-			chkShowHiddenPartitionsTarget.AutoSize = true;
 			chkShowHiddenPartitionsTarget.Location = new Point(278, 8);
 			chkShowHiddenPartitionsTarget.Margin = new Padding(10, 8, 3, 3);
 			chkShowHiddenPartitionsTarget.Name = "chkShowHiddenPartitionsTarget";
@@ -1564,7 +1503,6 @@ namespace SecureServerBackup.WinForm
 			// 
 			// txtSelectedTargetLabel
 			// 
-			txtSelectedTargetLabel.AutoSize = true;
 			txtSelectedTargetLabel.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
 			txtSelectedTargetLabel.ForeColor = Color.FromArgb(96, 96, 96);
 			txtSelectedTargetLabel.Location = new Point(3, 20);
@@ -1575,12 +1513,11 @@ namespace SecureServerBackup.WinForm
 			// 
 			// flpButtons
 			// 
-			flpButtons.AutoSize = true;
 			flpButtons.Controls.Add(btnCancel);
 			flpButtons.Controls.Add(btnRestore);
 			flpButtons.Dock = DockStyle.Fill;
 			flpButtons.FlowDirection = FlowDirection.RightToLeft;
-			flpButtons.Location = new Point(3, 763);
+			flpButtons.Location = new Point(3, 894);
 			flpButtons.Name = "flpButtons";
 			flpButtons.Size = new Size(1074, 40);
 			flpButtons.TabIndex = 2;
@@ -1610,7 +1547,7 @@ namespace SecureServerBackup.WinForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(1100, 828);
+			ClientSize = new Size(1100, 959);
 			Controls.Add(tlpRoot);
 			MinimumSize = new Size(850, 675);
 			Name = "RestoreFormNew";
@@ -1619,41 +1556,29 @@ namespace SecureServerBackup.WinForm
 			Text = "Restore Backup";
 			Load += RestoreWindowNew_Load;
 			tlpRoot.ResumeLayout(false);
-			tlpRoot.PerformLayout();
 			tlpBody.ResumeLayout(false);
 			tlpLeft.ResumeLayout(false);
-			tlpLeft.PerformLayout();
 			grpSelectBackup.ResumeLayout(false);
-			grpSelectBackup.PerformLayout();
 			tlpSelectBackup.ResumeLayout(false);
-			tlpSelectBackup.PerformLayout();
 			tlpBackupSourceRow.ResumeLayout(false);
 			tlpBackupSourceRow.PerformLayout();
 			pnlBackupInfo.ResumeLayout(false);
-			pnlBackupInfo.PerformLayout();
 			flpBackupCounts.ResumeLayout(false);
-			flpBackupCounts.PerformLayout();
 			grpRestoreOptions.ResumeLayout(false);
 			pnlOptionsScroll.ResumeLayout(false);
 			tlpOptions.ResumeLayout(false);
-			tlpOptions.PerformLayout();
 			pnlItemSelection.ResumeLayout(false);
 			pnlHyperVRestoreMode.ResumeLayout(false);
-			pnlHyperVRestoreMode.PerformLayout();
 			pnlHyperVVmOptions.ResumeLayout(false);
 			pnlHyperVVmOptions.PerformLayout();
 			pnlHyperVReplaceExistingOptions.ResumeLayout(false);
-			pnlHyperVReplaceExistingOptions.PerformLayout();
 			pnlHyperVDirectoryOptions.ResumeLayout(false);
-			pnlHyperVDirectoryOptions.PerformLayout();
 			tlpHyperVDirRow.ResumeLayout(false);
 			tlpHyperVDirRow.PerformLayout();
 			pnlRegularHyperVRestore.ResumeLayout(false);
-			pnlRegularHyperVRestore.PerformLayout();
 			tlpHyperVDiskRow.ResumeLayout(false);
 			tlpHyperVDiskRow.PerformLayout();
 			pnlExistingHyperVVmOptions.ResumeLayout(false);
-			pnlExistingHyperVVmOptions.PerformLayout();
 			pnlNewHyperVVmOptions.ResumeLayout(false);
 			pnlNewHyperVVmOptions.PerformLayout();
 			tlpNewVmPathRow.ResumeLayout(false);
@@ -1661,24 +1586,19 @@ namespace SecureServerBackup.WinForm
 			pnlLocationChoice.ResumeLayout(false);
 			pnlLocationChoice.PerformLayout();
 			pnlHyperVCloneDestination.ResumeLayout(false);
-			pnlHyperVCloneDestination.PerformLayout();
 			pnlHyperVCloneAlternate.ResumeLayout(false);
-			pnlHyperVCloneAlternate.PerformLayout();
 			tlpCloneVmRow.ResumeLayout(false);
 			tlpCloneVmRow.PerformLayout();
 			tlpCloneDiskRow.ResumeLayout(false);
 			tlpCloneDiskRow.PerformLayout();
 			grpRestoreTarget.ResumeLayout(false);
 			tlpTarget.ResumeLayout(false);
-			tlpTarget.PerformLayout();
 			pnlTargetTreeHost.ResumeLayout(false);
 			loadingTargetOverlay.ResumeLayout(false);
 			tlpLoadingCenter.ResumeLayout(false);
 			pnlLoadingContent.ResumeLayout(false);
 			tlpTargetFooter.ResumeLayout(false);
-			tlpTargetFooter.PerformLayout();
 			flpTargetButtons.ResumeLayout(false);
-			flpTargetButtons.PerformLayout();
 			flpButtons.ResumeLayout(false);
 			ResumeLayout(false);
 		}

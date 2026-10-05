@@ -8,7 +8,7 @@ using SecureServerBackup.Models;
 using SecureServerBackup.WinForms;
 using Xunit;
 
-using BackupWindowNew = SecureServerBackup.WinForms.BackupWindowNewForm;
+using BackupWindowNew = SecureServerBackup.WinForms.BackupNewForm;
 using RestoreWindowNew = SecureServerBackup.WinForm.RestoreFormNew;
 
 namespace SecureServerBackup.Tests;

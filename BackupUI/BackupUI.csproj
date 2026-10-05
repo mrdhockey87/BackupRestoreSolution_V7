@@ -80,11 +80,11 @@
     <Compile Update="WinForms\ActivityManagementForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="WinForms\BackupWindowNewForm.cs">
+    <Compile Update="WinForms\BackupNewForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="WinForms\BackupWindowNewForm.Designer.cs">
-      <DependentUpon>BackupWindowNewForm.cs</DependentUpon>
+    <Compile Update="WinForms\BackupNewForm.Designer.cs">
+      <DependentUpon>BackupNewForm.cs</DependentUpon>
     </Compile>
     <Compile Update="WinForms\ExclusionsManagementForm.cs">
       <SubType>Form</SubType>
