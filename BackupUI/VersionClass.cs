@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.8.56";
+        private static readonly string version_fallback_number = "7.4.8.58";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,10 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.8.58 Added the MountBackupTabForm to the WinForms project so the Mount Backup tab can be implemented there rather than
+ *                   in the main form, removed the code from the mainform that was from the mount tab, which I accedently put in the activity 
+ *                   tabs location, copied the layout from the mainform to the Mount form so the UI looks correct.  mdail 10/5/2026
+ *  Version 7.4.8.57 Fixed BackupNewForm so the WinForms designer builds the layout and no longer opens mostly blank mdail 10/5/2026
  *  Version 7.4.8.56 Renamed BackupWindowNewForm to BackupNewForm to make it more consistent with the other BackupUI forms, and updated all references to the 
  *                   renamed form. mdail 10/5/2026
  *  Version 7.4.8.55 Fixed RestoreFormNew layout sizing so restore fields and buttons no longer overlap or clip in the WinForms restore window mdail 10/5/2026

@@ -35,7 +35,7 @@ namespace SecureServerBackup.WinForms
 		private const int VolumeAnimationFrameCount = 6;
 
 
-		
+
 
 		public BackupNewForm()
 			: this(null)
@@ -47,6 +47,7 @@ namespace SecureServerBackup.WinForms
 			existingJob = job;
 			currentJob = job;
 			InitializeComponent();
+			BuildFormLayout();
 
 			Text = job == null ? "Create Backup" : $"Edit Backup - {job.Name}";
 			headerLabel.Text = Text;
@@ -173,6 +174,633 @@ namespace SecureServerBackup.WinForms
 		private void SettingsScroll_Resize(object? sender, EventArgs e)
 		{
 			ResizeSettingsWidth();
+		}
+
+		private void BuildFormLayout()
+		{
+			SuspendLayout();
+
+			ConfigureBasicGroup();
+			ConfigureRetentionPanel(retentionPanel, "Full Backup Retention", "Keep the most recent", retainCountTextBox, "full backup set(s).");
+			ConfigureRetentionPanel(selectedFilesRetentionPanel, "Selected Files Retention", "Keep the most recent", selectedFilesRetentionComboBox, "selected file backup(s).");
+			ConfigureRetentionPanel(cloneRetentionPanel, "Clone Export Retention", "Keep the most recent", cloneRetentionComboBox, "clone or export backup(s).");
+			ConfigureExclusionsGroup();
+			ConfigureEncryptionGroup();
+			ConfigureScheduleGroup();
+			ConfigureSourceControls();
+
+			Controls.Clear();
+
+			var rootLayout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				Padding = new Padding(12, 10, 12, 12),
+				ColumnCount = 2,
+				RowCount = 3
+			};
+			rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 57F));
+			rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 43F));
+			rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+			rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+			headerLabel.AutoSize = true;
+			headerLabel.Margin = new Padding(0, 0, 0, 12);
+
+			rootLayout.Controls.Add(headerLabel, 0, 0);
+			rootLayout.SetColumnSpan(headerLabel, 2);
+			rootLayout.Controls.Add(CreateSourcesColumn(), 0, 1);
+
+			settingsScroll.Controls.Clear();
+			settingsScroll.AutoScroll = true;
+			settingsScroll.Dock = DockStyle.Fill;
+			settingsScroll.Margin = new Padding(12, 0, 0, 0);
+			settingsScroll.BackColor = Color.Transparent;
+
+			settingsStack.Controls.Clear();
+			settingsStack.AutoSize = true;
+			settingsStack.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+			settingsStack.ColumnCount = 1;
+			settingsStack.RowCount = 0;
+			settingsStack.Dock = DockStyle.Top;
+			settingsStack.Margin = Padding.Empty;
+			settingsStack.Padding = Padding.Empty;
+			settingsStack.ColumnStyles.Clear();
+			settingsStack.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+			AddSettingsSection(basicGroup);
+			AddSettingsSection(retentionPanel);
+			AddSettingsSection(selectedFilesRetentionPanel);
+			AddSettingsSection(cloneRetentionPanel);
+			AddSettingsSection(exclusionsGroup);
+			AddSettingsSection(encryptionGroup);
+			AddSettingsSection(scheduleGroup);
+
+			settingsScroll.Controls.Add(settingsStack);
+			rootLayout.Controls.Add(settingsScroll, 1, 1);
+			Control actionButtonPanel = CreateActionButtonPanel();
+			rootLayout.Controls.Add(actionButtonPanel, 0, 2);
+			rootLayout.SetColumnSpan(actionButtonPanel, 2);
+
+			Controls.Add(rootLayout);
+
+			ResumeLayout(false);
+			PerformLayout();
+		}
+
+		private void AddSettingsSection(Control control)
+		{
+			ArgumentNullException.ThrowIfNull(control);
+
+			int row = settingsStack.RowCount;
+			settingsStack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			settingsStack.RowCount = row + 1;
+			control.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			settingsStack.Controls.Add(control, 0, row);
+		}
+
+		private void ConfigureBasicGroup()
+		{
+			basicGroup.Controls.Clear();
+			basicGroup.Text = "Basic Settings";
+			basicGroup.Visible = true;
+
+			var layout = CreateDetailsLayout();
+			AddLabeledControl(layout, 0, "Backup Name", backupNameTextBox);
+
+			var browseDestinationButton = new Button
+			{
+				Text = "Browse...",
+				AutoSize = true,
+				UseVisualStyleBackColor = true,
+				Margin = new Padding(0, 2, 0, 2)
+			};
+			browseDestinationButton.Click += BrowseDestination_Click;
+
+			ConfigureFillControl(destinationTextBox);
+			AddLabeledControl(layout, 1, "Destination", destinationTextBox, browseDestinationButton);
+
+			EnsureRow(layout, 2);
+			layout.Controls.Add(new Label
+			{
+				Text = "Backup Type",
+				AutoSize = true,
+				Anchor = AnchorStyles.Left,
+				Margin = new Padding(0, 4, 8, 4)
+			}, 0, 2);
+
+			var backupTypesPanel = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				AutoSize = true,
+				ColumnCount = 2,
+				Margin = new Padding(0, 2, 4, 2)
+			};
+			backupTypesPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+			backupTypesPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+			AddBackupTypeRadioButton(backupTypesPanel, 0, 0, "Full Backup", 0);
+			AddBackupTypeRadioButton(backupTypesPanel, 1, 0, "Full then Incremental", 1);
+			AddBackupTypeRadioButton(backupTypesPanel, 0, 1, "Full then Differential", 2);
+			AddBackupTypeRadioButton(backupTypesPanel, 1, 1, "Selected Files & Folder", 3);
+			AddBackupTypeRadioButton(backupTypesPanel, 0, 2, "Clone to Disk", 4);
+			AddBackupTypeRadioButton(backupTypesPanel, 1, 2, "Clone to Virtual Disk (Hyper-V)", 5);
+			AddBackupTypeRadioButton(backupTypesPanel, 0, 3, "Clone Hyper-V System", 6);
+			AddBackupTypeRadioButton(backupTypesPanel, 1, 3, "Export Hyper-V System", 7);
+
+			layout.Controls.Add(backupTypesPanel, 1, 2);
+			layout.SetColumnSpan(backupTypesPanel, 2);
+
+			backupTypeComboBox.Visible = false;
+			backupTypeComboBox.TabStop = false;
+			layout.Controls.Add(backupTypeComboBox, 2, 2);
+
+			AddCheckBoxRow(layout, 3, compressCheckBox, "Compress backup data");
+			AddCheckBoxRow(layout, 4, verifyCheckBox, "Verify backup after completion");
+
+			basicGroup.Controls.Add(layout);
+		}
+
+		private void ConfigureExclusionsGroup()
+		{
+			exclusionsGroup.Controls.Clear();
+			exclusionsGroup.Visible = true;
+
+			var layout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				AutoSize = true,
+				ColumnCount = 1,
+				Padding = new Padding(8)
+			};
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+			var descriptionLabel = new Label
+			{
+				Text = "Choose folders or files that should be skipped when this backup runs.",
+				AutoSize = true,
+				MaximumSize = new Size(340, 0),
+				Margin = new Padding(0, 0, 0, 8)
+			};
+
+			manageExclusionsButton.AutoSize = true;
+			manageExclusionsButton.UseVisualStyleBackColor = true;
+			manageExclusionsButton.Anchor = AnchorStyles.Left;
+			UpdateExclusionsButtonText();
+
+			layout.Controls.Add(descriptionLabel, 0, 0);
+			layout.Controls.Add(manageExclusionsButton, 0, 1);
+			exclusionsGroup.Controls.Add(layout);
+		}
+
+		private void ConfigureEncryptionGroup()
+		{
+			encryptionGroup.Controls.Clear();
+			encryptionGroup.Visible = true;
+
+			var outerLayout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				AutoSize = true,
+				ColumnCount = 1,
+				Padding = new Padding(8)
+			};
+
+			encryptCheckBox.AutoSize = true;
+			encryptCheckBox.Text = "Encrypt backup data";
+			encryptCheckBox.Margin = new Padding(0, 0, 0, 8);
+
+			encryptionPanel.Controls.Clear();
+			encryptionPanel.Dock = DockStyle.Top;
+			encryptionPanel.AutoSize = true;
+
+			var detailsLayout = CreateDetailsLayout();
+			AddLabeledControl(detailsLayout, 0, "Password", encryptionPasswordTextBox);
+
+			EnsureRow(detailsLayout, 1);
+			var verifyPasswordLabel = new Label
+			{
+				Name = "VerifyPasswordLabel",
+				Text = "Verify Password",
+				AutoSize = true,
+				Anchor = AnchorStyles.Left,
+				Margin = new Padding(0, 4, 8, 4)
+			};
+			detailsLayout.Controls.Add(verifyPasswordLabel, 0, 1);
+			ConfigureFillControl(verifyEncryptionPasswordTextBox);
+			detailsLayout.Controls.Add(verifyEncryptionPasswordTextBox, 1, 1);
+
+			showPasswordCheckBox.AutoSize = true;
+			showPasswordCheckBox.Text = "Show password";
+			showPasswordCheckBox.Margin = new Padding(0, 6, 0, 0);
+
+			encryptionPanel.Controls.Add(detailsLayout);
+			outerLayout.Controls.Add(encryptCheckBox, 0, 0);
+			outerLayout.Controls.Add(encryptionPanel, 0, 1);
+			outerLayout.Controls.Add(showPasswordCheckBox, 0, 2);
+			encryptionGroup.Controls.Add(outerLayout);
+		}
+
+		private void ConfigureScheduleGroup()
+		{
+			scheduleGroup.Controls.Clear();
+			scheduleGroup.Visible = true;
+
+			var outerLayout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				AutoSize = true,
+				ColumnCount = 1,
+				Padding = new Padding(8)
+			};
+
+			enableScheduleCheckBox.AutoSize = true;
+			enableScheduleCheckBox.Text = "Enable schedule";
+			enableScheduleCheckBox.Margin = new Padding(0, 0, 0, 8);
+
+			schedulePanel.Controls.Clear();
+			schedulePanel.Dock = DockStyle.Top;
+			schedulePanel.AutoSize = true;
+
+			var detailsLayout = CreateDetailsLayout();
+			frequencyComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+			AddLabeledControl(detailsLayout, 0, "Frequency", frequencyComboBox);
+
+			var timePanel = new FlowLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				AutoSize = true,
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = false,
+				Margin = new Padding(0, 2, 4, 2)
+			};
+			hourComboBox.Width = 60;
+			minuteComboBox.Width = 60;
+			amPmComboBox.Width = 70;
+			timePanel.Controls.Add(hourComboBox);
+			timePanel.Controls.Add(new Label { Text = ":", AutoSize = true, Margin = new Padding(6, 8, 6, 0) });
+			timePanel.Controls.Add(minuteComboBox);
+			timePanel.Controls.Add(amPmComboBox);
+			AddLabeledControl(detailsLayout, 1, "Time", timePanel);
+
+			weeklyPanel.Controls.Clear();
+			weeklyPanel.Dock = DockStyle.Top;
+			weeklyPanel.AutoSize = true;
+			var weeklyLayout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				AutoSize = true,
+				ColumnCount = 2,
+				Margin = new Padding(0)
+			};
+			weeklyLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130F));
+			weeklyLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+			weeklyLayout.Controls.Add(new Label
+			{
+				Text = "Days",
+				AutoSize = true,
+				Anchor = AnchorStyles.Left,
+				Margin = new Padding(0, 4, 8, 4)
+			}, 0, 0);
+			weeklyDaysCheckedListBox.CheckOnClick = true;
+			weeklyDaysCheckedListBox.Height = 116;
+			if (weeklyDaysCheckedListBox.Items.Count == 0)
+			{
+				weeklyDaysCheckedListBox.Items.AddRange(new object[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" });
+			}
+			weeklyLayout.Controls.Add(weeklyDaysCheckedListBox, 1, 0);
+			weeklyPanel.Controls.Add(weeklyLayout);
+
+			monthlyPanel.Controls.Clear();
+			monthlyPanel.Dock = DockStyle.Top;
+			monthlyPanel.AutoSize = true;
+			var monthlyLayout = new FlowLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				AutoSize = true,
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = false,
+				Margin = new Padding(0)
+			};
+			monthlyLayout.Controls.Add(new Label { Text = "Day of month", AutoSize = true, Margin = new Padding(0, 8, 6, 0) });
+			monthlyLayout.Controls.Add(dayOfMonthComboBox);
+			monthlyPanel.Controls.Add(monthlyLayout);
+
+			EnsureRow(detailsLayout, 2);
+			detailsLayout.Controls.Add(new Label { AutoSize = true }, 0, 2);
+			detailsLayout.Controls.Add(weeklyPanel, 1, 2);
+			detailsLayout.SetColumnSpan(weeklyPanel, 2);
+
+			EnsureRow(detailsLayout, 3);
+			detailsLayout.Controls.Add(new Label { AutoSize = true }, 0, 3);
+			detailsLayout.Controls.Add(monthlyPanel, 1, 3);
+			detailsLayout.SetColumnSpan(monthlyPanel, 2);
+
+			schedulePanel.Controls.Add(detailsLayout);
+			outerLayout.Controls.Add(enableScheduleCheckBox, 0, 0);
+			outerLayout.Controls.Add(schedulePanel, 0, 1);
+			scheduleGroup.Controls.Add(outerLayout);
+		}
+
+		private void ConfigureSourceControls()
+		{
+			refreshDriveTreeButton.Text = "Refresh";
+			refreshDriveTreeButton.AutoSize = true;
+			refreshDriveTreeButton.UseVisualStyleBackColor = true;
+
+			expandTreeButton.Text = "Expand All";
+			expandTreeButton.AutoSize = true;
+			expandTreeButton.UseVisualStyleBackColor = true;
+
+			collapseTreeButton.Text = "Collapse All";
+			collapseTreeButton.AutoSize = true;
+			collapseTreeButton.UseVisualStyleBackColor = true;
+
+			showHiddenPartitionsCheckBox.AutoSize = true;
+			showHiddenPartitionsCheckBox.Text = "Show hidden partitions";
+
+			nativeCoverageLabel.AutoSize = true;
+			nativeCoverageLabel.MaximumSize = new Size(620, 0);
+			nativeCoverageLabel.Margin = new Padding(0, 0, 0, 8);
+
+			actionInfoLabel.AutoSize = true;
+			actionInfoLabel.MaximumSize = new Size(620, 0);
+			actionInfoLabel.BorderStyle = BorderStyle.FixedSingle;
+			actionInfoLabel.Padding = new Padding(10);
+			actionInfoLabel.Margin = new Padding(0, 0, 0, 8);
+
+			actionHelpLabel.AutoSize = true;
+			actionHelpLabel.MaximumSize = new Size(620, 0);
+			actionHelpLabel.Margin = new Padding(0, 0, 0, 8);
+
+			advancedStateLabel.AutoSize = true;
+			advancedStateLabel.MaximumSize = new Size(620, 0);
+			advancedStateLabel.Margin = new Padding(0, 0, 0, 8);
+
+			advancedSelectionListBox.IntegralHeight = false;
+			advancedSelectionListBox.Height = 140;
+
+			openAdvancedEditorButton.Text = "Open Advanced Editor";
+			openAdvancedEditorButton.AutoSize = true;
+			openAdvancedEditorButton.UseVisualStyleBackColor = true;
+		}
+
+		private Control CreateSourcesColumn()
+		{
+			var sourceColumn = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				ColumnCount = 1,
+				RowCount = 2,
+				Margin = Padding.Empty
+			};
+			sourceColumn.RowStyles.Add(new RowStyle(SizeType.Percent, 56F));
+			sourceColumn.RowStyles.Add(new RowStyle(SizeType.Percent, 44F));
+
+			sourceColumn.Controls.Add(CreateSourceSelectionGroup(), 0, 0);
+			sourceColumn.Controls.Add(CreateAdvancedStateGroup(), 0, 1);
+
+			return sourceColumn;
+		}
+
+		private Control CreateSourceSelectionGroup()
+		{
+			GroupBox group = CreateGroupBox("Source Selection");
+			group.Dock = DockStyle.Fill;
+			group.AutoSize = false;
+
+			var layout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				Padding = new Padding(8),
+				ColumnCount = 1,
+				RowCount = 6
+			};
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 110F));
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+			var treeButtonPanel = new FlowLayoutPanel
+			{
+				AutoSize = true,
+				Dock = DockStyle.Fill,
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = true,
+				Margin = new Padding(0, 0, 0, 6)
+			};
+			treeButtonPanel.Controls.Add(refreshDriveTreeButton);
+			treeButtonPanel.Controls.Add(expandTreeButton);
+			treeButtonPanel.Controls.Add(collapseTreeButton);
+
+			driveTree.Dock = DockStyle.Fill;
+			driveTree.Margin = new Padding(0, 0, 0, 8);
+
+			var selectedSourcesLabel = new Label
+			{
+				Text = "Selected file and folder sources",
+				AutoSize = true,
+				Margin = new Padding(0, 2, 0, 6)
+			};
+
+			nativeSourceListBox.Dock = DockStyle.Fill;
+			nativeSourceListBox.Margin = new Padding(0, 0, 0, 8);
+
+			var sourceActionPanel = new FlowLayoutPanel
+			{
+				AutoSize = true,
+				Dock = DockStyle.Fill,
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = true,
+				Margin = Padding.Empty
+			};
+			sourceActionPanel.Controls.Add(addFolderSourceButton);
+			sourceActionPanel.Controls.Add(addFileSourceButton);
+			sourceActionPanel.Controls.Add(removeSourceButton);
+
+			layout.Controls.Add(treeButtonPanel, 0, 0);
+			layout.Controls.Add(showHiddenPartitionsCheckBox, 0, 1);
+			layout.Controls.Add(driveTree, 0, 2);
+			layout.Controls.Add(selectedSourcesLabel, 0, 3);
+			layout.Controls.Add(nativeSourceListBox, 0, 4);
+			layout.Controls.Add(sourceActionPanel, 0, 5);
+
+			group.Controls.Add(layout);
+			return group;
+		}
+
+		private Control CreateAdvancedStateGroup()
+		{
+			GroupBox group = CreateGroupBox("Advanced State");
+			group.Dock = DockStyle.Fill;
+			group.AutoSize = false;
+
+			var layout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				Padding = new Padding(8),
+				ColumnCount = 1,
+				RowCount = 5
+			};
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+			layout.Controls.Add(nativeCoverageLabel, 0, 0);
+			layout.Controls.Add(actionInfoLabel, 0, 1);
+			layout.Controls.Add(actionHelpLabel, 0, 2);
+			layout.Controls.Add(advancedStateLabel, 0, 3);
+
+			var selectionLayout = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				ColumnCount = 1,
+				RowCount = 2,
+				Margin = Padding.Empty
+			};
+			selectionLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+			selectionLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			selectionLayout.Controls.Add(advancedSelectionListBox, 0, 0);
+			selectionLayout.Controls.Add(openAdvancedEditorButton, 0, 1);
+
+			layout.Controls.Add(selectionLayout, 0, 4);
+			group.Controls.Add(layout);
+			return group;
+		}
+
+		private Control CreateActionButtonPanel()
+		{
+			var actionPanel = new FlowLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				FlowDirection = FlowDirection.RightToLeft,
+				AutoSize = true,
+				WrapContents = false,
+				Margin = new Padding(0, 12, 0, 0)
+			};
+
+			saveJobButton.Text = "Save Backup";
+			saveJobButton.AutoSize = true;
+			saveJobButton.UseVisualStyleBackColor = true;
+
+			startBackupButton.Text = "Start Backup";
+			startBackupButton.AutoSize = true;
+			startBackupButton.UseVisualStyleBackColor = true;
+
+			actionPanel.Controls.Add(startBackupButton);
+			actionPanel.Controls.Add(saveJobButton);
+
+			return actionPanel;
+		}
+
+		private static void ConfigureRetentionPanel(Panel panel, string title, string prefix, TextBox textBox, string suffix)
+		{
+			ArgumentNullException.ThrowIfNull(panel);
+			ArgumentNullException.ThrowIfNull(textBox);
+
+			panel.Controls.Clear();
+			panel.Dock = DockStyle.Top;
+			panel.AutoSize = true;
+
+			GroupBox group = CreateGroupBox(title);
+			var layout = new FlowLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = false,
+				AutoSize = true,
+				Padding = new Padding(10)
+			};
+
+			textBox.Width = 60;
+			textBox.TextAlign = HorizontalAlignment.Center;
+
+			layout.Controls.Add(new Label { Text = prefix, AutoSize = true, Margin = new Padding(0, 8, 6, 0) });
+			layout.Controls.Add(textBox);
+			layout.Controls.Add(new Label { Text = suffix, AutoSize = true, Margin = new Padding(6, 8, 0, 0) });
+
+			group.Controls.Add(layout);
+			panel.Controls.Add(group);
+		}
+
+		private static void ConfigureRetentionPanel(Panel panel, string title, string prefix, ComboBox comboBox, string suffix)
+		{
+			ArgumentNullException.ThrowIfNull(panel);
+			ArgumentNullException.ThrowIfNull(comboBox);
+
+			panel.Controls.Clear();
+			panel.Dock = DockStyle.Top;
+			panel.AutoSize = true;
+
+			GroupBox group = CreateGroupBox(title);
+			var layout = new FlowLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = false,
+				AutoSize = true,
+				Padding = new Padding(10)
+			};
+
+			comboBox.Width = 80;
+			comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+
+			layout.Controls.Add(new Label { Text = prefix, AutoSize = true, Margin = new Padding(0, 8, 6, 0) });
+			layout.Controls.Add(comboBox);
+			layout.Controls.Add(new Label { Text = suffix, AutoSize = true, Margin = new Padding(6, 8, 0, 0) });
+
+			group.Controls.Add(layout);
+			panel.Controls.Add(group);
+		}
+
+		private static void AddLabeledControl(TableLayoutPanel panel, int row, string label, Control control, Control? trailingControl = null)
+		{
+			ArgumentNullException.ThrowIfNull(panel);
+			ArgumentNullException.ThrowIfNull(control);
+
+			EnsureRow(panel, row);
+			panel.Controls.Add(new Label
+			{
+				Text = label,
+				AutoSize = true,
+				Anchor = AnchorStyles.Left,
+				Margin = new Padding(0, 4, 8, 4)
+			}, 0, row);
+
+			ConfigureFillControl(control);
+			panel.Controls.Add(control, 1, row);
+
+			if (trailingControl != null)
+			{
+				trailingControl.Anchor = AnchorStyles.Left;
+				panel.Controls.Add(trailingControl, 2, row);
+			}
+		}
+
+		private static void AddCheckBoxRow(TableLayoutPanel panel, int row, CheckBox checkBox, string text)
+		{
+			ArgumentNullException.ThrowIfNull(panel);
+			ArgumentNullException.ThrowIfNull(checkBox);
+
+			EnsureRow(panel, row);
+			checkBox.Text = text;
+			checkBox.AutoSize = true;
+			checkBox.Margin = new Padding(0, 4, 4, 4);
+			panel.Controls.Add(new Label { AutoSize = true }, 0, row);
+			panel.Controls.Add(checkBox, 1, row);
+			panel.SetColumnSpan(checkBox, 2);
+		}
+
+		private static void ConfigureFillControl(Control control)
+		{
+			ArgumentNullException.ThrowIfNull(control);
+
+			control.Dock = DockStyle.Fill;
+			control.Margin = new Padding(0, 2, 4, 2);
 		}
 
 		private void ApplyDesignTimeState()
@@ -2332,6 +2960,11 @@ namespace SecureServerBackup.WinForms
 
 			minuteComboBox.Text = minute.ToString("D2");
 			return true;
+		}
+
+		private void BackupNewForm_FormClosed(object sender, FormClosedEventArgs e)
+		{
+
 		}
 	}
 }

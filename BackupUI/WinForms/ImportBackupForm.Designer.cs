@@ -126,7 +126,7 @@ namespace SecureServerBackup.WinForms
 			rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			rootLayout.RowStyles.Add(new RowStyle());
 			rootLayout.RowStyles.Add(new RowStyle());
-			rootLayout.Size = new Size(706, 738);
+			rootLayout.Size = new Size(706, 740);
 			rootLayout.TabIndex = 0;
 			// 
 			// headerLabel
@@ -147,7 +147,7 @@ namespace SecureServerBackup.WinForms
 			fileGroupBox.Location = new Point(18, 56);
 			fileGroupBox.Margin = new Padding(3, 3, 3, 17);
 			fileGroupBox.Name = "fileGroupBox";
-			fileGroupBox.Size = new Size(670, 438);
+			fileGroupBox.Size = new Size(670, 440);
 			fileGroupBox.TabIndex = 1;
 			fileGroupBox.TabStop = false;
 			fileGroupBox.Text = "Select Backup File";
@@ -466,7 +466,7 @@ namespace SecureServerBackup.WinForms
 			optionsGroupBox.AutoSize = true;
 			optionsGroupBox.Controls.Add(optionsLayout);
 			optionsGroupBox.Dock = DockStyle.Top;
-			optionsGroupBox.Location = new Point(18, 514);
+			optionsGroupBox.Location = new Point(18, 516);
 			optionsGroupBox.Margin = new Padding(3, 3, 3, 17);
 			optionsGroupBox.Name = "optionsGroupBox";
 			optionsGroupBox.Size = new Size(670, 138);
@@ -535,7 +535,7 @@ namespace SecureServerBackup.WinForms
 			buttonsPanel.Controls.Add(importButton);
 			buttonsPanel.Dock = DockStyle.Fill;
 			buttonsPanel.FlowDirection = FlowDirection.RightToLeft;
-			buttonsPanel.Location = new Point(18, 672);
+			buttonsPanel.Location = new Point(18, 674);
 			buttonsPanel.Name = "buttonsPanel";
 			buttonsPanel.Size = new Size(670, 46);
 			buttonsPanel.TabIndex = 3;
@@ -572,7 +572,7 @@ namespace SecureServerBackup.WinForms
 			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
 			CancelButton = cancelButton;
-			ClientSize = new Size(706, 738);
+			ClientSize = new Size(706, 740);
 			Controls.Add(rootLayout);
 			FormBorderStyle = FormBorderStyle.FixedDialog;
 			MaximizeBox = false;

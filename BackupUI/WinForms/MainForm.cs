@@ -221,7 +221,7 @@ namespace SecureServerBackup.WinForms
 			using var form = new BackupNewForm(job);
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			LoadMountedBackups();
+			//LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
@@ -244,7 +244,7 @@ namespace SecureServerBackup.WinForms
 			{
 				jobManager.DeleteJob(job.Id);
 				LoadBackupJobs();
-				LoadMountedBackups();
+				//LoadMountedBackups();
 				LoadVerifyBackups();
 				LoadRestoreBackups();
 
@@ -567,7 +567,7 @@ namespace SecureServerBackup.WinForms
 			buttonsPanel.Controls.Add(CreateHeaderActionButton("Refresh", (_, _) =>
 			{
 				LoadBackupJobs();
-				LoadMountedBackups();
+				//LoadMountedBackups();
 				LoadVerifyBackups();
 				LoadRestoreBackups();
 			}, 100));
@@ -596,8 +596,8 @@ namespace SecureServerBackup.WinForms
 			}
 			else if (mainTabControl.SelectedTab == mountBackupsTabPage)
 			{
-				LoadAvailableBackups();
-				LoadMountedBackups();
+				//LoadAvailableBackups();
+				//LoadMountedBackups();
 			}
 			else if (mainTabControl.SelectedTab == verifyTabPage)
 			{
@@ -945,6 +945,7 @@ namespace SecureServerBackup.WinForms
 
 			return false;
 		}
+		/*
 		private void LoadAvailableBackups()
 		{
 			if (dgAvailableBackups == null)
@@ -987,13 +988,14 @@ namespace SecureServerBackup.WinForms
 				/*
 				if (txtNoBackups != null)
 					txtNoBackups.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-					*/
+					
 			}
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine($"Error loading available backups: {ex.Message}");
 			}
 		}
+
 		private void LoadMountedBackups()
 		{
 
@@ -1003,7 +1005,7 @@ namespace SecureServerBackup.WinForms
 			var mounted = NativeBackupMountManager.GetMountedBackups();
 			dgMountedBackups.DataSource = mounted;
 		}
-
+		*/
 		private void LoadVerifyBackups()
 		{
 			try
@@ -1020,7 +1022,7 @@ namespace SecureServerBackup.WinForms
 				verifyStatusLabel.Text = $"Error loading verify backups: {ex.Message}";
 			}
 		}
-
+		/*
 		private void BrowseMountBackup()
 		{
 			using var openFileDialog = new OpenFileDialog
@@ -1056,7 +1058,7 @@ namespace SecureServerBackup.WinForms
 			TrySelectBackupByPath(dgAvailableBackups, selectedFile);
 			mountStatusLabel.Text = $"Backup file added for mount: {Path.GetFileName(selectedFile)}";
 		}
-
+		*/
 		private void BrowseVerifyBackup()
 		{
 			using var openFileDialog = new OpenFileDialog
@@ -1475,8 +1477,8 @@ namespace SecureServerBackup.WinForms
 			using var form = new BackupNewForm();
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			LoadAvailableBackups();
-			LoadMountedBackups();
+			//LoadAvailableBackups();
+			//LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
@@ -1871,8 +1873,8 @@ namespace SecureServerBackup.WinForms
 			using var form = new ImportBackupForm();
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			LoadAvailableBackups();
-			LoadMountedBackups();
+			//LoadAvailableBackups();
+			//LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
@@ -1912,8 +1914,8 @@ namespace SecureServerBackup.WinForms
 		{
 			LoadVersion();
 			LoadBackupJobs();
-			LoadAvailableBackups();
-			LoadMountedBackups();
+			//LoadAvailableBackups();
+			//LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 			EnsureSelectedTabFits();
@@ -1952,10 +1954,10 @@ namespace SecureServerBackup.WinForms
 
 		private void RefreshMounts_Click(object sender, EventArgs e)
 		{
-			LoadAvailableBackups();
-			LoadMountedBackups();
+			//LoadAvailableBackups();
+			//LoadMountedBackups();
 		}
-
+		/*
 		private void BrowseBackup_Click(object sender, EventArgs e)
 		{
 			var openFileDialog = new Microsoft.Win32.OpenFileDialog
@@ -2002,9 +2004,9 @@ namespace SecureServerBackup.WinForms
 
 					dgAvailableBackups.DataSource = null; // Force refresh
 					dgAvailableBackups.DataSource = backups;
-					/*
+					
 					if (txtNoBackups != null)
-						txtNoBackups.Visibility = Visibility.Collapsed;*/
+						txtNoBackups.Visibility = Visibility.Collapsed;
 
 					CustomDialogService.ShowSuccess(this, $"Backup file added: {System.IO.Path.GetFileName(selectedFile)}",
 								  "Backup Added");
@@ -2016,7 +2018,7 @@ namespace SecureServerBackup.WinForms
 				}
 			}
 		}
-
+		*/
 		private void UnmountAll_Click(object sender, EventArgs e)
 		{
 			var mounted = NativeBackupMountManager.GetMountedBackups();
@@ -2035,7 +2037,7 @@ namespace SecureServerBackup.WinForms
 			if (result == CustomDialogResult.Yes)
 			{
 				NativeBackupMountManager.UnmountAll();
-				LoadMountedBackups();
+				//LoadMountedBackups();
 				CustomDialogService.ShowSuccess(this, "All backups unmounted successfully.",
 							  "Success");
 			}
@@ -2185,7 +2187,7 @@ namespace SecureServerBackup.WinForms
 										  $"Backup is READ-ONLY to prevent modifications.",
 										  "Backup Mounted");
 
-							LoadMountedBackups();
+							//LoadMountedBackups();
 							OpenExplorer(mountPath);
 						}
 						else
