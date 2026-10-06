@@ -22,6 +22,7 @@ namespace SecureServerBackup.WinForms
 
 		private readonly JobManager jobManager = new();
 		private ActivityManagementForm? activityManagementView;
+		private MountBackupTabForm? mountBackupTabView;
 		private ScheduleManagementForm? scheduleManagementView;
 
 		public MainForm()
@@ -596,8 +597,7 @@ namespace SecureServerBackup.WinForms
 			}
 			else if (mainTabControl.SelectedTab == mountBackupsTabPage)
 			{
-				//LoadAvailableBackups();
-				//LoadMountedBackups();
+				EnsureMountBackupTabLoaded();
 			}
 			else if (mainTabControl.SelectedTab == verifyTabPage)
 			{
@@ -610,6 +610,38 @@ namespace SecureServerBackup.WinForms
 			else if (mainTabControl.SelectedTab == schedulesTabPage)
 			{
 				EnsureScheduleManagementLoaded();
+			}
+
+			EnsureSelectedTabFits();
+		}
+
+		private void EnsureMountBackupTabLoaded()
+		{
+			if (mountBackupTabView != null && !mountBackupTabView.IsDisposed && mountBackupsTabPage.Controls.Contains(mountBackupTabView))
+			{
+				return;
+			}
+
+			mountBackupsTabPage.SuspendLayout();
+
+			try
+			{
+				mountBackupTabView?.Dispose();
+				mountBackupsTabPage.Controls.Clear();
+
+				MountBackupTabForm childForm = new();
+				childForm.ConfigureForEmbeddedHost();
+				childForm.TopLevel = false;
+				childForm.FormBorderStyle = FormBorderStyle.None;
+				childForm.Dock = DockStyle.Fill;
+
+				mountBackupTabView = childForm;
+				mountBackupsTabPage.Controls.Add(childForm);
+				childForm.Show();
+			}
+			finally
+			{
+				mountBackupsTabPage.ResumeLayout();
 			}
 
 			EnsureSelectedTabFits();
@@ -733,6 +765,19 @@ namespace SecureServerBackup.WinForms
 				return new System.Drawing.Size(
 					scheduleManagementView.MinimumSize.Width + schedulesTabPanel.Padding.Horizontal + schedulesTabPage.Padding.Horizontal,
 					scheduleManagementView.MinimumSize.Height + schedulesTabPanel.Padding.Vertical + schedulesTabPage.Padding.Vertical);
+			}
+
+			if (mainTabControl.SelectedTab == mountBackupsTabPage && mountBackupTabView != null && !mountBackupTabView.IsDisposed)
+			{
+				System.Drawing.Size hostedSize = mountBackupTabView.MinimumSize;
+				if (hostedSize.Width <= 0 || hostedSize.Height <= 0)
+				{
+					hostedSize = mountBackupTabView.Size;
+				}
+
+				return new System.Drawing.Size(
+					hostedSize.Width + mountBackupsTabPage.Padding.Horizontal,
+					hostedSize.Height + mountBackupsTabPage.Padding.Vertical);
 			}
 
 			return System.Drawing.Size.Empty;
@@ -985,7 +1030,7 @@ namespace SecureServerBackup.WinForms
 				}
 
 				dgAvailableBackups.DataSource = backups;
-				/*
+				
 				if (txtNoBackups != null)
 					txtNoBackups.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 					

@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.8.58";
+        private static readonly string version_fallback_number = "7.4.8.62";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,10 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.8.62 Fixed MountBackupTabForm so dgMountedBackups now uses the predefined designer columns instead of appending auto-generated bound columns mdail 10/6/2026
+ *  Version 7.4.8.61 Wired the Mount and Unmount DataGridView button columns in MountBackupTabForm so they now run the existing mount and unmount workflows mdail 10/6/2026
+ *  Version 7.4.8.60 Fixed MountBackupTabForm so dgAvailableBackups now uses the predefined designer columns instead of appending auto-generated bound columns mdail 10/6/2026
+ *  Version 7.4.8.59 Load the Mount Backups tab from MountBackupTabForm when the tab is selected so the main form no longer uses the old designer mount view mdail 10/6/2026
  *  Version 7.4.8.58 Added the MountBackupTabForm to the WinForms project so the Mount Backup tab can be implemented there rather than
  *                   in the main form, removed the code from the mainform that was from the mount tab, which I accedently put in the activity 
  *                   tabs location, copied the layout from the mainform to the Mount form so the UI looks correct.  mdail 10/5/2026
