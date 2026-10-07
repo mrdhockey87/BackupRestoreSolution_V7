@@ -31,6 +31,7 @@ namespace SecureServerBackup.WinForms
 			ConfigureMenu();
 			ConfigureShell();
 			MainMenuStrip = mainMenuStrip;
+			WindowPositionManager.RestoreMainWindowPosition(this);
 		}
 
 		private void LoadBackupJobs()
@@ -1987,9 +1988,10 @@ namespace SecureServerBackup.WinForms
 			ResizeBackupJobCards();
 		}
 
-		protected override void OnFormClosed(FormClosedEventArgs e)
+		protected override void OnFormClosing(FormClosingEventArgs e)
 		{
-			base.OnFormClosed(e);
+			WindowPositionManager.SaveMainWindowPosition(this);
+			base.OnFormClosing(e);
 		}
 
 		private void RestoreBackupsListView_DoubleClick(object? sender, EventArgs e)

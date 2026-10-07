@@ -10,7 +10,7 @@ namespace SecureServerBackup
 		private static void Main()
 		{
 			ApplicationConfiguration.Initialize();
-			WinFormsStartup.Run();//.GetAwaiter().GetResult();
+			WinFormsStartup.Run();
 		}
 	}
 }

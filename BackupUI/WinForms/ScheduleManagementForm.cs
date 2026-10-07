@@ -104,6 +104,7 @@ namespace SecureServerBackup.WinForms
 
 		private void LoadJobs()
 		{
+			jobManager.LoadJobs();
 			jobsGrid.DataSource = jobManager.GetScheduledJobs().ToList();
 		}
 

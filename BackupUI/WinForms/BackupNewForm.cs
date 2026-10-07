@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -23,15 +24,21 @@ namespace SecureServerBackup.WinForms
 		private readonly JobManager jobManager = new();
 		private readonly List<string> nativeSourcePaths = new();
 		private readonly List<string> nativeUserExclusions = new();
+		private readonly List<string> savedNetworkPaths = new();
 		private readonly HashSet<TreeNode> loadingVolumeNodes = [];
 
 		private BackupJob? currentJob;
 		private bool hasSavedEncryptionPassword;
+		private bool isPopulatingDriveTree;
 		private string savedProtectedPassword = string.Empty;
 		private bool suppressPasswordSync;
 		private bool suppressTreeCheckSync;
 		private int volumeAnimationFrame;
 		private Control[] settingsWidthControls = [];
+		private readonly ProgressBar driveTreeLoadProgressBar = new();
+		private readonly Label driveTreeStatusLabel = new();
+		private readonly CheckBox renameHyperVSystemCheckBox = new();
+		private readonly TextBox renameHyperVSystemNameTextBox = new();
 		private const int VolumeAnimationFrameCount = 6;
 
 
@@ -69,6 +76,7 @@ namespace SecureServerBackup.WinForms
 			ResizeSettingsWidth();
 
 			InitializeScheduleControls();
+			Shown += BackupNewForm_Shown;
 
 			if (IsInDesignMode)
 			{
@@ -76,7 +84,7 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			PopulateDriveTree();
+			savedNetworkPaths.AddRange(SavedNetworkPathStore.Load());
 			LoadExistingJob();
 			UpdateBackupTypeUi();
 			UpdateEncryptionUi();
@@ -126,9 +134,14 @@ namespace SecureServerBackup.WinForms
 			UpdateBackupTypeUi();
 		}
 
+		private void RenameHyperVSystemCheckBox_CheckedChanged(object? sender, EventArgs e)
+		{
+			UpdateCloneOptionsUi();
+		}
+
 		private void RefreshDriveTreeButton_Click(object? sender, EventArgs e)
 		{
-			PopulateDriveTree();
+			_ = PopulateDriveTreeAsync();
 		}
 
 		private void ExpandTreeButton_Click(object? sender, EventArgs e)
@@ -143,7 +156,19 @@ namespace SecureServerBackup.WinForms
 
 		private void ShowHiddenPartitionsCheckBox_CheckedChanged(object? sender, EventArgs e)
 		{
-			PopulateDriveTree();
+			_ = PopulateDriveTreeAsync();
+		}
+
+		private async void BackupNewForm_Shown(object? sender, EventArgs e)
+		{
+			try
+			{
+				await PopulateDriveTreeAsync().ConfigureAwait(true);
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"[BackupNewForm] Failed to load source tree: {ex.Message}");
+			}
 		}
 
 		private void NativeSourceListBox_SelectedIndexChanged(object? sender, EventArgs e)
@@ -316,6 +341,16 @@ namespace SecureServerBackup.WinForms
 
 			AddCheckBoxRow(layout, 3, compressCheckBox, "Compress backup data");
 			AddCheckBoxRow(layout, 4, verifyCheckBox, "Verify backup after completion");
+
+			renameHyperVSystemCheckBox.AutoSize = true;
+			renameHyperVSystemCheckBox.Text = "Rename imported Hyper-V system";
+			renameHyperVSystemCheckBox.Margin = new Padding(0, 4, 4, 4);
+			renameHyperVSystemCheckBox.CheckedChanged -= RenameHyperVSystemCheckBox_CheckedChanged;
+			renameHyperVSystemCheckBox.CheckedChanged += RenameHyperVSystemCheckBox_CheckedChanged;
+			AddCheckBoxRow(layout, 5, renameHyperVSystemCheckBox, renameHyperVSystemCheckBox.Text);
+
+			ConfigureFillControl(renameHyperVSystemNameTextBox);
+			AddLabeledControl(layout, 6, "New Hyper-V Name", renameHyperVSystemNameTextBox);
 
 			basicGroup.Controls.Add(layout);
 		}
@@ -540,9 +575,19 @@ namespace SecureServerBackup.WinForms
 			advancedSelectionListBox.IntegralHeight = false;
 			advancedSelectionListBox.Height = 140;
 
-			openAdvancedEditorButton.Text = "Open Advanced Editor";
+			openAdvancedEditorButton.Text = "Backup Editor Status";
 			openAdvancedEditorButton.AutoSize = true;
 			openAdvancedEditorButton.UseVisualStyleBackColor = true;
+
+			driveTreeLoadProgressBar.Style = ProgressBarStyle.Marquee;
+			driveTreeLoadProgressBar.MarqueeAnimationSpeed = 25;
+			driveTreeLoadProgressBar.Dock = DockStyle.Fill;
+			driveTreeLoadProgressBar.Visible = false;
+
+			driveTreeStatusLabel.AutoSize = true;
+			driveTreeStatusLabel.Margin = new Padding(0, 0, 0, 6);
+			driveTreeStatusLabel.Text = "Loading backup sources...";
+			driveTreeStatusLabel.Visible = false;
 		}
 
 		private Control CreateSourcesColumn()
@@ -574,14 +619,27 @@ namespace SecureServerBackup.WinForms
 				Dock = DockStyle.Fill,
 				Padding = new Padding(8),
 				ColumnCount = 1,
-				RowCount = 6
+				RowCount = 7
 			};
+			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 			layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 			layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 110F));
 			layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+			var loadingLayout = new TableLayoutPanel
+			{
+				AutoSize = true,
+				Dock = DockStyle.Fill,
+				ColumnCount = 1,
+				Margin = new Padding(0, 0, 0, 6)
+			};
+			loadingLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			loadingLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+			loadingLayout.Controls.Add(driveTreeStatusLabel, 0, 0);
+			loadingLayout.Controls.Add(driveTreeLoadProgressBar, 0, 1);
 
 			var treeButtonPanel = new FlowLayoutPanel
 			{
@@ -622,10 +680,11 @@ namespace SecureServerBackup.WinForms
 
 			layout.Controls.Add(treeButtonPanel, 0, 0);
 			layout.Controls.Add(showHiddenPartitionsCheckBox, 0, 1);
-			layout.Controls.Add(driveTree, 0, 2);
-			layout.Controls.Add(selectedSourcesLabel, 0, 3);
-			layout.Controls.Add(nativeSourceListBox, 0, 4);
-			layout.Controls.Add(sourceActionPanel, 0, 5);
+			layout.Controls.Add(loadingLayout, 0, 2);
+			layout.Controls.Add(driveTree, 0, 3);
+			layout.Controls.Add(selectedSourcesLabel, 0, 4);
+			layout.Controls.Add(nativeSourceListBox, 0, 5);
+			layout.Controls.Add(sourceActionPanel, 0, 6);
 
 			group.Controls.Add(layout);
 			return group;
@@ -977,7 +1036,7 @@ namespace SecureServerBackup.WinForms
 		{
 			return new Label
 			{
-				Text = "Advanced migration status\n\n- Native: common settings, encryption, schedule, retention\n- Legacy advanced editor: source tree, Hyper-V, clone/export, immediate execution",
+				Text = "WinForms backup status\n\n- Native: common settings, encryption, schedule, retention, source tree, Hyper-V, clone, export, save, and immediate execution\n- This form is the primary backup authoring surface",
 				AutoSize = true,
 				MaximumSize = new Size(220, 0),
 				BorderStyle = BorderStyle.FixedSingle,
@@ -1161,6 +1220,12 @@ namespace SecureServerBackup.WinForms
 					.Where(path => !string.IsNullOrWhiteSpace(path))
 					.Distinct(StringComparer.OrdinalIgnoreCase));
 			}
+			else if (job.Target == BackupTarget.HyperV || job.IsHyperVBackup || job.HyperVMachines.Count > 0)
+			{
+				nativeSourcePaths.AddRange(GetReplayPathsForJob(job)
+					.Where(path => !string.IsNullOrWhiteSpace(path))
+					.Distinct(StringComparer.OrdinalIgnoreCase));
+			}
 			else if (CanUseNativeSourceSelection(job.Type, job.Target))
 			{
 				nativeSourcePaths.AddRange(job.SourcePaths
@@ -1181,7 +1246,7 @@ namespace SecureServerBackup.WinForms
 
 			if (nativeSourcePaths.Count == 0)
 			{
-				nativeSourceListBox.Items.Add("No native file or folder sources selected.");
+				nativeSourceListBox.Items.Add("No backup sources selected.");
 				nativeSourceListBox.Enabled = false;
 				nativeSourceListBox.SelectedIndex = -1;
 			}
@@ -1202,40 +1267,224 @@ namespace SecureServerBackup.WinForms
 			removeSourceButton.Enabled = nativeSelectionSupported && nativeSourcePaths.Count > 0 && nativeSourceListBox.Enabled && nativeSourceListBox.SelectedIndex >= 0;
 		}
 
-		private void PopulateDriveTree()
+		private async Task PopulateDriveTreeAsync()
 		{
-			if (driveTree == null)
+			if (IsInDesignMode || driveTree.IsDisposed || isPopulatingDriveTree)
 			{
 				return;
 			}
 
-			driveTree.BeginUpdate();
+			isPopulatingDriveTree = true;
+			SetDriveTreeLoadingState(true, "Loading backup sources...");
+
 			try
 			{
-				driveTree.Nodes.Clear();
-				bool loadedPhysicalDisks = PopulateDriveTreeFromPhysicalDisks();
+				bool showHidden = showHiddenPartitionsCheckBox.Checked;
+				List<SourceRootDescriptor> rootDescriptors = await Task.Run(() => LoadDriveTreeRootDescriptors(showHidden)).ConfigureAwait(true);
 
-				if (!loadedPhysicalDisks || driveTree.Nodes.Count == 0)
+				if (IsDisposed || driveTree.IsDisposed)
 				{
-					PopulateDriveTreeFromLogicalVolumes();
+					return;
 				}
 
-				if (driveTree.Nodes.Count == 0)
+				driveTree.BeginUpdate();
+				try
 				{
-					driveTree.Nodes.Add(new TreeNode("No disks or volumes were detected."));
+					driveTree.Nodes.Clear();
+					foreach (SourceRootDescriptor descriptor in rootDescriptors)
+					{
+						driveTree.Nodes.Add(CreateRootNode(descriptor));
+					}
+
+					if (driveTree.Nodes.Count == 0)
+					{
+						driveTree.Nodes.Add(new TreeNode("No disks, Hyper-V systems, or network locations were detected."));
+					}
 				}
+				finally
+				{
+					driveTree.EndUpdate();
+				}
+
+				UpdateLoadedTreeSelectionStates();
+				await ReplayDeferredHyperVSelectionsAsync().ConfigureAwait(true);
 			}
-			catch
+			catch (Exception ex)
 			{
-				if (driveTree.Nodes.Count == 0)
+				Debug.WriteLine($"[BackupNewForm] Failed to populate drive tree: {ex.Message}");
+
+				if (!IsDisposed && !driveTree.IsDisposed)
 				{
-					driveTree.Nodes.Add(new TreeNode("No disks or volumes were detected."));
+					driveTree.Nodes.Clear();
+					driveTree.Nodes.Add(new TreeNode("No disks, Hyper-V systems, or network locations were detected."));
 				}
 			}
 			finally
 			{
-				driveTree.EndUpdate();
+				SetDriveTreeLoadingState(false);
+				isPopulatingDriveTree = false;
 			}
+		}
+
+		private async Task ReplayDeferredHyperVSelectionsAsync()
+		{
+			bool hasSavedHyperVVirtualDiskSelections = nativeSourcePaths.Any(path =>
+				!string.IsNullOrWhiteSpace(path) &&
+				(path.EndsWith(".vhd", StringComparison.OrdinalIgnoreCase) ||
+				 path.EndsWith(".vhdx", StringComparison.OrdinalIgnoreCase)));
+
+			if (!hasSavedHyperVVirtualDiskSelections)
+			{
+				return;
+			}
+
+			foreach (TreeNode node in driveTree.Nodes)
+			{
+				if (node.Tag is not SourceTreeNodeData nodeData || nodeData.Kind != SourceTreeNodeKind.HyperVSystem)
+				{
+					continue;
+				}
+
+				await LoadHyperVVirtualDisksAsync(node, nodeData).ConfigureAwait(true);
+			}
+
+			UpdateLoadedTreeSelectionStates();
+		}
+
+		private void SetDriveTreeLoadingState(bool isLoading, string? statusText = null)
+		{
+			driveTreeStatusLabel.Text = statusText ?? "Loading backup sources...";
+			driveTreeStatusLabel.Visible = isLoading;
+			driveTreeLoadProgressBar.Visible = isLoading;
+			refreshDriveTreeButton.Enabled = !isLoading;
+			expandTreeButton.Enabled = !isLoading;
+			collapseTreeButton.Enabled = !isLoading;
+			showHiddenPartitionsCheckBox.Enabled = !isLoading;
+			driveTree.Enabled = !isLoading;
+		}
+
+		private List<SourceRootDescriptor> LoadDriveTreeRootDescriptors(bool showHidden)
+		{
+			List<SourceRootDescriptor> descriptors = LoadPhysicalDiskRootDescriptors();
+			if (descriptors.Count == 0)
+			{
+				descriptors.AddRange(LoadLogicalVolumeRootDescriptors(showHidden));
+			}
+
+			descriptors.AddRange(LoadHyperVSystemRootDescriptors());
+			descriptors.Add(new SourceRootDescriptor(SourceTreeNodeKind.NetworkRoot, "Network Locations", AddPlaceholder: true));
+			return descriptors;
+		}
+
+		private List<SourceRootDescriptor> LoadHyperVSystemRootDescriptors()
+		{
+			return EnumerateHyperVVirtualMachines()
+				.Select(virtualMachine => new SourceRootDescriptor(
+					SourceTreeNodeKind.HyperVSystem,
+					virtualMachine.DisplayName,
+					SelectionPath: virtualMachine.VirtualMachineName,
+					VirtualMachineName: virtualMachine.VirtualMachineName,
+					AddPlaceholder: true))
+				.ToList();
+		}
+
+		private List<SourceRootDescriptor> LoadPhysicalDiskRootDescriptors()
+		{
+			List<SourceRootDescriptor> descriptors = new();
+
+			try
+			{
+				using var diskSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_DiskDrive ORDER BY Index");
+				foreach (ManagementObject disk in diskSearcher.Get())
+				{
+					if (!int.TryParse(disk["Index"]?.ToString(), out int diskIndex))
+					{
+						continue;
+					}
+
+					string diskModel = string.IsNullOrWhiteSpace(disk["Model"]?.ToString())
+						? $"PhysicalDrive{diskIndex}"
+						: disk["Model"]!.ToString()!.Trim();
+
+					descriptors.Add(new SourceRootDescriptor(
+						SourceTreeNodeKind.Disk,
+						$"Disk {diskIndex} - {diskModel} ({FormatStorageSize(TryReadInt64(disk["Size"]))})",
+						DiskNumber: diskIndex,
+						SelectionPath: $@"\\.\PHYSICALDRIVE{diskIndex}",
+						AddPlaceholder: true));
+				}
+			}
+			catch
+			{
+			}
+
+			return descriptors;
+		}
+
+		private List<SourceRootDescriptor> LoadLogicalVolumeRootDescriptors(bool showHidden)
+		{
+			List<SourceRootDescriptor> descriptors = new();
+
+			foreach (DriveInfo driveInfo in DriveInfo.GetDrives())
+			{
+				try
+				{
+					if (!driveInfo.IsReady)
+					{
+						continue;
+					}
+
+					if (driveInfo.DriveType != DriveType.Fixed && driveInfo.DriveType != DriveType.Removable)
+					{
+						continue;
+					}
+
+					string rootPath = driveInfo.RootDirectory.FullName;
+					if (!showHidden && string.IsNullOrWhiteSpace(rootPath))
+					{
+						continue;
+					}
+
+					descriptors.Add(new SourceRootDescriptor(
+						SourceTreeNodeKind.Volume,
+						FormatVolumeNodeText(driveInfo),
+						DiskNumber: TryGetDiskNumberForDrive(driveInfo.Name) ?? -1,
+						SelectionPath: driveInfo.Name,
+						FileSystemPath: rootPath,
+						AddPlaceholder: true));
+				}
+				catch
+				{
+				}
+			}
+
+			return descriptors;
+		}
+
+		private TreeNode CreateRootNode(SourceRootDescriptor descriptor)
+		{
+			TreeNode node = new(descriptor.Text)
+			{
+				Tag = new SourceTreeNodeData
+				{
+					Kind = descriptor.Kind,
+					DiskNumber = descriptor.DiskNumber,
+					SelectionPath = descriptor.SelectionPath,
+					FileSystemPath = descriptor.FileSystemPath,
+					VirtualMachineName = descriptor.VirtualMachineName,
+					IsRemovableNetworkPath = descriptor.IsRemovableNetworkPath
+				},
+				ImageKey = GetTreeImageKey(descriptor.Kind),
+				SelectedImageKey = GetTreeImageKey(descriptor.Kind)
+			};
+
+			if (descriptor.AddPlaceholder)
+			{
+				node.Nodes.Add(CreatePlaceholderNode());
+			}
+
+			ApplySelectionStateToNode(node);
+			return node;
 		}
 
 		private bool PopulateDriveTreeFromPhysicalDisks()
@@ -1454,6 +1703,11 @@ namespace SecureServerBackup.WinForms
 			SourceTreeNodeKind.Disk => driveImageList.Images.ContainsKey("drive") ? "drive" : string.Empty,
 			SourceTreeNodeKind.Volume => driveImageList.Images.ContainsKey("drive") ? "drive" : string.Empty,
 			SourceTreeNodeKind.Partition => driveImageList.Images.ContainsKey("drive") ? "drive" : string.Empty,
+			SourceTreeNodeKind.HyperVSystem => driveImageList.Images.ContainsKey("drive") ? "drive" : string.Empty,
+			SourceTreeNodeKind.HyperVVirtualDisk => driveImageList.Images.ContainsKey("drive") ? "drive" : string.Empty,
+			SourceTreeNodeKind.NetworkDrive => driveImageList.Images.ContainsKey("drive") ? "drive" : string.Empty,
+			SourceTreeNodeKind.NetworkShare => driveImageList.Images.ContainsKey("folder") ? "folder" : string.Empty,
+			SourceTreeNodeKind.NetworkBrowser => driveImageList.Images.ContainsKey("folder") ? "folder" : string.Empty,
 			SourceTreeNodeKind.File => driveImageList.Images.ContainsKey("file") ? "file" : string.Empty,
 			_ => driveImageList.Images.ContainsKey("folder") ? "folder" : string.Empty
 		};
@@ -1584,7 +1838,21 @@ namespace SecureServerBackup.WinForms
 				case SourceTreeNodeKind.Disk:
 					PopulateVolumeNodes(e.Node, nodeData.DiskNumber);
 					break;
+				case SourceTreeNodeKind.HyperVRoot:
+					e.Cancel = true;
+					_ = LoadHyperVSystemsAsync(e.Node);
+					break;
+				case SourceTreeNodeKind.HyperVSystem:
+					e.Cancel = true;
+					_ = LoadHyperVVirtualDisksAsync(e.Node, nodeData);
+					break;
+				case SourceTreeNodeKind.NetworkRoot:
+					e.Cancel = true;
+					_ = LoadNetworkLocationsAsync(e.Node);
+					break;
 				case SourceTreeNodeKind.Volume:
+				case SourceTreeNodeKind.NetworkDrive:
+				case SourceTreeNodeKind.NetworkShare:
 					e.Cancel = true;
 					_ = LoadNodeFileSystemChildrenAsync(e.Node, nodeData, animateNode: true);
 					break;
@@ -1593,6 +1861,281 @@ namespace SecureServerBackup.WinForms
 					_ = LoadNodeFileSystemChildrenAsync(e.Node, nodeData, animateNode: false);
 					break;
 			}
+		}
+
+		private async Task LoadHyperVSystemsAsync(TreeNode parentNode)
+		{
+			ArgumentNullException.ThrowIfNull(parentNode);
+
+			if (loadingVolumeNodes.Contains(parentNode))
+			{
+				return;
+			}
+
+			BeginNodeLoading(parentNode, animateNode: true);
+			try
+			{
+				List<HyperVVirtualMachineInfo> virtualMachines = await Task.Run(EnumerateHyperVVirtualMachines).ConfigureAwait(true);
+
+				if (IsDisposed || driveTree.IsDisposed)
+				{
+					return;
+				}
+
+				parentNode.Nodes.Clear();
+				foreach (HyperVVirtualMachineInfo virtualMachine in virtualMachines)
+				{
+					TreeNode childNode = new(virtualMachine.DisplayName)
+					{
+						Tag = new SourceTreeNodeData
+						{
+							Kind = SourceTreeNodeKind.HyperVSystem,
+							SelectionPath = virtualMachine.VirtualMachineName,
+							VirtualMachineName = virtualMachine.VirtualMachineName
+						},
+						ImageKey = GetTreeImageKey(SourceTreeNodeKind.HyperVSystem),
+						SelectedImageKey = GetTreeImageKey(SourceTreeNodeKind.HyperVSystem)
+					};
+
+					childNode.Nodes.Add(CreatePlaceholderNode());
+					ApplySelectionStateToNode(childNode);
+					parentNode.Nodes.Add(childNode);
+				}
+
+				if (parentNode.Nodes.Count == 0)
+				{
+					parentNode.Nodes.Add(new TreeNode("No Hyper-V systems detected."));
+				}
+
+				parentNode.Expand();
+			}
+			catch
+			{
+				if (!IsDisposed && !driveTree.IsDisposed)
+				{
+					parentNode.Nodes.Clear();
+					parentNode.Nodes.Add(new TreeNode("Unable to load Hyper-V systems."));
+					parentNode.Expand();
+				}
+			}
+			finally
+			{
+				EndNodeLoading(parentNode, animateNode: true, SourceTreeNodeKind.HyperVRoot);
+			}
+		}
+
+		private async Task LoadHyperVVirtualDisksAsync(TreeNode parentNode, SourceTreeNodeData nodeData)
+		{
+			ArgumentNullException.ThrowIfNull(parentNode);
+			ArgumentNullException.ThrowIfNull(nodeData);
+
+			if (loadingVolumeNodes.Contains(parentNode) || string.IsNullOrWhiteSpace(nodeData.VirtualMachineName))
+			{
+				return;
+			}
+
+			BeginNodeLoading(parentNode, animateNode: true);
+			try
+			{
+				List<string> virtualDiskPaths = await Task.Run(() => EnumerateHyperVVirtualDisks(nodeData.VirtualMachineName)).ConfigureAwait(true);
+
+				if (IsDisposed || driveTree.IsDisposed)
+				{
+					return;
+				}
+
+				parentNode.Nodes.Clear();
+				foreach (string virtualDiskPath in virtualDiskPaths)
+				{
+					TreeNode childNode = new(Path.GetFileName(virtualDiskPath))
+					{
+						Tag = new SourceTreeNodeData
+						{
+							Kind = SourceTreeNodeKind.HyperVVirtualDisk,
+							SelectionPath = virtualDiskPath,
+							VirtualMachineName = nodeData.VirtualMachineName
+						},
+						ImageKey = GetTreeImageKey(SourceTreeNodeKind.HyperVVirtualDisk),
+						SelectedImageKey = GetTreeImageKey(SourceTreeNodeKind.HyperVVirtualDisk)
+					};
+
+					ApplySelectionStateToNode(childNode);
+					parentNode.Nodes.Add(childNode);
+				}
+
+				if (parentNode.Nodes.Count == 0)
+				{
+					parentNode.Nodes.Add(new TreeNode("No Hyper-V virtual disks detected."));
+				}
+
+				parentNode.Expand();
+			}
+			catch
+			{
+				if (!IsDisposed && !driveTree.IsDisposed)
+				{
+					parentNode.Nodes.Clear();
+					parentNode.Nodes.Add(new TreeNode("Unable to load Hyper-V virtual disks."));
+					parentNode.Expand();
+				}
+			}
+			finally
+			{
+				EndNodeLoading(parentNode, animateNode: true, SourceTreeNodeKind.HyperVSystem);
+			}
+		}
+
+		private async Task LoadNetworkLocationsAsync(TreeNode parentNode)
+		{
+			ArgumentNullException.ThrowIfNull(parentNode);
+
+			if (loadingVolumeNodes.Contains(parentNode))
+			{
+				return;
+			}
+
+			BeginNodeLoading(parentNode, animateNode: true);
+			try
+			{
+				List<SourceRootDescriptor> networkDescriptors = await Task.Run(LoadNetworkLocationDescriptors).ConfigureAwait(true);
+
+				if (IsDisposed || driveTree.IsDisposed)
+				{
+					return;
+				}
+
+				parentNode.Nodes.Clear();
+				foreach (SourceRootDescriptor descriptor in networkDescriptors)
+				{
+					parentNode.Nodes.Add(CreateRootNode(descriptor));
+				}
+
+				if (parentNode.Nodes.Count == 0)
+				{
+					parentNode.Nodes.Add(new TreeNode("No network locations detected."));
+				}
+
+				parentNode.Expand();
+			}
+			catch
+			{
+				if (!IsDisposed && !driveTree.IsDisposed)
+				{
+					parentNode.Nodes.Clear();
+					parentNode.Nodes.Add(new TreeNode("Unable to load network locations."));
+					parentNode.Expand();
+				}
+			}
+			finally
+			{
+				EndNodeLoading(parentNode, animateNode: true, SourceTreeNodeKind.NetworkRoot);
+			}
+		}
+
+		private List<SourceRootDescriptor> LoadNetworkLocationDescriptors()
+		{
+			List<SourceRootDescriptor> descriptors = new();
+			List<string> savedPaths = savedNetworkPaths.ToList();
+
+			foreach (DriveInfo driveInfo in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Network))
+			{
+				try
+				{
+					descriptors.Add(new SourceRootDescriptor(
+						SourceTreeNodeKind.NetworkDrive,
+						$"{driveInfo.Name.TrimEnd('\\')} - Mapped",
+						SelectionPath: driveInfo.Name,
+						FileSystemPath: driveInfo.RootDirectory.FullName,
+						AddPlaceholder: true));
+				}
+				catch
+				{
+				}
+			}
+
+			foreach (string savedNetworkPath in savedPaths)
+			{
+				descriptors.Add(new SourceRootDescriptor(
+					SourceTreeNodeKind.NetworkShare,
+					savedNetworkPath,
+					SelectionPath: savedNetworkPath,
+					FileSystemPath: savedNetworkPath,
+					AddPlaceholder: true,
+					IsRemovableNetworkPath: true));
+			}
+
+			descriptors.Add(new SourceRootDescriptor(SourceTreeNodeKind.NetworkBrowser, "Add Network Path..."));
+			return descriptors;
+		}
+
+		private static List<HyperVVirtualMachineInfo> EnumerateHyperVVirtualMachines()
+		{
+			List<HyperVVirtualMachineInfo> virtualMachines = new();
+			foreach (string csvLine in RunPowerShellLines("Get-VM | Select-Object -Property Name,State | ConvertTo-Csv -NoTypeInformation").Skip(1))
+			{
+				string[] parts = ParseCsvLine(csvLine);
+				if (parts.Length < 2 || string.IsNullOrWhiteSpace(parts[0]))
+				{
+					continue;
+				}
+
+				string vmName = parts[0].Trim();
+				string vmState = parts[1].Trim();
+				string displayName = string.Equals(vmState, "Running", StringComparison.OrdinalIgnoreCase)
+					? $"{vmName} (Running)"
+					: vmName;
+
+				virtualMachines.Add(new HyperVVirtualMachineInfo(vmName, displayName));
+			}
+
+			return virtualMachines;
+		}
+
+		private static List<string> EnumerateHyperVVirtualDisks(string virtualMachineName)
+		{
+			string escapedVmName = virtualMachineName.Replace("'", "''", StringComparison.Ordinal);
+			return RunPowerShellLines($"Get-VMHardDiskDrive -VMName '{escapedVmName}' | Select-Object -ExpandProperty Path")
+				.Where(path => !string.IsNullOrWhiteSpace(path))
+				.Select(path => path.Trim().Trim('"'))
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.ToList();
+		}
+
+		private static List<string> RunPowerShellLines(string command)
+		{
+			using var process = Process.Start(new ProcessStartInfo
+			{
+				FileName = "powershell.exe",
+				Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{command}\"",
+				UseShellExecute = false,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				CreateNoWindow = true
+			});
+
+			if (process == null)
+			{
+				return new List<string>();
+			}
+
+			string output = process.StandardOutput.ReadToEnd();
+			process.WaitForExit();
+
+			return output
+				.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+				.Select(line => line.Trim())
+				.Where(line => !string.IsNullOrWhiteSpace(line))
+				.ToList();
+		}
+
+		private static string[] ParseCsvLine(string csvLine)
+		{
+			if (string.IsNullOrWhiteSpace(csvLine))
+			{
+				return Array.Empty<string>();
+			}
+
+			return csvLine.Trim().Trim('"').Split(new[] { "\",\"" }, StringSplitOptions.None);
 		}
 
 		private void PopulateVolumeNodes(TreeNode diskNode, int diskIndex)
@@ -1922,7 +2465,10 @@ namespace SecureServerBackup.WinForms
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			if ((job.Type == BackupType.CloneHyperVSystem || job.Type == BackupType.ExportHyperVSystem) &&
+			if ((job.Type == BackupType.CloneHyperVSystem ||
+				 job.Type == BackupType.ExportHyperVSystem ||
+				 job.Target == BackupTarget.HyperV ||
+				 job.IsHyperVBackup) &&
 				job.HyperVMachines.Count > 0)
 			{
 				return job.HyperVMachines
@@ -2110,8 +2656,39 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
+			if (nodeData.Kind == SourceTreeNodeKind.NetworkBrowser)
+			{
+				bool openDialog = e.Node.Checked;
+				suppressTreeCheckSync = true;
+				try
+				{
+					e.Node.Checked = false;
+				}
+				finally
+				{
+					suppressTreeCheckSync = false;
+				}
+
+				if (openDialog)
+				{
+					AddNetworkPathFromDialog();
+				}
+
+				return;
+			}
+
 			if (string.IsNullOrWhiteSpace(nodeData.SelectionPath))
 			{
+				suppressTreeCheckSync = true;
+				try
+				{
+					e.Node.Checked = false;
+				}
+				finally
+				{
+					suppressTreeCheckSync = false;
+				}
+
 				return;
 			}
 
@@ -2129,6 +2706,43 @@ namespace SecureServerBackup.WinForms
 
 			RefreshNativeSourceListBox();
 			UpdateAdvancedStateSummary();
+		}
+
+		private void AddNetworkPathFromDialog()
+		{
+			using var dialog = new NetworkPathForm();
+			if (dialog.ShowDialog(this) != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.NetworkPath))
+			{
+				return;
+			}
+
+			string networkPath = dialog.NetworkPath.Trim();
+			if (!savedNetworkPaths.Contains(networkPath, StringComparer.OrdinalIgnoreCase))
+			{
+				savedNetworkPaths.Add(networkPath);
+				SavedNetworkPathStore.Add(networkPath);
+			}
+
+			AddNativeSourcePath(networkPath);
+			RefreshNetworkRootNode();
+		}
+
+		private void RefreshNetworkRootNode()
+		{
+			foreach (TreeNode node in driveTree.Nodes)
+			{
+				if (node.Tag is SourceTreeNodeData nodeData && nodeData.Kind == SourceTreeNodeKind.NetworkRoot)
+				{
+					node.Nodes.Clear();
+					node.Nodes.Add(CreatePlaceholderNode());
+					if (node.IsExpanded)
+					{
+						_ = LoadNetworkLocationsAsync(node);
+					}
+
+					break;
+				}
+			}
 		}
 
 		private void UpdateLoadedTreeSelectionStates()
@@ -2173,6 +2787,14 @@ namespace SecureServerBackup.WinForms
 			if (node.Tag is not SourceTreeNodeData nodeData || string.IsNullOrWhiteSpace(nodeData.SelectionPath))
 			{
 				node.Checked = false;
+				return;
+			}
+
+			if (nodeData.Kind == SourceTreeNodeKind.HyperVSystem)
+			{
+				node.Checked = nativeSourcePaths.Any(existingPath =>
+					string.Equals(NormalizeHyperVDisplayName(existingPath), nodeData.VirtualMachineName, StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(existingPath, nodeData.VirtualMachineName, StringComparison.OrdinalIgnoreCase));
 				return;
 			}
 
@@ -2257,26 +2879,82 @@ namespace SecureServerBackup.WinForms
 
 		private static bool CanUseNativeSourceSelection(BackupType backupType, BackupTarget target)
 		{
-			if (backupType == BackupType.SelectedFilesAndFolders)
-			{
-				return target != BackupTarget.Disk && target != BackupTarget.Volume && target != BackupTarget.HyperV;
-			}
-
-			if (backupType == BackupType.CloneToDisk ||
-				backupType == BackupType.CloneToVirtualDisk ||
-				backupType == BackupType.CloneHyperVSystem ||
-				backupType == BackupType.ExportHyperVSystem ||
-				backupType == BackupType.SelectedFilesAndFolders)
-			{
-				return false;
-			}
-
-			if (target == BackupTarget.Disk || target == BackupTarget.Volume || target == BackupTarget.HyperV)
-			{
-				return false;
-			}
-
 			return true;
+		}
+
+		private SelectedSourceState CollectSelectedSourceState()
+		{
+			SelectedSourceState state = new();
+
+			foreach (TreeNode rootNode in driveTree.Nodes)
+			{
+				CollectSelectedSourceState(rootNode, state);
+			}
+
+			if (state.SourcePaths.Count == 0 && state.HyperVMachines.Count == 0)
+			{
+				state.SourcePaths.AddRange(nativeSourcePaths
+					.Where(path => !string.IsNullOrWhiteSpace(path))
+					.Distinct(StringComparer.OrdinalIgnoreCase));
+			}
+
+			state.SourcePaths = state.SourcePaths
+				.Where(path => !string.IsNullOrWhiteSpace(path))
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.ToList();
+
+			state.HyperVMachines = state.HyperVMachines
+				.Where(name => !string.IsNullOrWhiteSpace(name))
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.ToList();
+
+			return state;
+		}
+
+		private void CollectSelectedSourceState(TreeNode node, SelectedSourceState state)
+		{
+			ArgumentNullException.ThrowIfNull(node);
+			ArgumentNullException.ThrowIfNull(state);
+
+			if (node.Checked && node.Tag is SourceTreeNodeData nodeData)
+			{
+				switch (nodeData.Kind)
+				{
+					case SourceTreeNodeKind.Disk:
+						state.HasDiskSelection = true;
+						state.SourcePaths.Add(nodeData.SelectionPath);
+						break;
+					case SourceTreeNodeKind.Volume:
+					case SourceTreeNodeKind.Partition:
+						state.HasVolumeSelection = true;
+						state.SourcePaths.Add(nodeData.SelectionPath);
+						break;
+					case SourceTreeNodeKind.Directory:
+					case SourceTreeNodeKind.File:
+					case SourceTreeNodeKind.NetworkDrive:
+					case SourceTreeNodeKind.NetworkShare:
+						state.HasFileSystemSelection = true;
+						state.SourcePaths.Add(nodeData.SelectionPath);
+						break;
+					case SourceTreeNodeKind.HyperVSystem:
+						state.HasHyperVSelection = true;
+						state.HyperVMachines.Add(nodeData.VirtualMachineName);
+						break;
+					case SourceTreeNodeKind.HyperVVirtualDisk:
+						state.HasHyperVSelection = true;
+						state.SourcePaths.Add(nodeData.SelectionPath);
+						state.HyperVMachines.Add(nodeData.VirtualMachineName);
+						break;
+				}
+			}
+
+			foreach (TreeNode childNode in node.Nodes)
+			{
+				if (!IsPlaceholderNode(childNode))
+				{
+					CollectSelectedSourceState(childNode, state);
+				}
+			}
 		}
 
 		private void UpdateAdvancedStateSummary()
@@ -2288,7 +2966,7 @@ namespace SecureServerBackup.WinForms
 			{
 				if (nativeSourcePaths.Count > 0)
 				{
-					advancedStateLabel.Text = $"Native file/folder sources staged for save: {nativeSourcePaths.Count} item(s).";
+					advancedStateLabel.Text = $"Native backup sources staged for save: {nativeSourcePaths.Count} item(s).";
 					foreach (string path in nativeSourcePaths.Take(25))
 					{
 						advancedSelectionListBox.Items.Add($"Source: {path}");
@@ -2301,7 +2979,7 @@ namespace SecureServerBackup.WinForms
 				}
 				else
 				{
-					advancedStateLabel.Text = "No source selection has been configured yet. Add native file/folder sources or open Advanced Editor for disk, volume, clone, or Hyper-V selection.";
+					advancedStateLabel.Text = "No source selection has been configured yet. Choose disks, volumes, files, folders, Hyper-V systems, or network locations from the tree.";
 					advancedSelectionListBox.Items.Add("No sources selected yet.");
 				}
 
@@ -2332,7 +3010,7 @@ namespace SecureServerBackup.WinForms
 			if (job.Type == BackupType.SelectedFilesAndFolders && job.Target == BackupTarget.FilesAndFolders)
 			{
 				string selectionText = itemCount == 1 ? "1 selected item" : $"{itemCount} selected items";
-				return $"Selected file and folder backup currently staged natively: {selectionText}. You can save and start this backup directly from WinForms.";
+				return $"Selected file and folder backup currently staged natively: {selectionText}. You can save this backup directly from WinForms.";
 			}
 
 			string targetText;
@@ -2356,7 +3034,7 @@ namespace SecureServerBackup.WinForms
 			}
 
 			string countText = itemCount == 1 ? "1 item" : $"{itemCount} items";
-			return $"{targetText} currently attached to this job: {countText}. Use Advanced Editor to change source-tree, clone, or Hyper-V selections.";
+			return $"{targetText} currently attached to this job: {countText}. You can edit these source selections directly from this WinForms screen.";
 		}
 
 		private static List<string> BuildAdvancedSummaryItems(BackupJob job)
@@ -2388,33 +3066,40 @@ namespace SecureServerBackup.WinForms
 		private void UpdateBackupTypeUi()
 		{
 			BackupType backupType = GetSelectedBackupType();
-			bool isNativeSaveSupported = backupType == BackupType.Full || backupType == BackupType.Incremental || backupType == BackupType.Differential || backupType == BackupType.SelectedFilesAndFolders;
 			bool isSelectedFiles = backupType == BackupType.SelectedFilesAndFolders;
 			bool isCloneOrExport = backupType == BackupType.CloneToVirtualDisk || backupType == BackupType.CloneHyperVSystem || backupType == BackupType.ExportHyperVSystem;
 			bool nativeSourceSelectionSupported = IsNativeSourceSelectionSupportedForCurrentState();
+			bool isNativeSaveSupported = nativeSourceSelectionSupported;
 
 			retentionPanel.Visible = backupType == BackupType.Full;
 			selectedFilesRetentionPanel.Visible = isSelectedFiles;
 			cloneRetentionPanel.Visible = isCloneOrExport;
 			saveJobButton.Enabled = isNativeSaveSupported;
 			startBackupButton.Enabled = true;
-			openAdvancedEditorButton.Enabled = !isNativeSaveSupported || !nativeSourceSelectionSupported;
-			openAdvancedEditorButton.Visible = !isSelectedFiles;
+			openAdvancedEditorButton.Enabled = false;
+			openAdvancedEditorButton.Visible = false;
 			startBackupButton.Text = "Start Backup";
 			actionInfoLabel.Text = isSelectedFiles
-				? "Advanced migration status\n\n- Native: common settings, encryption, schedule, retention, selected file/folder source lists, immediate execution\n- Remaining legacy-only areas: disk, volume, clone/export, and Hyper-V authoring"
-				: "Advanced migration status\n\n- Native: common settings, encryption, schedule, retention\n- Legacy advanced editor: source tree, Hyper-V, clone/export, immediate execution";
+				? "WinForms backup status\n\n- Native: common settings, encryption, schedule, selected-file retention, source tree, Hyper-V list, network locations, save, and start-now support\n- This form is the primary authoring surface for current backup jobs"
+				: "WinForms backup status\n\n- Native: common settings, encryption, schedule, retention, source tree, Hyper-V list, network locations, save, and start-now support\n- This form is the primary authoring surface for all backup types";
 			actionHelpLabel.Text = isSelectedFiles
-				? "Selected file and folder jobs can now be saved and started directly from this WinForms screen. Use the Add Folder and Add File buttons to build the selection list."
-				: "Save Native Settings stores common backup metadata now. To select sources, clones, Hyper-V systems, or to run the job immediately, use Advanced Editor until those sections are migrated.";
+				? "Selected Files & Folder jobs support files, folders, and network shares directly from this screen. Use the tree or the Add Folder and Add File buttons to build the selection list."
+				: "Use the source tree to choose disks, volumes, Hyper-V systems, and network locations. Use this screen to save and start all backup types, including clone and export jobs.";
 			UpdateNativeSourceUi();
+			UpdateCloneOptionsUi();
 			UpdateAdvancedStateSummary();
 
-			nativeCoverageLabel.Text = isNativeSaveSupported
-				? nativeSourceSelectionSupported
-					? "This native WinForms screen can now save standard file/folder full, incremental, and differential jobs, including ordinary file and folder source paths. Use Advanced Editor only for disk, volume, clone/export, Hyper-V, and immediate execution flows."
-					: "This job currently uses a disk, volume, or Hyper-V source selection that remains on the legacy advanced editor. You can still update common settings here, but source changes stay in Advanced Editor for now."
-				: "This backup type still depends on advanced source or clone/Hyper-V configuration. Use the advanced editor for full functionality while the remaining sections are migrated to WinForms.";
+			nativeCoverageLabel.Text = nativeSourceSelectionSupported
+				? "This WinForms screen authors backup jobs directly with disk, volume, file, folder, Hyper-V, network, clone, and export support."
+				: "This WinForms screen authors backup jobs directly. Review the current source and clone settings before saving.";
+		}
+
+		private void UpdateCloneOptionsUi()
+		{
+			bool isCloneHyperVSystem = GetSelectedBackupType() == BackupType.CloneHyperVSystem;
+			renameHyperVSystemCheckBox.Visible = isCloneHyperVSystem;
+			renameHyperVSystemNameTextBox.Visible = isCloneHyperVSystem;
+			renameHyperVSystemNameTextBox.Enabled = isCloneHyperVSystem && renameHyperVSystemCheckBox.Checked;
 		}
 
 		private void UpdateEncryptionUi()
@@ -2460,14 +3145,6 @@ namespace SecureServerBackup.WinForms
 
 		private async void StartBackup_Click(object? sender, EventArgs e)
 		{
-			BackupType backupType = GetSelectedBackupType();
-			bool nativeRunSupported = backupType == BackupType.Full || backupType == BackupType.Incremental || backupType == BackupType.Differential;
-			if (!nativeRunSupported)
-			{
-				OpenAdvancedEditor_Click(sender, e);
-				return;
-			}
-
 			if (!ValidateNativeInputs())
 			{
 				return;
@@ -2565,8 +3242,8 @@ namespace SecureServerBackup.WinForms
 		{
 			global::System.Windows.Forms.MessageBox.Show(
 				this,
-				"This backup type is not yet available in the WinForms backup editor.\n\nSelected file and folder jobs can now be created here, but disk, volume, clone/export, and Hyper-V authoring still need native WinForms replacements before WPF can be removed completely.",
-				"WinForms Migration In Progress",
+				"All backup types are now expected to be configured directly from this WinForms screen. If something is still missing here, it should be implemented on this form instead of using a separate editor.",
+				"WinForms Backup Editor",
 				global::System.Windows.Forms.MessageBoxButtons.OK,
 				global::System.Windows.Forms.MessageBoxIcon.Information);
 		}
@@ -2617,9 +3294,7 @@ namespace SecureServerBackup.WinForms
 				{
 					global::System.Windows.Forms.MessageBox.Show(
 						this,
-						nativeSourceSelectionSupported
-							? $"Backup job '{job.Name}' updated successfully!\n\nNative file/folder sources were saved with the job. Open the advanced editor only when you need disk, volume, clone/export, or Hyper-V settings."
-							: $"Backup job '{job.Name}' updated successfully!\n\nAdvanced source selection remains unchanged. Open the advanced editor when you need to change sources, clone/export options, or Hyper-V settings.",
+						$"Backup job '{job.Name}' updated successfully!\n\nThe current WinForms selections and settings were saved with the job.",
 						"Success",
 						global::System.Windows.Forms.MessageBoxButtons.OK,
 						global::System.Windows.Forms.MessageBoxIcon.Information);
@@ -2634,9 +3309,7 @@ namespace SecureServerBackup.WinForms
 				{
 					global::System.Windows.Forms.MessageBox.Show(
 						this,
-						nativeSourceSelectionSupported
-							? $"Backup job '{job.Name}' created successfully!\n\nNative file/folder sources were saved with the job. Use Advanced Editor only if you need disk, volume, clone/export, or Hyper-V options."
-							: $"Backup job '{job.Name}' created successfully!\n\nNext step: open the advanced editor to choose sources and any clone or Hyper-V options until full WinForms parity is finished.",
+						$"Backup job '{job.Name}' created successfully!\n\nThe current WinForms selections and settings were saved with the job.",
 						"Success",
 						global::System.Windows.Forms.MessageBoxButtons.OK,
 						global::System.Windows.Forms.MessageBoxIcon.Information);
@@ -2710,15 +3383,61 @@ namespace SecureServerBackup.WinForms
 			}
 
 			BackupType backupType = GetSelectedBackupType();
-			if (backupType != BackupType.Full && backupType != BackupType.Incremental && backupType != BackupType.Differential && backupType != BackupType.SelectedFilesAndFolders)
+
+			SelectedSourceState selectedSourceState = CollectSelectedSourceState();
+
+			if (IsNativeSourceSelectionSupportedForCurrentState() && selectedSourceState.SourcePaths.Count == 0 && selectedSourceState.HyperVMachines.Count == 0)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "This backup type still requires the advanced editor in the current migration stage. Use 'Open Advanced Editor...' for this backup type.", "Native Form Limitation", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				global::System.Windows.Forms.MessageBox.Show(this, "Please select at least one backup source.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
 				return false;
 			}
 
-			if (IsNativeSourceSelectionSupportedForCurrentState() && nativeSourcePaths.Count == 0)
+			bool allowsDiskPlusHyperV = backupType == BackupType.CloneHyperVSystem;
+			if (!allowsDiskPlusHyperV && selectedSourceState.HasHyperVSelection && (selectedSourceState.HasDiskSelection || selectedSourceState.HasVolumeSelection || selectedSourceState.HasFileSystemSelection))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Add at least one file or folder source before saving this native file/folder backup job.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				global::System.Windows.Forms.MessageBox.Show(this, "Hyper-V system selections cannot be combined with disk, volume, file, or network selections in the same backup job.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				return false;
+			}
+
+			if (backupType == BackupType.SelectedFilesAndFolders && (selectedSourceState.HasDiskSelection || selectedSourceState.HasVolumeSelection || selectedSourceState.HasHyperVSelection))
+			{
+				global::System.Windows.Forms.MessageBox.Show(this, "Selected Files & Folder backups only support file, folder, and network-share sources.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				return false;
+			}
+
+			if (backupType == BackupType.CloneToVirtualDisk && (selectedSourceState.HasFileSystemSelection || selectedSourceState.HasHyperVSelection || (!selectedSourceState.HasDiskSelection && !selectedSourceState.HasVolumeSelection)))
+			{
+				global::System.Windows.Forms.MessageBox.Show(this, "Clone to Virtual Disk requires at least one disk or volume source and does not support file, network, or Hyper-V system selections.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				return false;
+			}
+
+			if (backupType == BackupType.CloneHyperVSystem && selectedSourceState.HasVolumeSelection)
+			{
+				global::System.Windows.Forms.MessageBox.Show(this, "Clone Hyper-V System supports either a Hyper-V system selection or a disk selection. Volume selections are not supported for this backup type.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				return false;
+			}
+
+			if (backupType == BackupType.CloneHyperVSystem && selectedSourceState.HasFileSystemSelection)
+			{
+				global::System.Windows.Forms.MessageBox.Show(this, "Clone Hyper-V System does not support file or network selections. Choose a Hyper-V system or a disk source.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				return false;
+			}
+
+			if (backupType == BackupType.CloneHyperVSystem && !selectedSourceState.HasHyperVSelection && !selectedSourceState.HasDiskSelection)
+			{
+				global::System.Windows.Forms.MessageBox.Show(this, "Clone Hyper-V System requires either a selected Hyper-V system or a selected disk.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				return false;
+			}
+
+			if (backupType == BackupType.ExportHyperVSystem && (selectedSourceState.HasDiskSelection || selectedSourceState.HasVolumeSelection || selectedSourceState.HasFileSystemSelection || !selectedSourceState.HasHyperVSelection))
+			{
+				global::System.Windows.Forms.MessageBox.Show(this, "Export Hyper-V System requires a selected Hyper-V system and does not support disk, volume, file, or network selections.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				return false;
+			}
+
+			if (backupType == BackupType.CloneHyperVSystem && renameHyperVSystemCheckBox.Checked && !IsValidWindowsComputerName(renameHyperVSystemNameTextBox.Text.Trim()))
+			{
+				global::System.Windows.Forms.MessageBox.Show(this, "Please enter a valid new Hyper-V system name. Use letters, numbers, or hyphens, and do not start or end the name with a hyphen.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
 				return false;
 			}
 
@@ -2756,7 +3475,7 @@ namespace SecureServerBackup.WinForms
 		{
 			BackupType backupType = GetSelectedBackupType();
 			BackupJob? sourceJob = currentJob ?? existingJob;
-			BackupTarget effectiveTarget = GetEffectiveSourceTargetForCurrentState();
+			SelectedSourceState selectedSourceState = CollectSelectedSourceState();
 			var job = new BackupJob
 			{
 				Id = sourceJob?.Id ?? Guid.NewGuid(),
@@ -2781,28 +3500,36 @@ namespace SecureServerBackup.WinForms
 			};
 
 			job.UserExclusions = new List<string>(nativeUserExclusions);
+			job.RenameHyperVSystem = backupType == BackupType.CloneHyperVSystem && renameHyperVSystemCheckBox.Checked;
+			job.RenameHyperVSystemName = job.RenameHyperVSystem ? renameHyperVSystemNameTextBox.Text.Trim() : string.Empty;
 
 			if (backupType == BackupType.SelectedFilesAndFolders)
 			{
 				job.Target = BackupTarget.FilesAndFolders;
 				job.IsHyperVBackup = false;
 				job.HyperVMachines.Clear();
-				job.SourcePaths = nativeSourcePaths
-					.Where(path => !string.IsNullOrWhiteSpace(path))
-					.Distinct(StringComparer.OrdinalIgnoreCase)
-					.ToList();
+				job.SourcePaths = selectedSourceState.SourcePaths.ToList();
 				job.SelectedFilesSourceRoots = GetSelectedFilesSourceRoots(job.SourcePaths);
 			}
-			else if (CanUseNativeSourceSelection(backupType, effectiveTarget))
+			else if (CanUseNativeSourceSelection(backupType, sourceJob?.Target ?? BackupTarget.FilesAndFolders))
 			{
-				job.Target = BackupTarget.FilesAndFolders;
-				job.IsHyperVBackup = false;
-				job.HyperVMachines.Clear();
+				job.Target = backupType switch
+				{
+					BackupType.CloneHyperVSystem when selectedSourceState.HasHyperVSelection => BackupTarget.HyperV,
+					BackupType.CloneHyperVSystem when selectedSourceState.HasDiskSelection => BackupTarget.Disk,
+					BackupType.ExportHyperVSystem => BackupTarget.HyperV,
+					_ => selectedSourceState.HasHyperVSelection
+						? BackupTarget.HyperV
+						: selectedSourceState.HasDiskSelection
+							? BackupTarget.Disk
+							: selectedSourceState.HasVolumeSelection
+								? BackupTarget.Volume
+								: BackupTarget.FilesAndFolders
+				};
+				job.IsHyperVBackup = selectedSourceState.HasHyperVSelection;
+				job.HyperVMachines = selectedSourceState.HyperVMachines.ToList();
 				job.SelectedFilesSourceRoots.Clear();
-				job.SourcePaths = nativeSourcePaths
-					.Where(path => !string.IsNullOrWhiteSpace(path))
-					.Distinct(StringComparer.OrdinalIgnoreCase)
-					.ToList();
+				job.SourcePaths = selectedSourceState.SourcePaths.ToList();
 			}
 
 			if (enableScheduleCheckBox.Checked && TryGetScheduledTime(out int hour24, out int minute))
@@ -2965,6 +3692,28 @@ namespace SecureServerBackup.WinForms
 		private void BackupNewForm_FormClosed(object sender, FormClosedEventArgs e)
 		{
 
+		}
+
+		private sealed record SourceRootDescriptor(
+			SourceTreeNodeKind Kind,
+			string Text,
+			int DiskNumber = -1,
+			string SelectionPath = "",
+			string FileSystemPath = "",
+			string VirtualMachineName = "",
+			bool AddPlaceholder = false,
+			bool IsRemovableNetworkPath = false);
+
+		private sealed record HyperVVirtualMachineInfo(string VirtualMachineName, string DisplayName);
+
+		private sealed class SelectedSourceState
+		{
+			public List<string> SourcePaths { get; set; } = new();
+			public List<string> HyperVMachines { get; set; } = new();
+			public bool HasDiskSelection { get; set; }
+			public bool HasVolumeSelection { get; set; }
+			public bool HasFileSystemSelection { get; set; }
+			public bool HasHyperVSelection { get; set; }
 		}
 	}
 }

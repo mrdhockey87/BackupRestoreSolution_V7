@@ -127,6 +127,9 @@ namespace SecureServerBackup.WinForms
 			collapseTreeButton = new Button();
 			showHiddenPartitionsCheckBox = new CheckBox();
 			nativeSourceListBox = new ListBox();
+			var sourceSelectionGroup = new GroupBox();
+			var advancedStateGroup = new GroupBox();
+			var leftColumnLayout = new TableLayoutPanel();
 			SuspendLayout();
 			// 
 			// driveImageList
@@ -174,7 +177,7 @@ namespace SecureServerBackup.WinForms
 			basicGroup.TabIndex = 0;
 			basicGroup.TabStop = false;
 			basicGroup.Text = "Settings";
-			basicGroup.Visible = false;
+			basicGroup.Visible = true;
 			// 
 			// backupNameTextBox
 			// 
@@ -304,6 +307,7 @@ namespace SecureServerBackup.WinForms
 			enableScheduleCheckBox.Name = "enableScheduleCheckBox";
 			enableScheduleCheckBox.Size = new Size(104, 24);
 			enableScheduleCheckBox.TabIndex = 0;
+			enableScheduleCheckBox.Text = "Enable schedule";
 			enableScheduleCheckBox.CheckedChanged += EnableScheduleCheckBox_CheckedChanged;
 			// 
 			// schedulePanel
@@ -427,6 +431,7 @@ namespace SecureServerBackup.WinForms
 			nativeCoverageLabel.Name = "nativeCoverageLabel";
 			nativeCoverageLabel.Size = new Size(100, 23);
 			nativeCoverageLabel.TabIndex = 0;
+			nativeCoverageLabel.Text = "Native source selection preview";
 			// 
 			// actionInfoLabel
 			// 
@@ -434,6 +439,7 @@ namespace SecureServerBackup.WinForms
 			actionInfoLabel.Name = "actionInfoLabel";
 			actionInfoLabel.Size = new Size(100, 23);
 			actionInfoLabel.TabIndex = 0;
+			actionInfoLabel.Text = "Advanced migration status";
 			// 
 			// actionHelpLabel
 			// 
@@ -441,6 +447,7 @@ namespace SecureServerBackup.WinForms
 			actionHelpLabel.Name = "actionHelpLabel";
 			actionHelpLabel.Size = new Size(100, 23);
 			actionHelpLabel.TabIndex = 0;
+			actionHelpLabel.Text = "Designer preview of the backup editor layout";
 			// 
 			// advancedStateLabel
 			// 
@@ -448,6 +455,7 @@ namespace SecureServerBackup.WinForms
 			advancedStateLabel.Name = "advancedStateLabel";
 			advancedStateLabel.Size = new Size(100, 23);
 			advancedStateLabel.TabIndex = 0;
+			advancedStateLabel.Text = "No sources selected yet.";
 			// 
 			// advancedSelectionListBox
 			// 
@@ -532,6 +540,8 @@ namespace SecureServerBackup.WinForms
 			refreshDriveTreeButton.Name = "refreshDriveTreeButton";
 			refreshDriveTreeButton.Size = new Size(75, 23);
 			refreshDriveTreeButton.TabIndex = 0;
+			refreshDriveTreeButton.Text = "Refresh";
+			refreshDriveTreeButton.UseVisualStyleBackColor = true;
 			refreshDriveTreeButton.Click += RefreshDriveTreeButton_Click;
 			// 
 			// expandTreeButton
@@ -540,6 +550,8 @@ namespace SecureServerBackup.WinForms
 			expandTreeButton.Name = "expandTreeButton";
 			expandTreeButton.Size = new Size(75, 23);
 			expandTreeButton.TabIndex = 0;
+			expandTreeButton.Text = "Expand All";
+			expandTreeButton.UseVisualStyleBackColor = true;
 			expandTreeButton.Click += ExpandTreeButton_Click;
 			// 
 			// collapseTreeButton
@@ -548,6 +560,8 @@ namespace SecureServerBackup.WinForms
 			collapseTreeButton.Name = "collapseTreeButton";
 			collapseTreeButton.Size = new Size(75, 23);
 			collapseTreeButton.TabIndex = 0;
+			collapseTreeButton.Text = "Collapse All";
+			collapseTreeButton.UseVisualStyleBackColor = true;
 			collapseTreeButton.Click += CollapseTreeButton_Click;
 			// 
 			// showHiddenPartitionsCheckBox
@@ -556,6 +570,7 @@ namespace SecureServerBackup.WinForms
 			showHiddenPartitionsCheckBox.Name = "showHiddenPartitionsCheckBox";
 			showHiddenPartitionsCheckBox.Size = new Size(104, 24);
 			showHiddenPartitionsCheckBox.TabIndex = 0;
+			showHiddenPartitionsCheckBox.Text = "Show hidden partitions";
 			showHiddenPartitionsCheckBox.CheckedChanged += ShowHiddenPartitionsCheckBox_CheckedChanged;
 			// 
 			// nativeSourceListBox
@@ -567,15 +582,269 @@ namespace SecureServerBackup.WinForms
 			nativeSourceListBox.TabIndex = 0;
 			nativeSourceListBox.SelectedIndexChanged += NativeSourceListBox_SelectedIndexChanged;
 			// 
+			// sourceSelectionGroup
+			// 
+			sourceSelectionGroup.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			sourceSelectionGroup.Location = new Point(0, 0);
+			sourceSelectionGroup.Name = "sourceSelectionGroup";
+			sourceSelectionGroup.Padding = new Padding(8);
+			sourceSelectionGroup.Size = new Size(554, 512);
+			sourceSelectionGroup.TabIndex = 100;
+			sourceSelectionGroup.TabStop = false;
+			sourceSelectionGroup.Text = "Source Selection";
+			sourceSelectionGroup.Controls.Add(nativeSourceListBox);
+			sourceSelectionGroup.Controls.Add(showHiddenPartitionsCheckBox);
+			sourceSelectionGroup.Controls.Add(collapseTreeButton);
+			sourceSelectionGroup.Controls.Add(expandTreeButton);
+			sourceSelectionGroup.Controls.Add(refreshDriveTreeButton);
+			sourceSelectionGroup.Controls.Add(removeSourceButton);
+			sourceSelectionGroup.Controls.Add(addFileSourceButton);
+			sourceSelectionGroup.Controls.Add(addFolderSourceButton);
+			sourceSelectionGroup.Controls.Add(driveTree);
+			// 
+			// advancedStateGroup
+			// 
+			advancedStateGroup.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			advancedStateGroup.Location = new Point(0, 518);
+			advancedStateGroup.Name = "advancedStateGroup";
+			advancedStateGroup.Padding = new Padding(8);
+			advancedStateGroup.Size = new Size(554, 274);
+			advancedStateGroup.TabIndex = 101;
+			advancedStateGroup.TabStop = false;
+			advancedStateGroup.Text = "Advanced State";
+			advancedStateGroup.Controls.Add(openAdvancedEditorButton);
+			advancedStateGroup.Controls.Add(advancedSelectionListBox);
+			advancedStateGroup.Controls.Add(advancedStateLabel);
+			advancedStateGroup.Controls.Add(actionHelpLabel);
+			advancedStateGroup.Controls.Add(actionInfoLabel);
+			advancedStateGroup.Controls.Add(nativeCoverageLabel);
+			// 
+			// leftColumnLayout
+			// 
+			leftColumnLayout.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+			leftColumnLayout.ColumnCount = 1;
+			leftColumnLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+			leftColumnLayout.Controls.Add(sourceSelectionGroup, 0, 0);
+			leftColumnLayout.Controls.Add(advancedStateGroup, 0, 1);
+			leftColumnLayout.Location = new Point(12, 59);
+			leftColumnLayout.Name = "leftColumnLayout";
+			leftColumnLayout.RowCount = 2;
+			leftColumnLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 62F));
+			leftColumnLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 38F));
+			leftColumnLayout.Size = new Size(560, 798);
+			leftColumnLayout.TabIndex = 102;
+			// 
+			// settingsStack
+			// 
+			settingsStack.Controls.Add(basicGroup, 0, 0);
+			settingsStack.Controls.Add(retentionPanel, 0, 1);
+			settingsStack.Controls.Add(selectedFilesRetentionPanel, 0, 2);
+			settingsStack.Controls.Add(cloneRetentionPanel, 0, 3);
+			settingsStack.Controls.Add(exclusionsGroup, 0, 4);
+			settingsStack.Controls.Add(encryptionGroup, 0, 5);
+			settingsStack.Controls.Add(scheduleGroup, 0, 6);
+			settingsStack.RowCount = 7;
+			// 
+			// settingsScroll
+			// 
+			settingsScroll.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			settingsScroll.AutoScroll = true;
+			settingsScroll.Controls.Add(settingsStack);
+			settingsScroll.Location = new Point(590, 59);
+			settingsScroll.Size = new Size(518, 798);
+			// 
+			// driveTree
+			// 
+			driveTree.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			driveTree.Location = new Point(12, 68);
+			driveTree.Size = new Size(530, 436);
+			// 
+			// showHiddenPartitionsCheckBox
+			// 
+			showHiddenPartitionsCheckBox.AutoSize = true;
+			showHiddenPartitionsCheckBox.Location = new Point(12, 38);
+			showHiddenPartitionsCheckBox.Size = new Size(155, 21);
+			// 
+			// refreshDriveTreeButton
+			// 
+			refreshDriveTreeButton.Location = new Point(12, 510);
+			refreshDriveTreeButton.Size = new Size(86, 27);
+			// 
+			// expandTreeButton
+			// 
+			expandTreeButton.Location = new Point(104, 510);
+			expandTreeButton.Size = new Size(91, 27);
+			// 
+			// collapseTreeButton
+			// 
+			collapseTreeButton.Location = new Point(201, 510);
+			collapseTreeButton.Size = new Size(95, 27);
+			// 
+			// nativeSourceListBox
+			// 
+			nativeSourceListBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			nativeSourceListBox.Location = new Point(12, 552);
+			nativeSourceListBox.Size = new Size(530, 112);
+			// 
+			// addFolderSourceButton
+			// 
+			addFolderSourceButton.Location = new Point(12, 674);
+			addFolderSourceButton.Size = new Size(96, 27);
+			// 
+			// addFileSourceButton
+			// 
+			addFileSourceButton.Location = new Point(114, 674);
+			addFileSourceButton.Size = new Size(84, 27);
+			// 
+			// removeSourceButton
+			// 
+			removeSourceButton.Location = new Point(204, 674);
+			removeSourceButton.Size = new Size(126, 27);
+			// 
+			// nativeCoverageLabel
+			// 
+			nativeCoverageLabel.AutoSize = true;
+			nativeCoverageLabel.Location = new Point(12, 28);
+			nativeCoverageLabel.Size = new Size(204, 17);
+			// 
+			// actionInfoLabel
+			// 
+			actionInfoLabel.AutoSize = true;
+			actionInfoLabel.Location = new Point(12, 54);
+			actionInfoLabel.Size = new Size(154, 17);
+			// 
+			// actionHelpLabel
+			// 
+			actionHelpLabel.AutoSize = true;
+			actionHelpLabel.Location = new Point(12, 80);
+			actionHelpLabel.Size = new Size(261, 17);
+			// 
+			// advancedStateLabel
+			// 
+			advancedStateLabel.AutoSize = true;
+			advancedStateLabel.Location = new Point(12, 106);
+			advancedStateLabel.Size = new Size(138, 17);
+			// 
+			// advancedSelectionListBox
+			// 
+			advancedSelectionListBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			advancedSelectionListBox.Location = new Point(12, 134);
+			advancedSelectionListBox.Size = new Size(530, 100);
+			// 
+			// openAdvancedEditorButton
+			// 
+			openAdvancedEditorButton.Location = new Point(12, 238);
+			openAdvancedEditorButton.Size = new Size(150, 27);
+			openAdvancedEditorButton.Text = "Open Advanced Editor";
+			openAdvancedEditorButton.UseVisualStyleBackColor = true;
+			// 
+			// settingsStack
+			// 
+			settingsStack.AutoSize = true;
+			settingsStack.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+			settingsStack.ColumnCount = 1;
+			settingsStack.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+			settingsStack.Dock = DockStyle.Top;
+			settingsStack.Location = new Point(0, 0);
+			settingsStack.Padding = Padding.Empty;
+			settingsStack.Size = new Size(490, 740);
+			// 
+			// exclusionsGroup
+			// 
+			exclusionsGroup.Location = new Point(3, 315);
+			exclusionsGroup.Name = "exclusionsGroup";
+			exclusionsGroup.Size = new Size(484, 64);
+			exclusionsGroup.TabIndex = 1;
+			exclusionsGroup.TabStop = false;
+			exclusionsGroup.Text = "Exclusions";
+			exclusionsGroup.Visible = true;
+			exclusionsGroup.Controls.Add(manageExclusionsButton);
+			manageExclusionsButton.Location = new Point(16, 24);
+			manageExclusionsButton.Size = new Size(154, 27);
+			// 
+			// encryptionGroup
+			// 
+			encryptionGroup.Location = new Point(3, 385);
+			encryptionGroup.Name = "encryptionGroup";
+			encryptionGroup.Size = new Size(484, 132);
+			encryptionGroup.TabIndex = 2;
+			encryptionGroup.TabStop = false;
+			encryptionGroup.Text = "Encryption";
+			encryptionGroup.Visible = true;
+			encryptionGroup.Controls.Add(showPasswordCheckBox);
+			encryptionGroup.Controls.Add(verifyEncryptionPasswordTextBox);
+			encryptionGroup.Controls.Add(encryptionPasswordTextBox);
+			encryptionGroup.Controls.Add(encryptCheckBox);
+			encryptCheckBox.AutoSize = true;
+			encryptCheckBox.Location = new Point(16, 28);
+			encryptCheckBox.Text = "Encrypt backup";
+			encryptionPasswordTextBox.Location = new Point(16, 58);
+			encryptionPasswordTextBox.Size = new Size(200, 25);
+			verifyEncryptionPasswordTextBox.Location = new Point(16, 89);
+			verifyEncryptionPasswordTextBox.Size = new Size(200, 25);
+			showPasswordCheckBox.AutoSize = true;
+			showPasswordCheckBox.Location = new Point(232, 60);
+			showPasswordCheckBox.Text = "Show password";
+			// 
+			// scheduleGroup
+			// 
+			scheduleGroup.Location = new Point(3, 523);
+			scheduleGroup.Name = "scheduleGroup";
+			scheduleGroup.Size = new Size(484, 150);
+			scheduleGroup.TabIndex = 3;
+			scheduleGroup.TabStop = false;
+			scheduleGroup.Text = "Schedule";
+			scheduleGroup.Visible = true;
+			scheduleGroup.Controls.Add(enableScheduleCheckBox);
+			enableScheduleCheckBox.AutoSize = true;
+			enableScheduleCheckBox.Location = new Point(16, 28);
+			// 
+			// retentionPanel
+			// 
+			retentionPanel.Location = new Point(3, 109);
+			retentionPanel.Size = new Size(484, 62);
+			retentionPanel.Visible = true;
+			// 
+			// selectedFilesRetentionPanel
+			// 
+			selectedFilesRetentionPanel.Location = new Point(3, 177);
+			selectedFilesRetentionPanel.Size = new Size(484, 62);
+			selectedFilesRetentionPanel.Visible = true;
+			// 
+			// cloneRetentionPanel
+			// 
+			cloneRetentionPanel.Location = new Point(3, 245);
+			cloneRetentionPanel.Size = new Size(484, 62);
+			cloneRetentionPanel.Visible = true;
+			// 
+			// basicGroup
+			// 
+			basicGroup.Location = new Point(3, 3);
+			basicGroup.Size = new Size(484, 100);
+			// 
 			// BackupNewForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
 			BackColor = Color.White;
 			ClientSize = new Size(1120, 956);
+			Controls.Add(settingsScroll);
+			Controls.Add(leftColumnLayout);
+			Controls.Add(startBackupButton);
+			Controls.Add(saveJobButton);
 			Controls.Add(headerLabel);
 			MinimumSize = new Size(1040, 901);
 			Name = "BackupNewForm";
+			saveJobButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+			saveJobButton.Location = new Point(842, 872);
+			saveJobButton.Size = new Size(122, 32);
+			saveJobButton.Text = "Save Backup";
+			saveJobButton.UseVisualStyleBackColor = true;
+			startBackupButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+			startBackupButton.Location = new Point(970, 872);
+			startBackupButton.Size = new Size(138, 32);
+			startBackupButton.Text = "Start Backup";
+			startBackupButton.UseVisualStyleBackColor = true;
 			StartPosition = FormStartPosition.CenterParent;
 			Text = "Create Backup";
 			FormClosed += BackupNewForm_FormClosed;

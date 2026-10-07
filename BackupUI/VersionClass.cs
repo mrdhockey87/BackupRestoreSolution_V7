@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.8.62";
+        private static readonly string version_fallback_number = "7.4.8.71";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,20 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.8.71 Removed the BackupNewForm advanced-editor dependency so all backup types stay on the WinForms form and clone or export jobs now use native 
+ *                   validation and Hyper-V rename options. Note: right now the backup type selection is missing for the new backup
+ *                   form. as well as other differences from the original new/edit window. mdail 10/7/2026
+ *  Version 7.4.8.70 Fixed BackupNewForm so saved Hyper-V disk selections replay again, the source section stays reachable, and native save remains enabled for
+ *                   supported disk and Hyper-V selections mdail 10/7/2026
+ *  Version 7.4.8.69 Flattened BackupNewForm Hyper-V systems into the main source list and fixed native save/reload for disk and Hyper-V selections mdail 10/7/2026
+ *  Version 7.4.8.68 Stopped the shared WinForms theme idle refresh from force reapplying on already themed forms to reduce tree and list repaint flicker mdail 10/7/2026
+ *  Version 7.4.8.67 Restored the BackupNewForm source tree so the designer shows the full layout and runtime now lazy-loads disks, Hyper-V systems, and saved network 
+ *                   locations with progress feedback mdail 10/7/2026
+ *  Version 7.4.8.66 Fix ScheduleManagementForm not reloading the schedule list after a new schedule is added or an existing schedule is edited, so the list now refreshes
+ *                   properly after changes. mdail 10/7/2026
+ *  Version 7.4.8.65 Forced the central WinForms theme refresh to rewalk open forms so late-added controls and context menus also pick up the shared theme mdail 10/7/2026
+ *  Version 7.4.8.64 Expanded WinForms theme application so shared theming now reaches more forms, menus, and context menus across the app mdail 10/7/2026
+ *  Version 7.4.8.63 Restored WinForms main window position persistence so the main form now saves on close and reopens at the saved location mdail 10/7/2026
  *  Version 7.4.8.62 Fixed MountBackupTabForm so dgMountedBackups now uses the predefined designer columns instead of appending auto-generated bound columns mdail 10/6/2026
  *  Version 7.4.8.61 Wired the Mount and Unmount DataGridView button columns in MountBackupTabForm so they now run the existing mount and unmount workflows mdail 10/6/2026
  *  Version 7.4.8.60 Fixed MountBackupTabForm so dgAvailableBackups now uses the predefined designer columns instead of appending auto-generated bound columns mdail 10/6/2026

@@ -13,5 +13,7 @@ namespace SecureServerBackup.Models
 		public int DiskNumber { get; init; }
 		public string SelectionPath { get; init; } = string.Empty;
 		public string FileSystemPath { get; init; } = string.Empty;
+		public string VirtualMachineName { get; init; } = string.Empty;
+		public bool IsRemovableNetworkPath { get; init; }
 	}
 }

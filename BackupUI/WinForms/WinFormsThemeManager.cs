@@ -57,9 +57,14 @@ namespace SecureServerBackup.WinForms
 
 		internal static void ApplyTheme(Form form)
 		{
+			ApplyTheme(form, force: false);
+		}
+
+		private static void ApplyTheme(Form form, bool force)
+		{
 			ArgumentNullException.ThrowIfNull(form);
 
-			ApplyThemeToControl(form);
+			ApplyThemeToControl(form, force);
 			RegisterForm(form);
 		}
 
@@ -72,7 +77,10 @@ namespace SecureServerBackup.WinForms
 					continue;
 				}
 
-				ApplyTheme(form);
+				if (!ThemedForms.Contains(form.Handle))
+				{
+					ApplyTheme(form);
+				}
 			}
 		}
 
@@ -85,6 +93,16 @@ namespace SecureServerBackup.WinForms
 			}
 		}
 
+		private static void OnControlHandleCreated(object? sender, EventArgs e)
+		{
+			if (sender is not Control control || control.IsDisposed)
+			{
+				return;
+			}
+
+			ApplyThemeToControl(control, force: true);
+		}
+
 		private static void OnControlAdded(object? sender, ControlEventArgs e)
 		{
 			if (e.Control is null)
@@ -95,17 +113,23 @@ namespace SecureServerBackup.WinForms
 			ApplyThemeToControl(e.Control);
 		}
 
-		private static void ApplyThemeToControl(Control control)
+		private static void ApplyThemeToControl(Control control, bool force = false)
 		{
 			ArgumentNullException.ThrowIfNull(control);
 
 			if (!ThemedControls.Add(control))
 			{
-				return;
+				if (!force)
+				{
+					return;
+				}
 			}
-
-			control.Disposed += (_, _) => ThemedControls.Remove(control);
-			control.ControlAdded += OnControlAdded;
+			else
+			{
+				control.Disposed += (_, _) => ThemedControls.Remove(control);
+				control.ControlAdded += OnControlAdded;
+				control.HandleCreated += OnControlHandleCreated;
+			}
 
 			if (control is Form form)
 			{
@@ -232,34 +256,72 @@ namespace SecureServerBackup.WinForms
 				progressBar.ForeColor = ButtonBackground;
 			}
 
+			if (control.ContextMenuStrip is not null)
+			{
+				ApplyThemeToToolStrip(control.ContextMenuStrip);
+			}
+
 			if (control is MenuStrip menuStrip)
 			{
-				menuStrip.BackColor = HeaderBackground;
-				if (ShouldApplyForeground(menuStrip.ForeColor))
-				{
-					menuStrip.ForeColor = PrimaryText;
-				}
+				ApplyThemeToToolStrip(menuStrip);
 			}
 			else if (control is StatusStrip statusStrip)
 			{
-				statusStrip.BackColor = StatusBarBackground;
-				if (ShouldApplyForeground(statusStrip.ForeColor))
-				{
-					statusStrip.ForeColor = PrimaryText;
-				}
+				ApplyThemeToToolStrip(statusStrip);
 			}
 			else if (control is ToolStrip toolStrip)
 			{
-				toolStrip.BackColor = HeaderBackground;
-				if (ShouldApplyForeground(toolStrip.ForeColor))
-				{
-					toolStrip.ForeColor = PrimaryText;
-				}
+				ApplyThemeToToolStrip(toolStrip);
 			}
 
 			foreach (Control child in control.Controls)
 			{
-				ApplyThemeToControl(child);
+				ApplyThemeToControl(child, force);
+			}
+		}
+
+		private static void ApplyThemeToToolStrip(ToolStrip toolStrip)
+		{
+			ArgumentNullException.ThrowIfNull(toolStrip);
+
+			toolStrip.RenderMode = ToolStripRenderMode.ManagerRenderMode;
+			toolStrip.BackColor = GetToolStripBackground(toolStrip);
+
+			if (ShouldApplyForeground(toolStrip.ForeColor))
+			{
+				toolStrip.ForeColor = PrimaryText;
+			}
+
+			foreach (ToolStripItem item in toolStrip.Items)
+			{
+				ApplyThemeToToolStripItem(item);
+			}
+		}
+
+		private static void ApplyThemeToToolStripItem(ToolStripItem item)
+		{
+			ArgumentNullException.ThrowIfNull(item);
+
+			if (item is not ToolStripSeparator)
+			{
+				item.BackColor = GetToolStripItemBackground(item);
+
+				if (ShouldApplyForeground(item.ForeColor))
+				{
+					item.ForeColor = PrimaryText;
+				}
+			}
+
+			if (item is not ToolStripDropDownItem dropDownItem)
+			{
+				return;
+			}
+
+			ApplyThemeToToolStrip(dropDownItem.DropDown);
+
+			foreach (ToolStripItem dropDownChild in dropDownItem.DropDownItems)
+			{
+				ApplyThemeToToolStripItem(dropDownChild);
 			}
 		}
 
@@ -309,6 +371,21 @@ namespace SecureServerBackup.WinForms
 		private static Color GetPressedColor(Color backColor)
 		{
 			return backColor == ButtonBackground ? ButtonPressed : ControlPaint.Dark(backColor);
+		}
+
+		private static Color GetToolStripBackground(ToolStrip toolStrip)
+		{
+			return toolStrip switch
+			{
+				StatusStrip => StatusBarBackground,
+				ContextMenuStrip or ToolStripDropDown => VeryLightTurquoise,
+				_ => HeaderBackground
+			};
+		}
+
+		private static Color GetToolStripItemBackground(ToolStripItem item)
+		{
+			return item.IsOnDropDown ? VeryLightTurquoise : HeaderBackground;
 		}
 
 		private static bool ShouldApplyButtonBackground(Color backColor)

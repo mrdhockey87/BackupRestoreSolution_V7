@@ -12,6 +12,13 @@ namespace SecureServerBackup.Enums
 		Volume,
 		Directory,
 		File,
-		Partition
+		Partition,
+		HyperVRoot,
+		HyperVSystem,
+		HyperVVirtualDisk,
+		NetworkRoot,
+		NetworkDrive,
+		NetworkShare,
+		NetworkBrowser
 	}
 }
