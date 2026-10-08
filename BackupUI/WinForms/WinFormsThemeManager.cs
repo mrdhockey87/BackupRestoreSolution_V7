@@ -1,3 +1,5 @@
+using SecureServerBackup.Controls;
+
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,7 +10,7 @@ namespace SecureServerBackup.WinForms
 	internal static class WinFormsThemeManager
 	{
 		internal static Color PrimaryTurquoise => ColorTranslator.FromHtml("#20B2AA");
-		internal static Color DarkTurquoise => ColorTranslator.FromHtml("#00CED1");
+		internal static Color DarkTurquoise => ColorTranslator.FromHtml("#009A9C");
 		internal static Color MediumTurquoise => ColorTranslator.FromHtml("#48D1CC");
 		internal static Color LightTurquoise => ColorTranslator.FromHtml("#AFEEEE");
 		internal static Color VeryLightTurquoise => ColorTranslator.FromHtml("#E0F7F7");
@@ -22,7 +24,7 @@ namespace SecureServerBackup.WinForms
 		internal static Color WarningText => ColorTranslator.FromHtml("#FF8C00");
 		internal static Color SuccessText => ColorTranslator.FromHtml("#006400");
 		internal static Color InfoText => ColorTranslator.FromHtml("#000080");
-		internal static Color WindowBackground => ColorTranslator.FromHtml("#F5FFFF");
+		internal static Color WindowBackground => ColorTranslator.FromHtml("#AFEEEE");//F5FFFF");
 		internal static Color PanelBackground => ColorTranslator.FromHtml("#E0F7F7");
 		internal static Color AlternateRowBackground => ColorTranslator.FromHtml("#5F9EA0");
 		internal static Color HeaderBackground => ColorTranslator.FromHtml("#B0E0E6");
@@ -139,14 +141,6 @@ namespace SecureServerBackup.WinForms
 					form.ForeColor = PrimaryText;
 				}
 			}
-			else if (control is TabPage)
-			{
-				control.BackColor = WindowBackground;
-				if (ShouldApplyForeground(control.ForeColor))
-				{
-					control.ForeColor = PrimaryText;
-				}
-			}
 			else if (control is GroupBox)
 			{
 				control.BackColor = VeryLightTurquoise;
@@ -202,7 +196,7 @@ namespace SecureServerBackup.WinForms
 			}
 			else if (control is TextBoxBase or ComboBox or NumericUpDown or DateTimePicker or ListBox or CheckedListBox)
 			{
-				control.BackColor = VeryLightTurquoise;
+				control.BackColor = LightTurquoise;
 
 				if (ShouldApplyForeground(control.ForeColor))
 				{
@@ -211,7 +205,7 @@ namespace SecureServerBackup.WinForms
 			}
 			else if (control is ListView listView)
 			{
-				listView.BackColor = VeryLightTurquoise;
+				listView.BackColor = LightTurquoise;
 
 				if (ShouldApplyForeground(listView.ForeColor))
 				{
@@ -220,7 +214,7 @@ namespace SecureServerBackup.WinForms
 			}
 			else if (control is TreeView treeView)
 			{
-				treeView.BackColor = VeryLightTurquoise;
+				treeView.BackColor = LightTurquoise;
 
 				if (ShouldApplyForeground(treeView.ForeColor))
 				{
@@ -234,16 +228,71 @@ namespace SecureServerBackup.WinForms
 				{
 				}
 			}
+			else if (control is CustomTabControl customTab)
+			{
+				//customTab.TabStripBackColor = WindowBackground;   // space behind and between the tabs
+				//customTab.ForeColor = PrimaryText;
+
+				if (ShouldApplyContainerBackground(customTab.TabStripBackColor))
+				{
+					customTab.TabStripBackColor = LightTurquoise;
+				}
+
+				if (ShouldApplyForeground(customTab.TabBorderColor))
+				{
+					customTab.TabBorderColor = DarkTurquoise;
+				}
+				if (ShouldApplyForeground(customTab.TabBackColor))
+				{
+					customTab.TabBackColor = LightTurquoise;
+				}
+				if (ShouldApplyContainerBackground(customTab.SelectedTabBackColor))
+				{
+					customTab.SelectedTabBackColor = MediumTurquoise;
+				}
+
+				if (ShouldApplyForeground(customTab.BackColor))
+				{
+					customTab.TabTextColor = LightTurquoise;
+				}
+				if (ShouldApplyForeground(customTab.ForeColor))
+				{
+					customTab.ForeColor = PrimaryText;
+				}
+				if (ShouldApplyForeground(customTab.TabTextColor))
+				{
+					customTab.TabTextColor = PrimaryText;
+				}
+
+				/*
+				if (ShouldApplyContainerBackground(customTab.BackColor))
+				{
+					customTab.BackColor = MediumTurquoise;
+				}
+
+				if (ShouldApplyForeground(customTab.ForeColor))
+				{
+					customTab.ForeColor = PrimaryText;
+				}*/
+
+			}
 			else if (control is TabControl tabControl)
 			{
 				if (ShouldApplyContainerBackground(tabControl.BackColor))
 				{
 					tabControl.BackColor = WindowBackground;
 				}
-
 				if (ShouldApplyForeground(tabControl.ForeColor))
 				{
 					tabControl.ForeColor = PrimaryText;
+				}
+			}
+			else if (control is TabPage)
+			{
+				control.BackColor = WindowBackground;
+				if (ShouldApplyForeground(control.ForeColor))
+				{
+					control.ForeColor = PrimaryText;
 				}
 			}
 			else if (control is DataGridView dataGridView)

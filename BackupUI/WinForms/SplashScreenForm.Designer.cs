@@ -6,7 +6,7 @@ namespace SecureServerBackup.WinForms
 {
 	partial class SplashScreenForm
 	{
-		private IContainer components;
+		//private IContainer components;
 		private PictureBox logoPictureBox;
 		private Label titleLabel;
 		private Label versionLabel;
@@ -14,17 +14,17 @@ namespace SecureServerBackup.WinForms
 
 		protected override void Dispose(bool disposing)
 		{
-			if (disposing && components != null)
+			/*if (disposing && components != null)
 			{
 				components.Dispose();
-			}
+			}*/
 
 			base.Dispose(disposing);
 		}
 
 		private void InitializeComponent()
 		{
-			components = new Container();
+			//components = new Container();
 			logoPictureBox = new PictureBox();
 			titleLabel = new Label();
 			versionLabel = new Label();
