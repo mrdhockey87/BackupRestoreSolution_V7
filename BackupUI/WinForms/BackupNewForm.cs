@@ -42,9 +42,6 @@ namespace SecureServerBackup.WinForms
 		private readonly TextBox renameHyperVSystemNameTextBox = new();
 		private const int VolumeAnimationFrameCount = 6;
 
-
-
-
 		public BackupNewForm()
 			: this(null)
 		{
