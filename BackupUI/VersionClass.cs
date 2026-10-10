@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.8.75";
+        private static readonly string version_fallback_number = "7.4.8.76";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,8 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.8.76 Finish visual layout of the BackupNewEditForm so it is more like the old version and uses more of the old code so it should work better. 
+ *                   Still need to match the field names and add the events and other code to make it even close to try. mdail 10/10/2026
  *  Version 7.4.8.75 Start adding a replacement for the BackupNewForm so I can make it more like the old version and use more of the old code so it should work better. mdail 10/9/2026
  *  Version 7.4.8.74 Fixed the tab control background between tabs not getting themed properly so the tab control now uses the shared theme colors for the background 
  *                   between tabs by making a custom tab control, fixed some other theme issues, still have some that need to be fixed. mdail 10/7/2026
