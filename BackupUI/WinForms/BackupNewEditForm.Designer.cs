@@ -33,22 +33,22 @@
 			tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
 			groupBox1 = new System.Windows.Forms.GroupBox();
 			label1 = new System.Windows.Forms.Label();
-			treeView1 = new System.Windows.Forms.TreeView();
 			flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
 			button1 = new System.Windows.Forms.Button();
 			button2 = new System.Windows.Forms.Button();
 			button3 = new System.Windows.Forms.Button();
-			checkBox1 = new System.Windows.Forms.CheckBox();
+			chkShowHiddenPartitions = new System.Windows.Forms.CheckBox();
+			treeViewDrives = new System.Windows.Forms.TreeView();
 			tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
 			groupBox2 = new System.Windows.Forms.GroupBox();
 			flowLayoutPanel6 = new System.Windows.Forms.FlowLayoutPanel();
-			checkBox2 = new System.Windows.Forms.CheckBox();
+			chkShowEncryptionPassword = new System.Windows.Forms.CheckBox();
 			label7 = new System.Windows.Forms.Label();
-			textBox1 = new System.Windows.Forms.TextBox();
+			pwdEncryptionPassword = new System.Windows.Forms.TextBox();
 			flowLayoutPanel5 = new System.Windows.Forms.FlowLayoutPanel();
 			label5 = new System.Windows.Forms.Label();
-			comboBox1 = new System.Windows.Forms.ComboBox();
-			label6 = new System.Windows.Forms.Label();
+			cmbCloneRetentionCount = new System.Windows.Forms.ComboBox();
+			txtCloneRetentionSuffix = new System.Windows.Forms.Label();
 			label4 = new System.Windows.Forms.Label();
 			button5 = new System.Windows.Forms.Button();
 			checkedListBox1 = new System.Windows.Forms.CheckedListBox();
@@ -71,16 +71,23 @@
 			radioButton1 = new System.Windows.Forms.RadioButton();
 			groupBox4 = new System.Windows.Forms.GroupBox();
 			flowLayoutPanel7 = new System.Windows.Forms.FlowLayoutPanel();
-			checkBox3 = new System.Windows.Forms.CheckBox();
+			chkEnableSchedule = new System.Windows.Forms.CheckBox();
 			flowLayoutPanel8 = new System.Windows.Forms.FlowLayoutPanel();
 			label8 = new System.Windows.Forms.Label();
 			label9 = new System.Windows.Forms.Label();
 			flowLayoutPanel9 = new System.Windows.Forms.FlowLayoutPanel();
-			comboBox2 = new System.Windows.Forms.ComboBox();
+			cmbFrequency = new System.Windows.Forms.ComboBox();
 			panel1 = new System.Windows.Forms.Panel();
-			comboBox3 = new System.Windows.Forms.ComboBox();
-			comboBox4 = new System.Windows.Forms.ComboBox();
-			comboBox5 = new System.Windows.Forms.ComboBox();
+			cmbHour = new System.Windows.Forms.ComboBox();
+			cmbMinute = new System.Windows.Forms.ComboBox();
+			cmbAmPm = new System.Windows.Forms.ComboBox();
+			label10 = new System.Windows.Forms.Label();
+			flowLayoutPanel10 = new System.Windows.Forms.FlowLayoutPanel();
+			progressBar1 = new System.Windows.Forms.ProgressBar();
+			txtProgress = new System.Windows.Forms.Label();
+			button6 = new System.Windows.Forms.Button();
+			button7 = new System.Windows.Forms.Button();
+			button8 = new System.Windows.Forms.Button();
 			tableLayoutPanel1.SuspendLayout();
 			flowLayoutPanel1.SuspendLayout();
 			tableLayoutPanel2.SuspendLayout();
@@ -98,6 +105,7 @@
 			flowLayoutPanel7.SuspendLayout();
 			flowLayoutPanel8.SuspendLayout();
 			flowLayoutPanel9.SuspendLayout();
+			flowLayoutPanel10.SuspendLayout();
 			SuspendLayout();
 			// 
 			// tableLayoutPanel1
@@ -134,7 +142,7 @@
 			tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
 			tableLayoutPanel2.Controls.Add(groupBox1, 0, 0);
 			tableLayoutPanel2.Controls.Add(flowLayoutPanel2, 0, 2);
-			tableLayoutPanel2.Controls.Add(treeView1, 0, 1);
+			tableLayoutPanel2.Controls.Add(treeViewDrives, 0, 1);
 			tableLayoutPanel2.Location = new System.Drawing.Point(3, 3);
 			tableLayoutPanel2.Name = "tableLayoutPanel2";
 			tableLayoutPanel2.RowCount = 3;
@@ -165,20 +173,12 @@
 			label1.TabIndex = 0;
 			label1.Text = "Select the DIsk, Volume or File && Folders by checking the box. File && Folder are shown when Volumes are unselected.";
 			// 
-			// treeView1
-			// 
-			treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
-			treeView1.Location = new System.Drawing.Point(3, 86);
-			treeView1.Name = "treeView1";
-			treeView1.Size = new System.Drawing.Size(390, 438);
-			treeView1.TabIndex = 1;
-			// 
 			// flowLayoutPanel2
 			// 
 			flowLayoutPanel2.Controls.Add(button1);
 			flowLayoutPanel2.Controls.Add(button2);
 			flowLayoutPanel2.Controls.Add(button3);
-			flowLayoutPanel2.Controls.Add(checkBox1);
+			flowLayoutPanel2.Controls.Add(chkShowHiddenPartitions);
 			flowLayoutPanel2.Location = new System.Drawing.Point(3, 530);
 			flowLayoutPanel2.Name = "flowLayoutPanel2";
 			flowLayoutPanel2.Size = new System.Drawing.Size(390, 72);
@@ -193,6 +193,7 @@
 			button1.TabIndex = 3;
 			button1.Text = "Refresh";
 			button1.UseVisualStyleBackColor = true;
+			button1.Click += RefreshDrives_Click;
 			// 
 			// button2
 			// 
@@ -203,6 +204,7 @@
 			button2.TabIndex = 4;
 			button2.Text = "Expand All";
 			button2.UseVisualStyleBackColor = true;
+			button2.Click += ExpandAll_Click;
 			// 
 			// button3
 			// 
@@ -213,17 +215,26 @@
 			button3.TabIndex = 5;
 			button3.Text = "Collapse All";
 			button3.UseVisualStyleBackColor = true;
+			button3.Click += CollapseAll_Click;
 			// 
-			// checkBox1
+			// chkShowHiddenPartitions
 			// 
-			checkBox1.AutoSize = true;
-			checkBox1.Location = new System.Drawing.Point(3, 44);
-			checkBox1.Margin = new System.Windows.Forms.Padding(3, 8, 3, 3);
-			checkBox1.Name = "checkBox1";
-			checkBox1.Size = new System.Drawing.Size(162, 21);
-			checkBox1.TabIndex = 6;
-			checkBox1.Text = "Show Hidden Partitions";
-			checkBox1.UseVisualStyleBackColor = true;
+			chkShowHiddenPartitions.AutoSize = true;
+			chkShowHiddenPartitions.Location = new System.Drawing.Point(3, 44);
+			chkShowHiddenPartitions.Margin = new System.Windows.Forms.Padding(3, 8, 3, 3);
+			chkShowHiddenPartitions.Name = "chkShowHiddenPartitions";
+			chkShowHiddenPartitions.Size = new System.Drawing.Size(162, 21);
+			chkShowHiddenPartitions.TabIndex = 6;
+			chkShowHiddenPartitions.Text = "Show Hidden Partitions";
+			chkShowHiddenPartitions.UseVisualStyleBackColor = true;
+			// 
+			// treeViewDrives
+			// 
+			treeViewDrives.Dock = System.Windows.Forms.DockStyle.Fill;
+			treeViewDrives.Location = new System.Drawing.Point(3, 86);
+			treeViewDrives.Name = "treeViewDrives";
+			treeViewDrives.Size = new System.Drawing.Size(390, 438);
+			treeViewDrives.TabIndex = 1;
 			// 
 			// tableLayoutPanel3
 			// 
@@ -260,23 +271,23 @@
 			// 
 			// flowLayoutPanel6
 			// 
-			flowLayoutPanel6.Controls.Add(checkBox2);
+			flowLayoutPanel6.Controls.Add(chkShowEncryptionPassword);
 			flowLayoutPanel6.Controls.Add(label7);
-			flowLayoutPanel6.Controls.Add(textBox1);
+			flowLayoutPanel6.Controls.Add(pwdEncryptionPassword);
 			flowLayoutPanel6.Location = new System.Drawing.Point(-3, 434);
 			flowLayoutPanel6.Name = "flowLayoutPanel6";
 			flowLayoutPanel6.Size = new System.Drawing.Size(396, 29);
 			flowLayoutPanel6.TabIndex = 6;
 			// 
-			// checkBox2
+			// chkShowEncryptionPassword
 			// 
-			checkBox2.AutoSize = true;
-			checkBox2.Location = new System.Drawing.Point(3, 3);
-			checkBox2.Name = "checkBox2";
-			checkBox2.Size = new System.Drawing.Size(115, 21);
-			checkBox2.TabIndex = 0;
-			checkBox2.Text = "Encrypt Backup";
-			checkBox2.UseVisualStyleBackColor = true;
+			chkShowEncryptionPassword.AutoSize = true;
+			chkShowEncryptionPassword.Location = new System.Drawing.Point(3, 3);
+			chkShowEncryptionPassword.Name = "chkShowEncryptionPassword";
+			chkShowEncryptionPassword.Size = new System.Drawing.Size(115, 21);
+			chkShowEncryptionPassword.TabIndex = 0;
+			chkShowEncryptionPassword.Text = "Encrypt Backup";
+			chkShowEncryptionPassword.UseVisualStyleBackColor = true;
 			// 
 			// label7
 			// 
@@ -287,20 +298,20 @@
 			label7.TabIndex = 2;
 			label7.Text = "Password:";
 			// 
-			// textBox1
+			// pwdEncryptionPassword
 			// 
-			textBox1.Location = new System.Drawing.Point(208, 3);
-			textBox1.Name = "textBox1";
-			textBox1.Size = new System.Drawing.Size(185, 25);
-			textBox1.TabIndex = 1;
-			textBox1.UseSystemPasswordChar = true;
-			textBox1.TextChanged += textBox1_TextChanged;
+			pwdEncryptionPassword.Location = new System.Drawing.Point(208, 3);
+			pwdEncryptionPassword.Name = "pwdEncryptionPassword";
+			pwdEncryptionPassword.Size = new System.Drawing.Size(185, 25);
+			pwdEncryptionPassword.TabIndex = 1;
+			pwdEncryptionPassword.UseSystemPasswordChar = true;
+			pwdEncryptionPassword.TextChanged += pwdEncryptionPassword_TextChanged;
 			// 
 			// flowLayoutPanel5
 			// 
 			flowLayoutPanel5.Controls.Add(label5);
-			flowLayoutPanel5.Controls.Add(comboBox1);
-			flowLayoutPanel5.Controls.Add(label6);
+			flowLayoutPanel5.Controls.Add(cmbCloneRetentionCount);
+			flowLayoutPanel5.Controls.Add(txtCloneRetentionSuffix);
 			flowLayoutPanel5.Location = new System.Drawing.Point(-4, 401);
 			flowLayoutPanel5.Name = "flowLayoutPanel5";
 			flowLayoutPanel5.Size = new System.Drawing.Size(402, 30);
@@ -315,23 +326,23 @@
 			label5.TabIndex = 0;
 			label5.Text = "Keep Last";
 			// 
-			// comboBox1
+			// cmbCloneRetentionCount
 			// 
-			comboBox1.FormattingEnabled = true;
-			comboBox1.Items.AddRange(new object[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31" });
-			comboBox1.Location = new System.Drawing.Point(75, 3);
-			comboBox1.Name = "comboBox1";
-			comboBox1.Size = new System.Drawing.Size(82, 25);
-			comboBox1.TabIndex = 1;
+			cmbCloneRetentionCount.FormattingEnabled = true;
+			cmbCloneRetentionCount.Items.AddRange(new object[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31" });
+			cmbCloneRetentionCount.Location = new System.Drawing.Point(75, 3);
+			cmbCloneRetentionCount.Name = "cmbCloneRetentionCount";
+			cmbCloneRetentionCount.Size = new System.Drawing.Size(82, 25);
+			cmbCloneRetentionCount.TabIndex = 1;
 			// 
-			// label6
+			// txtCloneRetentionSuffix
 			// 
-			label6.Location = new System.Drawing.Point(163, 10);
-			label6.Margin = new System.Windows.Forms.Padding(3, 10, 3, 0);
-			label6.Name = "label6";
-			label6.Size = new System.Drawing.Size(90, 20);
-			label6.TabIndex = 2;
-			label6.Text = "backup(s)";
+			txtCloneRetentionSuffix.Location = new System.Drawing.Point(163, 10);
+			txtCloneRetentionSuffix.Margin = new System.Windows.Forms.Padding(3, 10, 3, 0);
+			txtCloneRetentionSuffix.Name = "txtCloneRetentionSuffix";
+			txtCloneRetentionSuffix.Size = new System.Drawing.Size(90, 20);
+			txtCloneRetentionSuffix.TabIndex = 2;
+			txtCloneRetentionSuffix.Text = "backup(s)";
 			// 
 			// label4
 			// 
@@ -559,7 +570,7 @@
 			// 
 			// flowLayoutPanel7
 			// 
-			flowLayoutPanel7.Controls.Add(checkBox3);
+			flowLayoutPanel7.Controls.Add(chkEnableSchedule);
 			flowLayoutPanel7.Controls.Add(flowLayoutPanel8);
 			flowLayoutPanel7.Controls.Add(flowLayoutPanel9);
 			flowLayoutPanel7.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
@@ -568,15 +579,15 @@
 			flowLayoutPanel7.Size = new System.Drawing.Size(401, 121);
 			flowLayoutPanel7.TabIndex = 0;
 			// 
-			// checkBox3
+			// chkEnableSchedule
 			// 
-			checkBox3.AutoSize = true;
-			checkBox3.Location = new System.Drawing.Point(3, 3);
-			checkBox3.Name = "checkBox3";
-			checkBox3.Size = new System.Drawing.Size(181, 21);
-			checkBox3.TabIndex = 0;
-			checkBox3.Text = "Enable Scheduled Backups";
-			checkBox3.UseVisualStyleBackColor = true;
+			chkEnableSchedule.AutoSize = true;
+			chkEnableSchedule.Location = new System.Drawing.Point(3, 3);
+			chkEnableSchedule.Name = "chkEnableSchedule";
+			chkEnableSchedule.Size = new System.Drawing.Size(181, 21);
+			chkEnableSchedule.TabIndex = 0;
+			chkEnableSchedule.Text = "Enable Scheduled Backups";
+			chkEnableSchedule.UseVisualStyleBackColor = true;
 			// 
 			// flowLayoutPanel8
 			// 
@@ -605,23 +616,25 @@
 			// 
 			// flowLayoutPanel9
 			// 
-			flowLayoutPanel9.Controls.Add(comboBox2);
+			flowLayoutPanel9.Controls.Add(cmbFrequency);
 			flowLayoutPanel9.Controls.Add(panel1);
-			flowLayoutPanel9.Controls.Add(comboBox3);
-			flowLayoutPanel9.Controls.Add(comboBox4);
-			flowLayoutPanel9.Controls.Add(comboBox5);
+			flowLayoutPanel9.Controls.Add(cmbHour);
+			flowLayoutPanel9.Controls.Add(label10);
+			flowLayoutPanel9.Controls.Add(cmbMinute);
+			flowLayoutPanel9.Controls.Add(cmbAmPm);
 			flowLayoutPanel9.Location = new System.Drawing.Point(3, 56);
 			flowLayoutPanel9.Name = "flowLayoutPanel9";
 			flowLayoutPanel9.Size = new System.Drawing.Size(390, 37);
 			flowLayoutPanel9.TabIndex = 2;
 			// 
-			// comboBox2
+			// cmbFrequency
 			// 
-			comboBox2.FormattingEnabled = true;
-			comboBox2.Location = new System.Drawing.Point(3, 3);
-			comboBox2.Name = "comboBox2";
-			comboBox2.Size = new System.Drawing.Size(188, 25);
-			comboBox2.TabIndex = 0;
+			cmbFrequency.FormattingEnabled = true;
+			cmbFrequency.Items.AddRange(new object[] { "Daily", "Weekly", "Monthly", "Once" });
+			cmbFrequency.Location = new System.Drawing.Point(3, 3);
+			cmbFrequency.Name = "cmbFrequency";
+			cmbFrequency.Size = new System.Drawing.Size(188, 25);
+			cmbFrequency.TabIndex = 0;
 			// 
 			// panel1
 			// 
@@ -630,38 +643,112 @@
 			panel1.Size = new System.Drawing.Size(19, 22);
 			panel1.TabIndex = 4;
 			// 
-			// comboBox3
+			// cmbHour
 			// 
-			comboBox3.FormattingEnabled = true;
-			comboBox3.Items.AddRange(new object[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" });
-			comboBox3.Location = new System.Drawing.Point(222, 3);
-			comboBox3.Name = "comboBox3";
-			comboBox3.Size = new System.Drawing.Size(40, 25);
-			comboBox3.TabIndex = 5;
+			cmbHour.FormattingEnabled = true;
+			cmbHour.Items.AddRange(new object[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" });
+			cmbHour.Location = new System.Drawing.Point(222, 3);
+			cmbHour.Name = "cmbHour";
+			cmbHour.Size = new System.Drawing.Size(40, 25);
+			cmbHour.TabIndex = 5;
 			// 
-			// comboBox4
+			// cmbMinute
 			// 
-			comboBox4.FormattingEnabled = true;
-			comboBox4.Items.AddRange(new object[] { "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59" });
-			comboBox4.Location = new System.Drawing.Point(268, 3);
-			comboBox4.Name = "comboBox4";
-			comboBox4.Size = new System.Drawing.Size(48, 25);
-			comboBox4.TabIndex = 6;
+			cmbMinute.FormattingEnabled = true;
+			cmbMinute.Items.AddRange(new object[] { "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59" });
+			cmbMinute.Location = new System.Drawing.Point(285, 3);
+			cmbMinute.Name = "cmbMinute";
+			cmbMinute.Size = new System.Drawing.Size(48, 25);
+			cmbMinute.TabIndex = 6;
 			// 
-			// comboBox5
+			// cmbAmPm
 			// 
-			comboBox5.FormattingEnabled = true;
-			comboBox5.Items.AddRange(new object[] { "AM", "PM" });
-			comboBox5.Location = new System.Drawing.Point(322, 3);
-			comboBox5.Name = "comboBox5";
-			comboBox5.Size = new System.Drawing.Size(46, 25);
-			comboBox5.TabIndex = 7;
+			cmbAmPm.FormattingEnabled = true;
+			cmbAmPm.Items.AddRange(new object[] { "AM", "PM" });
+			cmbAmPm.Location = new System.Drawing.Point(339, 3);
+			cmbAmPm.Name = "cmbAmPm";
+			cmbAmPm.Size = new System.Drawing.Size(46, 25);
+			cmbAmPm.TabIndex = 7;
+			// 
+			// label10
+			// 
+			label10.AutoSize = true;
+			label10.Location = new System.Drawing.Point(268, 7);
+			label10.Margin = new System.Windows.Forms.Padding(3, 7, 3, 0);
+			label10.Name = "label10";
+			label10.Size = new System.Drawing.Size(11, 17);
+			label10.TabIndex = 8;
+			label10.Text = ":";
+			label10.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// flowLayoutPanel10
+			// 
+			flowLayoutPanel10.Controls.Add(progressBar1);
+			flowLayoutPanel10.Controls.Add(txtProgress);
+			flowLayoutPanel10.Controls.Add(button6);
+			flowLayoutPanel10.Controls.Add(button7);
+			flowLayoutPanel10.Controls.Add(button8);
+			flowLayoutPanel10.Location = new System.Drawing.Point(7, 620);
+			flowLayoutPanel10.Name = "flowLayoutPanel10";
+			flowLayoutPanel10.Size = new System.Drawing.Size(825, 23);
+			flowLayoutPanel10.TabIndex = 1;
+			// 
+			// progressBar1
+			// 
+			progressBar1.Location = new System.Drawing.Point(3, 3);
+			progressBar1.Name = "progressBar1";
+			progressBar1.Size = new System.Drawing.Size(194, 22);
+			progressBar1.TabIndex = 0;
+			progressBar1.Visible = false;
+			// 
+			// txtProgress
+			// 
+			txtProgress.Location = new System.Drawing.Point(203, 0);
+			txtProgress.Name = "txtProgress";
+			txtProgress.Size = new System.Drawing.Size(171, 22);
+			txtProgress.TabIndex = 1;
+			txtProgress.Text = "progress";
+			txtProgress.Visible = false;
+			// 
+			// button6
+			// 
+			button6.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			button6.Location = new System.Drawing.Point(387, 0);
+			button6.Margin = new System.Windows.Forms.Padding(10, 0, 10, 3);
+			button6.Name = "button6";
+			button6.Size = new System.Drawing.Size(147, 22);
+			button6.TabIndex = 2;
+			button6.Text = "Start Backup";
+			button6.UseVisualStyleBackColor = true;
+			// 
+			// button7
+			// 
+			button7.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			button7.Location = new System.Drawing.Point(554, 0);
+			button7.Margin = new System.Windows.Forms.Padding(10, 0, 10, 3);
+			button7.Name = "button7";
+			button7.Size = new System.Drawing.Size(147, 22);
+			button7.TabIndex = 3;
+			button7.Text = "Save Job";
+			button7.UseVisualStyleBackColor = true;
+			// 
+			// button8
+			// 
+			button8.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			button8.Location = new System.Drawing.Point(721, 0);
+			button8.Margin = new System.Windows.Forms.Padding(10, 0, 3, 0);
+			button8.Name = "button8";
+			button8.Size = new System.Drawing.Size(95, 22);
+			button8.TabIndex = 4;
+			button8.Text = "Cancel";
+			button8.UseVisualStyleBackColor = true;
 			// 
 			// BackupNewEditForm
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(836, 619);
+			ClientSize = new System.Drawing.Size(836, 646);
+			Controls.Add(flowLayoutPanel10);
 			Controls.Add(tableLayoutPanel1);
 			Name = "BackupNewEditForm";
 			Text = "BackupNewEditForm";
@@ -690,6 +777,8 @@
 			flowLayoutPanel7.PerformLayout();
 			flowLayoutPanel8.ResumeLayout(false);
 			flowLayoutPanel9.ResumeLayout(false);
+			flowLayoutPanel9.PerformLayout();
+			flowLayoutPanel10.ResumeLayout(false);
 			ResumeLayout(false);
 		}
 
@@ -700,12 +789,12 @@
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
 		private System.Windows.Forms.GroupBox groupBox1;
 		private System.Windows.Forms.Label label1;
-		private System.Windows.Forms.TreeView treeView1;
+		private System.Windows.Forms.TreeView treeViewDrives;
 		private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel2;
 		private System.Windows.Forms.Button button1;
 		private System.Windows.Forms.Button button2;
 		private System.Windows.Forms.Button button3;
-		private System.Windows.Forms.CheckBox checkBox1;
+		private System.Windows.Forms.CheckBox chkShowHiddenPartitions;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel3;
 		private System.Windows.Forms.GroupBox groupBox2;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel4;
@@ -730,23 +819,30 @@
 		private System.Windows.Forms.Button button5;
 		private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel5;
 		private System.Windows.Forms.Label label5;
-		private System.Windows.Forms.ComboBox comboBox1;
-		private System.Windows.Forms.Label label6;
+		private System.Windows.Forms.ComboBox cmbCloneRetentionCount;
+		private System.Windows.Forms.Label txtCloneRetentionSuffix;
 		private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel6;
-		private System.Windows.Forms.CheckBox checkBox2;
+		private System.Windows.Forms.CheckBox chkShowEncryptionPassword;
 		private System.Windows.Forms.Label label7;
-		private System.Windows.Forms.TextBox textBox1;
+		private System.Windows.Forms.TextBox pwdEncryptionPassword;
 		private System.Windows.Forms.GroupBox groupBox4;
 		private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel7;
-		private System.Windows.Forms.CheckBox checkBox3;
+		private System.Windows.Forms.CheckBox chkEnableSchedule;
 		private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel8;
 		private System.Windows.Forms.Label label8;
 		private System.Windows.Forms.Label label9;
 		private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel9;
-		private System.Windows.Forms.ComboBox comboBox2;
+		private System.Windows.Forms.ComboBox cmbFrequency;
 		private System.Windows.Forms.Panel panel1;
-		private System.Windows.Forms.ComboBox comboBox3;
-		private System.Windows.Forms.ComboBox comboBox4;
-		private System.Windows.Forms.ComboBox comboBox5;
+		private System.Windows.Forms.ComboBox cmbHour;
+		private System.Windows.Forms.ComboBox cmbMinute;
+		private System.Windows.Forms.ComboBox cmbAmPm;
+		private System.Windows.Forms.Label label10;
+		private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel10;
+		private System.Windows.Forms.ProgressBar progressBar1;
+		private System.Windows.Forms.Label txtProgress;
+		private System.Windows.Forms.Button button6;
+		private System.Windows.Forms.Button button7;
+		private System.Windows.Forms.Button button8;
 	}
 }

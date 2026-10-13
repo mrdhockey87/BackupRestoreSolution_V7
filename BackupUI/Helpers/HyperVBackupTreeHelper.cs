@@ -1,4 +1,5 @@
 ﻿using SecureServerBackupCommon;
+using SecureServerBackup.Models;
 
 using System;
 using System.Collections.Generic;
@@ -178,6 +179,28 @@ namespace SecureServerBackup.Helpers
 
 			string suffix = path[(prefixIndex + physicalDrivePrefix.Length)..].Trim();
 			return int.TryParse(suffix, out diskNumber);
+		}
+
+		/// <summary>
+		/// Selects the HyperVSystem tree node whose normalized VirtualMachineName matches the saved name.
+		/// Returns true if a match was found and selected.
+		/// </summary>
+		public static bool PreSelectHyperVSystemByName(string savedVmName, List<DriveTreeItem> driveItems)
+		{
+			string normalizedSavedVmName = NormalizeSavedHyperVSystemName(savedVmName);
+			if (string.IsNullOrWhiteSpace(normalizedSavedVmName))
+				return false;
+
+			DriveTreeItem? match = driveItems.FirstOrDefault(item =>
+				item.ItemType == DriveTreeItemType.HyperVSystem &&
+				(string.Equals(NormalizeSavedHyperVSystemName(item.VirtualMachineName), normalizedSavedVmName, StringComparison.OrdinalIgnoreCase) ||
+				 string.Equals(NormalizeSavedHyperVSystemName(item.FullPath), normalizedSavedVmName, StringComparison.OrdinalIgnoreCase)));
+
+			if (match == null)
+				return false;
+
+			match.IsChecked = true;
+			return true;
 		}
 	}
 }

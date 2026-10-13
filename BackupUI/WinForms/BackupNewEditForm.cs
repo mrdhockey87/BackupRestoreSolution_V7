@@ -17,7 +17,22 @@ namespace SecureServerBackup.WinForms
 			InitializeComponent();
 		}
 
-		private void textBox1_TextChanged(object sender, EventArgs e)
+		private void pwdEncryptionPassword_TextChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void RefreshDrives_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void ExpandAll_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void CollapseAll_Click(object sender, EventArgs e)
 		{
 
 		}
