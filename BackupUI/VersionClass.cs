@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.8.77";
+        private static readonly string version_fallback_number = "7.4.9.79";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,10 @@ namespace SecureServerBackup
 
 /*
  * 
+ *  Version 7.4.9.79 Fixed the stale async initialization in BackupNewEditForm by canceling drive-loading work when the form is closing and guarding all UI dialogs
+ *                   so they no longer show against a disposed form instance. mdail 10/13/2026
+ *  Version 7.4.9.78 Fixed the BackupNewEditForm so it now uses the new layout and code that is more like the old version and uses more of the old code so 
+ *                   it should work better. Also moved alot of code form the forms to the Helpers section in multiple files. mdail 10/13/2026
  *  Version 7.4.8.77 Start getting ready to use a diferent layout for the BackupNewEditForm so it is more like the old version and uses more of the old code 
  *                   so it should work better. It also has more helpers code so hopefully less code it the file mdail 10/12/2026
  *  Version 7.4.8.76 Finish visual layout of the BackupNewEditForm so it is more like the old version and uses more of the old code so it should work better. 

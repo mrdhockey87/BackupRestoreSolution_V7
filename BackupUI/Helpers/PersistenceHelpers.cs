@@ -35,6 +35,29 @@ namespace SecureServerBackup.Helpers
 			SelectedFileListStore.Save(job.Name, job.SourcePaths);
 		}
 
+		public static IReadOnlyList<string> GetReplayPathsForJob(BackupJob job)
+		{
+			ArgumentNullException.ThrowIfNull(job);
+
+			if ((job.Type == BackupType.CloneHyperVSystem ||
+				 job.Type == BackupType.ExportHyperVSystem ||
+				 job.Target == BackupTarget.HyperV ||
+				 job.IsHyperVBackup) &&
+				job.HyperVMachines.Count > 0)
+			{
+				return job.HyperVMachines
+					.Where(name => !string.IsNullOrWhiteSpace(name))
+					.Select(HyperVHelpers.NormalizeHyperVDisplayName)
+					.Where(name => !string.IsNullOrWhiteSpace(name))
+					.Distinct(StringComparer.OrdinalIgnoreCase)
+					.ToArray();
+			}
+
+			return job.SourcePaths
+				.Where(path => !string.IsNullOrWhiteSpace(path))
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.ToArray();
+		}
 		public static IReadOnlyList<string> LoadSelectedFileList(BackupJob job)
 		{
 			ArgumentNullException.ThrowIfNull(job);

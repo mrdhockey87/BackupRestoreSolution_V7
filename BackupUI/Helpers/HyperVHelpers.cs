@@ -92,6 +92,25 @@ namespace SecureServerBackup.Helpers
 			}
 		}
 
+		public static string NormalizeHyperVDisplayName(string name)
+		{
+			ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+			string normalized = name.Trim();
+			const string hyperVPrefix = "Hyper-V:";
+			if (normalized.StartsWith(hyperVPrefix, StringComparison.OrdinalIgnoreCase))
+			{
+				normalized = normalized[hyperVPrefix.Length..].Trim();
+			}
+
+			int statusIndex = normalized.LastIndexOf(" (", StringComparison.Ordinal);
+			if (statusIndex > 0 && normalized.EndsWith(")", StringComparison.Ordinal))
+			{
+				normalized = normalized[..statusIndex].TrimEnd();
+			}
+
+			return normalized;
+		}
 		public static void AddHyperVVirtualDiskItem(DriveTreeItem hyperVItem, HyperVVirtualDiskInfo diskInfo)
 		{
 			if (hyperVItem.Children.Any(item =>

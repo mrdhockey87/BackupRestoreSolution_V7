@@ -139,5 +139,18 @@ namespace SecureServerBackup.Helpers
 				parentItem.PartitionNumber,
 				HyperVHelpers.BuildHyperVGuestRelativePath(parentItem, resolvedPath));
 		}
+
+		public static bool RequiresLazyLoad(DriveTreeItem item)
+		{
+			ArgumentNullException.ThrowIfNull(item);
+
+			return (item.ItemType == DriveTreeItemType.Volume ||
+					item.ItemType == DriveTreeItemType.HyperVVolume ||
+					item.ItemType == DriveTreeItemType.NetworkDrive ||
+					item.ItemType == DriveTreeItemType.NetworkShare ||
+					(item.ItemType == DriveTreeItemType.Folder && !string.IsNullOrWhiteSpace(item.ResolvedPath)) ||
+					item.ItemType == DriveTreeItemType.HyperVVirtualDisk) &&
+				   !item.ChildrenLoaded;
+		}
 	}
 }

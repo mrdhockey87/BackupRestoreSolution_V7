@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Controls;
+using System.Windows.Forms;
 
 namespace SecureServerBackup.Helpers
 {
@@ -116,7 +116,7 @@ namespace SecureServerBackup.Helpers
 		{
 			try
 			{
-				string targetPath = rbCloneDisk?.IsChecked == true
+				string targetPath = rbCloneDisk?.Checked == true
 					? txtCloneDestination.Text
 					: txtDestination.Text;
 
@@ -143,8 +143,8 @@ namespace SecureServerBackup.Helpers
 		{
 			try
 			{
-				bool isCloneToDisk = rbCloneDisk?.IsChecked == true;
-				bool isCloneToVirtual = rbCloneVirtual?.IsChecked == true;
+				bool isCloneToDisk = rbCloneDisk?.Checked == true;
+				bool isCloneToVirtual = rbCloneVirtual?.Checked == true;
 
 				if (isCloneToDisk)
 				{
