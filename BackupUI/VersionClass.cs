@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.9.79";
+        private static readonly string version_fallback_number = "7.4.9.84";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -67,7 +67,15 @@ namespace SecureServerBackup
 
 
 /*
- * 
+ *
+ *  Version 7.4.9.84 After several attempt to get Copilot to add the Verify button to the Verify tab list and the Restore button to the Restore tab list I gave up for now and they
+ *                   still aren't there. It added the button the first time to the restore tab but then it blew up the MainForm code file and kept hanging up I gave up it cost
+ *                   me 11% after I tried setting it to auto. mdail 10/16/2026
+ *  Version 7.4.9.83 Added a Verify action column to the Verify tab list so each backup row includes a Verify button that runs the verification workflow for that entry and keeps the 
+ *                   column widths inside the available form space. mdail 10/16/2026
+ *  Version 7.4.9.82 Fixed the Restore tab column sizing so all columns fit inside the available panel width and the Action button remains fully visible without clipping. mdail 10/16/2026
+ *  Version 7.4.9.81 Fixed the Restore tab column sizing so all list columns fit within the form width and the Action button stays visible without clipping. mdail 10/16/2026
+ *  Version 7.4.9.80 Added an Action column to the Restore tab list so each backup row now includes a Restore button that starts the restore workflow for that backup. mdail 10/16/2026
  *  Version 7.4.9.79 Fixed the stale async initialization in BackupNewEditForm by canceling drive-loading work when the form is closing and guarding all UI dialogs
  *                   so they no longer show against a disposed form instance. mdail 10/13/2026
  *  Version 7.4.9.78 Fixed the BackupNewEditForm so it now uses the new layout and code that is more like the old version and uses more of the old code so 

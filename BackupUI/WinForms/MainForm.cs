@@ -1,4 +1,4 @@
-using SecureServerBackup.Models;
+﻿using SecureServerBackup.Models;
 using SecureServerBackup.Services;
 using SecureServerBackup.Enums; // Keep for remaining staged WPF windows still launched from this WinForms shell.
 using SecureServerBackup.Helpers;
@@ -340,18 +340,30 @@ namespace SecureServerBackup.WinForms
 			ConfigurePlaceholderListView(restoreBackupsListView);
 
 			verifyBackupsListView.Columns.Clear();
-			verifyBackupsListView.Columns.Add("Backup Name", 220);
-			verifyBackupsListView.Columns.Add("Type", 120);
-			verifyBackupsListView.Columns.Add("Date", 160);
-			verifyBackupsListView.Columns.Add("Encrypted", 110);
-			verifyBackupsListView.Columns.Add("Path", 320);
+			verifyBackupsListView.Columns.Add("Backup Name", 180);
+			verifyBackupsListView.Columns.Add("Type", 110);
+			verifyBackupsListView.Columns.Add("Date", 140);
+			verifyBackupsListView.Columns.Add("Encrypted", 90);
+			verifyBackupsListView.Columns.Add("Path", 200);
+			verifyBackupsListView.Columns.Add("Action", 90);
+			verifyBackupsListView.OwnerDraw = true;
+			verifyBackupsListView.DrawColumnHeader += (s, e) => e.DrawDefault = true;
+			verifyBackupsListView.DrawItem += (s, e) => e.DrawDefault = true;
+			verifyBackupsListView.DrawSubItem += VerifyBackupsListView_DrawSubItem;
+			verifyBackupsListView.MouseClick += VerifyBackupsListView_MouseClick;
 
 			restoreBackupsListView.Columns.Clear();
-			restoreBackupsListView.Columns.Add("Backup Name", 220);
-			restoreBackupsListView.Columns.Add("Type", 120);
-			restoreBackupsListView.Columns.Add("Date", 160);
-			restoreBackupsListView.Columns.Add("Encrypted", 110);
-			restoreBackupsListView.Columns.Add("Path", 320);
+			restoreBackupsListView.Columns.Add("Backup Name", 180);
+			restoreBackupsListView.Columns.Add("Type", 110);
+			restoreBackupsListView.Columns.Add("Date", 140);
+			restoreBackupsListView.Columns.Add("Encrypted", 90);
+			restoreBackupsListView.Columns.Add("Path", 200);
+			restoreBackupsListView.Columns.Add("Action", 90);
+			restoreBackupsListView.OwnerDraw = true;
+			restoreBackupsListView.DrawColumnHeader += (s, e) => e.DrawDefault = true;
+			restoreBackupsListView.DrawItem += (s, e) => e.DrawDefault = true;
+			restoreBackupsListView.DrawSubItem += RestoreBackupsListView_DrawSubItem;
+			restoreBackupsListView.MouseClick += RestoreBackupsListView_MouseClick;
 
 			backupJobsPanel.Controls.Clear();
 			backupJobsPanel.Controls.Add(BuildBackupActionPanel());
@@ -729,7 +741,8 @@ namespace SecureServerBackup.WinForms
 			ListView listView,
 			System.Collections.Generic.IEnumerable<AvailableBackupInfo> backups,
 			Func<AvailableBackupInfo, string>? statusSelector = null,
-			Func<AvailableBackupInfo, string>? detailsSelector = null)
+			Func<AvailableBackupInfo, string>? detailsSelector = null,
+			string? actionLabel = null)
 		{
 			ArgumentNullException.ThrowIfNull(listView);
 			ArgumentNullException.ThrowIfNull(backups);
@@ -755,6 +768,12 @@ namespace SecureServerBackup.WinForms
 				}
 
 				item.SubItems.Add(backup.BackupPath);
+
+				if (actionLabel != null)
+				{
+					item.SubItems.Add(actionLabel);
+				}
+
 				item.Tag = backup;
 				listView.Items.Add(item);
 			}
@@ -901,7 +920,7 @@ namespace SecureServerBackup.WinForms
 			try
 			{
 				System.Collections.Generic.List<AvailableBackupInfo> backups = GetAvailableBackups();
-				PopulateBackupListView(verifyBackupsListView, backups);
+				PopulateBackupListView(verifyBackupsListView, backups, actionLabel: "Verify");
 				verifyStatusLabel.Text = backups.Count == 0
 					? "No backups were found. Create a backup first, then return here to verify it."
 					: "Select a backup and click Verify Selected to validate the archive before restoring it.";
@@ -1390,7 +1409,7 @@ namespace SecureServerBackup.WinForms
 			try
 			{
 				System.Collections.Generic.List<AvailableBackupInfo> backups = GetAvailableBackups();
-				PopulateBackupListView(restoreBackupsListView, backups);
+				PopulateBackupListView(restoreBackupsListView, backups, actionLabel: "Restore");
 
 				emptyRestoreBackupsLabel.Visible = backups.Count == 0;
 				restoreStatusLabel.Text = backups.Count == 0
@@ -1437,6 +1456,7 @@ namespace SecureServerBackup.WinForms
 			item.SubItems.Add(backupInfo.BackupDate.ToString("g"));
 			item.SubItems.Add(backupInfo.EncryptionStatus);
 			item.SubItems.Add(backupInfo.BackupPath);
+			item.SubItems.Add("Restore");
 			item.Tag = backupInfo;
 			restoreBackupsListView.Items.Add(item);
 			emptyRestoreBackupsLabel.Visible = false;
@@ -1830,6 +1850,99 @@ namespace SecureServerBackup.WinForms
 		private void MainForm_Resize(object? sender, EventArgs e)
 		{
 			ResizeBackupJobCards();
+			ResizeRestoreColumns();
+			ResizeVerifyColumns();
+		}
+
+		// Resize the Path column to fill available width; Action column stays fixed.
+		private void ResizeRestoreColumns()
+		{
+			if (restoreBackupsListView.Columns.Count < 6)
+				return;
+
+			int fixedWidth = restoreBackupsListView.Columns[0].Width
+				+ restoreBackupsListView.Columns[1].Width
+				+ restoreBackupsListView.Columns[2].Width
+				+ restoreBackupsListView.Columns[3].Width
+				+ restoreBackupsListView.Columns[5].Width;
+			int available = restoreBackupsListView.ClientSize.Width - fixedWidth - SystemInformation.VerticalScrollBarWidth;
+			restoreBackupsListView.Columns[4].Width = Math.Max(80, available);
+		}
+
+		private void ResizeVerifyColumns()
+		{
+			if (verifyBackupsListView.Columns.Count < 6)
+				return;
+
+			int fixedWidth = verifyBackupsListView.Columns[0].Width
+				+ verifyBackupsListView.Columns[1].Width
+				+ verifyBackupsListView.Columns[2].Width
+				+ verifyBackupsListView.Columns[3].Width
+				+ verifyBackupsListView.Columns[5].Width;
+			int available = verifyBackupsListView.ClientSize.Width - fixedWidth - SystemInformation.VerticalScrollBarWidth;
+			verifyBackupsListView.Columns[4].Width = Math.Max(80, available);
+		}
+
+		private static void DrawActionButton(DrawListViewSubItemEventArgs e, string label)
+		{
+			Rectangle btnRect = Rectangle.Inflate(e.Bounds, -3, -3);
+			ControlPaint.DrawButton(e.Graphics, btnRect, ButtonState.Normal);
+			TextRenderer.DrawText(
+				e.Graphics, label, SystemFonts.DefaultFont, btnRect,
+				SystemColors.ControlText,
+				TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+		}
+
+		private void RestoreBackupsListView_DrawSubItem(object? sender, DrawListViewSubItemEventArgs e)
+		{
+			if (e.ColumnIndex == restoreBackupsListView.Columns.Count - 1)
+				DrawActionButton(e, "Restore");
+			else
+				e.DrawDefault = true;
+		}
+
+		private void VerifyBackupsListView_DrawSubItem(object? sender, DrawListViewSubItemEventArgs e)
+		{
+			if (e.ColumnIndex == verifyBackupsListView.Columns.Count - 1)
+				DrawActionButton(e, "Verify");
+			else
+				e.DrawDefault = true;
+		}
+
+		private void RestoreBackupsListView_MouseClick(object? sender, MouseEventArgs e)
+		{
+			ListViewHitTestInfo hit = restoreBackupsListView.HitTest(e.Location);
+			if (hit.Item == null || hit.SubItem == null)
+				return;
+
+			if (hit.Item.SubItems.IndexOf(hit.SubItem) != restoreBackupsListView.Columns.Count - 1)
+				return;
+
+			if (hit.Item.Tag is not AvailableBackupInfo backup)
+				return;
+
+			OpenRestoreWorkflow(backup);
+		}
+
+		private async void VerifyBackupsListView_MouseClick(object? sender, MouseEventArgs e)
+		{
+			ListViewHitTestInfo hit = verifyBackupsListView.HitTest(e.Location);
+			if (hit.Item == null || hit.SubItem == null)
+				return;
+
+			if (hit.Item.SubItems.IndexOf(hit.SubItem) != verifyBackupsListView.Columns.Count - 1)
+				return;
+
+			hit.Item.Selected = true;
+
+			try
+			{
+				await VerifySelectedBackupAsync();
+			}
+			catch (Exception ex)
+			{
+				CustomDialogService.ShowError(this, $"Failed to verify the selected backup:{Environment.NewLine}{ex.Message}", "Verify Backup");
+			}
 		}
 
 		protected override void OnFormClosing(FormClosingEventArgs e)
