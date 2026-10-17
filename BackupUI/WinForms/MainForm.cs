@@ -1,6 +1,6 @@
 ﻿using SecureServerBackup.Models;
 using SecureServerBackup.Services;
-using SecureServerBackup.Enums; // Keep for remaining staged WPF windows still launched from this WinForms shell.
+using SecureServerBackup.Enums;
 using SecureServerBackup.Helpers;
 
 using SecureServerBackupCommon;
@@ -224,7 +224,6 @@ namespace SecureServerBackup.WinForms
 			using var form = new BackupNewEditForm(job);
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			//LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
@@ -247,7 +246,6 @@ namespace SecureServerBackup.WinForms
 			{
 				jobManager.DeleteJob(job.Id);
 				LoadBackupJobs();
-				//LoadMountedBackups();
 				LoadVerifyBackups();
 				LoadRestoreBackups();
 
@@ -334,36 +332,12 @@ namespace SecureServerBackup.WinForms
 			versionStatusLabel.Text = "Version: Loading...";
 			restoreStatusLabel.MaximumSize = new System.Drawing.Size(900, 0);
 
-			//ConfigurePlaceholderListView(dgAvailableBackups);
-			//ConfigurePlaceholderListView(dgMountedBackups);
-			ConfigurePlaceholderListView(verifyBackupsListView);
-			ConfigurePlaceholderListView(restoreBackupsListView);
-
-			verifyBackupsListView.Columns.Clear();
-			verifyBackupsListView.Columns.Add("Backup Name", 180);
-			verifyBackupsListView.Columns.Add("Type", 110);
-			verifyBackupsListView.Columns.Add("Date", 140);
-			verifyBackupsListView.Columns.Add("Encrypted", 90);
-			verifyBackupsListView.Columns.Add("Path", 200);
-			verifyBackupsListView.Columns.Add("Action", 90);
-			verifyBackupsListView.OwnerDraw = true;
-			verifyBackupsListView.DrawColumnHeader += (s, e) => e.DrawDefault = true;
-			verifyBackupsListView.DrawItem += (s, e) => e.DrawDefault = true;
-			verifyBackupsListView.DrawSubItem += VerifyBackupsListView_DrawSubItem;
-			verifyBackupsListView.MouseClick += VerifyBackupsListView_MouseClick;
-
-			restoreBackupsListView.Columns.Clear();
-			restoreBackupsListView.Columns.Add("Backup Name", 180);
-			restoreBackupsListView.Columns.Add("Type", 110);
-			restoreBackupsListView.Columns.Add("Date", 140);
-			restoreBackupsListView.Columns.Add("Encrypted", 90);
-			restoreBackupsListView.Columns.Add("Path", 200);
-			restoreBackupsListView.Columns.Add("Action", 90);
-			restoreBackupsListView.OwnerDraw = true;
-			restoreBackupsListView.DrawColumnHeader += (s, e) => e.DrawDefault = true;
-			restoreBackupsListView.DrawItem += (s, e) => e.DrawDefault = true;
-			restoreBackupsListView.DrawSubItem += RestoreBackupsListView_DrawSubItem;
-			restoreBackupsListView.MouseClick += RestoreBackupsListView_MouseClick;
+			ConfigurePlaceholderDataGridView(verifyBackupsDataGridiew);
+			ConfigurePlaceholderDataGridView(restoreBackupsDataGridView);
+			ConfigureBackupDataGridView(verifyBackupsDataGridiew, "Verify");
+			ConfigureBackupDataGridView(restoreBackupsDataGridView, "Restore");
+			verifyBackupsDataGridiew.CellContentClick += VerifyBackupsListView_CellContentClick;
+			restoreBackupsDataGridView.CellContentClick += RestoreBackupsListView_CellContentClick;
 
 			backupJobsPanel.Controls.Clear();
 			backupJobsPanel.Controls.Add(BuildBackupActionPanel());
@@ -375,12 +349,7 @@ namespace SecureServerBackup.WinForms
 			restoreActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadRestoreBackups()));
 			restoreActionsPanel.Controls.Add(CreateActionButton("Browse .ssb...", (_, _) => BrowseRestoreBackup()));
 			restoreActionsPanel.Controls.Add(CreateActionButton("Restore Selected", (_, _) => OpenSelectedRestoreBackup()));
-			/*
-			mountActionsPanel.Controls.Clear();
-			mountActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadMountedBackups()));
-			mountActionsPanel.Controls.Add(CreateActionButton("Browse...", (_, _) => BrowseMountBackup()));
-			mountActionsPanel.Controls.Add(CreateActionButton("Unmount All", async (_, _) => await UnmountAllBackupsAsync()));
-			*/
+			
 			verifyActionsPanel.Controls.Clear();
 			verifyActionsPanel.Controls.Add(CreateActionButton("Refresh", (_, _) => LoadVerifyBackups()));
 			verifyActionsPanel.Controls.Add(CreateActionButton("Browse .ssb...", (_, _) => BrowseVerifyBackup()));
@@ -425,7 +394,6 @@ namespace SecureServerBackup.WinForms
 			buttonsPanel.Controls.Add(CreateHeaderActionButton("Refresh", (_, _) =>
 			{
 				LoadBackupJobs();
-				//LoadMountedBackups();
 				LoadVerifyBackups();
 				LoadRestoreBackups();
 			}, 100));
@@ -640,26 +608,48 @@ namespace SecureServerBackup.WinForms
 			return System.Drawing.Size.Empty;
 		}
 
-		private static Label CreatePlaceholderLabel(string text)
+		private static void ConfigurePlaceholderDataGridView(DataGridView dataGridView)
 		{
-			return new Label
-			{
-				Text = text,
-				AutoSize = true,
-				ForeColor = WinFormsThemeManager.SecondaryText,
-				Margin = new Padding(10, 8, 10, 8),
-				BackColor = WinFormsThemeManager.PanelBackground
-			};
+			dataGridView.Dock = DockStyle.Fill;
+			dataGridView.AllowUserToAddRows = false;
+			dataGridView.AllowUserToDeleteRows = false;
+			dataGridView.AllowUserToResizeRows = false;
+			dataGridView.AutoGenerateColumns = false;
+			dataGridView.MultiSelect = false;
+			dataGridView.ReadOnly = true;
+			dataGridView.RowHeadersVisible = false;
+			dataGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+			dataGridView.BackgroundColor = WinFormsThemeManager.VeryLightTurquoise;
+			dataGridView.GridColor = WinFormsThemeManager.BorderColor;
+			dataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+			dataGridView.EnableHeadersVisualStyles = false;
+			dataGridView.Font = CreateMessageBoxFont(System.Drawing.FontStyle.Regular);
 		}
 
-		private static void ConfigurePlaceholderListView(ListView listView)
+		private static void ConfigureBackupDataGridView(DataGridView dataGridView, string actionText)
 		{
-			listView.Dock = DockStyle.Fill;
-			listView.View = View.Details;
-			listView.FullRowSelect = true;
-			listView.GridLines = true;
-			listView.HideSelection = false;
-			listView.BackColor = WinFormsThemeManager.VeryLightTurquoise;
+			dataGridView.Columns.Clear();
+			dataGridView.Columns.Add("BackupName", "Backup Name");
+			dataGridView.Columns["BackupName"].Width = 180;
+			dataGridView.Columns.Add("Type", "Type");
+			dataGridView.Columns["Type"].Width = 110;
+			dataGridView.Columns.Add("Date", "Date");
+			dataGridView.Columns["Date"].Width = 140;
+			dataGridView.Columns.Add("Encrypted", "Encrypted");
+			dataGridView.Columns["Encrypted"].Width = 90;
+			dataGridView.Columns.Add("Path", "Path");
+			dataGridView.Columns["Path"].Width = 200;
+
+			var actionColumn = new DataGridViewButtonColumn
+			{
+				Name = "Action",
+				HeaderText = "Action",
+				Text = actionText,
+				UseColumnTextForButtonValue = true,
+				Width = 90,
+				ReadOnly = true
+			};
+			dataGridView.Columns.Add(actionColumn);
 		}
 
 		private static Button CreateActionButton(string text, EventHandler onClick)
@@ -738,236 +728,119 @@ namespace SecureServerBackup.WinForms
 		}
 
 		private static void PopulateBackupListView(
-			ListView listView,
+			DataGridView dataGridView,
 			System.Collections.Generic.IEnumerable<AvailableBackupInfo> backups,
 			Func<AvailableBackupInfo, string>? statusSelector = null,
 			Func<AvailableBackupInfo, string>? detailsSelector = null,
 			string? actionLabel = null)
 		{
-			ArgumentNullException.ThrowIfNull(listView);
+			ArgumentNullException.ThrowIfNull(dataGridView);
 			ArgumentNullException.ThrowIfNull(backups);
 
-			listView.BeginUpdate();
-			listView.Items.Clear();
+			dataGridView.SuspendLayout();
+			dataGridView.Rows.Clear();
 
 			foreach (AvailableBackupInfo backup in backups)
 			{
-				var item = new ListViewItem(backup.BackupName);
-				item.SubItems.Add(backup.BackupType);
-				item.SubItems.Add(backup.BackupDate.ToString("g"));
-				item.SubItems.Add(backup.EncryptionStatus);
+				int rowIndex = dataGridView.Rows.Add();
+				DataGridViewRow row = dataGridView.Rows[rowIndex];
+				row.Tag = backup;
+				row.Cells["BackupName"].Value = backup.BackupName;
+				row.Cells["Type"].Value = backup.BackupType;
+				row.Cells["Date"].Value = backup.BackupDate.ToString("g");
+				row.Cells["Encrypted"].Value = backup.EncryptionStatus;
 
 				if (statusSelector != null)
 				{
-					item.SubItems.Add(statusSelector(backup));
+					row.Cells["Status"].Value = statusSelector(backup);
 				}
 
 				if (detailsSelector != null)
 				{
-					item.SubItems.Add(detailsSelector(backup));
+					row.Cells["Details"].Value = detailsSelector(backup);
 				}
 
-				item.SubItems.Add(backup.BackupPath);
-
-				if (actionLabel != null)
-				{
-					item.SubItems.Add(actionLabel);
-				}
-
-				item.Tag = backup;
-				listView.Items.Add(item);
+				row.Cells["Path"].Value = backup.BackupPath;
+				row.Cells["Action"].Value = actionLabel ?? string.Empty;
 			}
 
-			listView.EndUpdate();
+			dataGridView.ResumeLayout();
 		}
 
-		private static AvailableBackupInfo? GetSelectedBackup(ListView listView)
+		private static AvailableBackupInfo? GetSelectedBackup(DataGridView dataGridView)
 		{
-			ArgumentNullException.ThrowIfNull(listView);
+			ArgumentNullException.ThrowIfNull(dataGridView);
 
-			return listView.SelectedItems.Count > 0 && listView.SelectedItems[0].Tag is AvailableBackupInfo backup
+			return dataGridView.SelectedRows.Count > 0 && dataGridView.SelectedRows[0].Tag is AvailableBackupInfo backup
 				? backup
 				: null;
 		}
 
 		private static void AddBackupToListView(
-			ListView listView,
+			DataGridView dataGridView,
 			AvailableBackupInfo backup,
 			Func<AvailableBackupInfo, string>? statusSelector = null,
 			Func<AvailableBackupInfo, string>? detailsSelector = null)
 		{
-			ArgumentNullException.ThrowIfNull(listView);
+			ArgumentNullException.ThrowIfNull(dataGridView);
 			ArgumentNullException.ThrowIfNull(backup);
 
-			var item = new ListViewItem(backup.BackupName);
-			item.SubItems.Add(backup.BackupType);
-			item.SubItems.Add(backup.BackupDate.ToString("g"));
-			item.SubItems.Add(backup.EncryptionStatus);
+			int rowIndex = dataGridView.Rows.Add();
+			DataGridViewRow row = dataGridView.Rows[rowIndex];
+			row.Tag = backup;
+			row.Cells["BackupName"].Value = backup.BackupName;
+			row.Cells["Type"].Value = backup.BackupType;
+			row.Cells["Date"].Value = backup.BackupDate.ToString("g");
+			row.Cells["Encrypted"].Value = backup.EncryptionStatus;
+			row.Cells["Path"].Value = backup.BackupPath;
+			row.Cells["Action"].Value = "Verify";
 
 			if (statusSelector != null)
 			{
-				item.SubItems.Add(statusSelector(backup));
+				row.Cells["Status"].Value = statusSelector(backup);
 			}
 
 			if (detailsSelector != null)
 			{
-				item.SubItems.Add(detailsSelector(backup));
+				row.Cells["Details"].Value = detailsSelector(backup);
 			}
-
-			item.SubItems.Add(backup.BackupPath);
-			item.Tag = backup;
-			listView.Items.Add(item);
 		}
 
-		private static bool TrySelectBackupByPath(ListView listView, string backupPath)
-		{
-			ArgumentNullException.ThrowIfNull(listView);
-			ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
-
-			foreach (ListViewItem item in listView.Items)
-			{
-				if (item.Tag is AvailableBackupInfo backup && string.Equals(backup.BackupPath, backupPath, StringComparison.OrdinalIgnoreCase))
-				{
-					item.Selected = true;
-					item.Focused = true;
-					item.EnsureVisible();
-					return true;
-				}
-			}
-
-			return false;
-		}
 		private static bool TrySelectBackupByPath(DataGridView dataGridView, string backupPath)
 		{
 			ArgumentNullException.ThrowIfNull(dataGridView);
 			ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
 
-			foreach (DataGridViewRow item in dataGridView.Rows)
+			foreach (DataGridViewRow row in dataGridView.Rows)
 			{
-				if (item.Tag is AvailableBackupInfo backup && string.Equals(backup.BackupPath, backupPath, StringComparison.OrdinalIgnoreCase))
+				if (row.Tag is AvailableBackupInfo backup && string.Equals(backup.BackupPath, backupPath, StringComparison.OrdinalIgnoreCase))
 				{
-					item.Selected = true;
-					item.Visible = true;
+					row.Selected = true;
+					dataGridView.FirstDisplayedScrollingRowIndex = row.Index;
 					return true;
 				}
 			}
 
 			return false;
 		}
-		/*
-		private void LoadAvailableBackups()
-		{
-			if (dgAvailableBackups == null)
-				return;
 
-			var backups = new System.Collections.Generic.List<AvailableBackupInfo>();
-
-			try
-			{
-				// Scan backup directories for .ssb (WIM) files
-				var jobs = jobManager.GetAllJobs();
-
-				foreach (var job in jobs)
-				{
-					string destPath = job.DestinationPath;
-
-					if (System.IO.Directory.Exists(destPath))
-					{
-						// Find .ssb (WIM backup) files
-						var ssbFiles = System.IO.Directory.GetFiles(destPath, "*.ssb", System.IO.SearchOption.AllDirectories);
-
-						foreach (var ssb in ssbFiles)
-						{
-							var fileInfo = new System.IO.FileInfo(ssb);
-
-							backups.Add(new AvailableBackupInfo
-							{
-								BackupName = job.Name,
-								BackupType = job.Type.ToString(),
-								BackupDate = fileInfo.LastWriteTime,
-								BackupPath = ssb,
-								IsEncrypted = BackupEncryptionService.IsEncryptedBackupFile(ssb),
-								ProtectedEncryptionPassword = job.ProtectedEncryptionPassword
-							});
-						}
-					}
-				}
-
-				dgAvailableBackups.DataSource = backups;
-				
-				if (txtNoBackups != null)
-					txtNoBackups.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-					
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"Error loading available backups: {ex.Message}");
-			}
-		}
-
-		private void LoadMountedBackups()
-		{
-
-			if (dgMountedBackups == null)
-				return;
-
-			var mounted = NativeBackupMountManager.GetMountedBackups();
-			dgMountedBackups.DataSource = mounted;
-		}
-		*/
 		private void LoadVerifyBackups()
 		{
 			try
 			{
 				System.Collections.Generic.List<AvailableBackupInfo> backups = GetAvailableBackups();
-				PopulateBackupListView(verifyBackupsListView, backups, actionLabel: "Verify");
+				PopulateBackupListView(verifyBackupsDataGridiew, backups, actionLabel: "Verify");
 				verifyStatusLabel.Text = backups.Count == 0
 					? "No backups were found. Create a backup first, then return here to verify it."
 					: "Select a backup and click Verify Selected to validate the archive before restoring it.";
 			}
 			catch (Exception ex)
 			{
-				verifyBackupsListView.Items.Clear();
+				verifyBackupsDataGridiew.Rows.Clear();
 				verifyStatusLabel.Text = $"Error loading verify backups: {ex.Message}";
 			}
 		}
-		/*
-		private void BrowseMountBackup()
-		{
-			using var openFileDialog = new OpenFileDialog
-			{
-				Title = "Select Backup File to Mount",
-				Filter = "Secure Server Backup Files (*.ssb)|*.ssb|All Files (*.*)|*.*",
-				DefaultExt = "ssb",
-				Multiselect = false,
-				CheckFileExists = true
-			};
 
-			if (openFileDialog.ShowDialog(this) != DialogResult.OK)
-			{
-				return;
-			}
-
-			string selectedFile = openFileDialog.FileName;
-			if (TrySelectBackupByPath(dgAvailableBackups, selectedFile))
-			{
-				mountStatusLabel.Text = "Selected the existing available backup entry.";
-				return;
-			}
-
-			AvailableBackupInfo backupInfo = CreateAdHocBackupInfo(selectedFile);
-			int rowIndex = dgAvailableBackups.Rows.Add();
-			dgAvailableBackups.Rows[rowIndex].Cells[0].Value = backupInfo.BackupName;
-			dgAvailableBackups.Rows[rowIndex].Cells[1].Value = backupInfo.BackupType;
-			dgAvailableBackups.Rows[rowIndex].Cells[2].Value = backupInfo.IsEncrypted ? "Yes" : "No";
-			dgAvailableBackups.Rows[rowIndex].Cells[3].Value = backupInfo.BackupDate.ToString("g");
-			dgAvailableBackups.Rows[rowIndex].Cells[4].Value = backupInfo.BackupPath;
-			dgAvailableBackups.Rows[rowIndex].Cells[5].Value = "Mount";
-			dgAvailableBackups.Rows[rowIndex].Tag = backupInfo;
-			TrySelectBackupByPath(dgAvailableBackups, selectedFile);
-			mountStatusLabel.Text = $"Backup file added for mount: {Path.GetFileName(selectedFile)}";
-		}
-		*/
 		private void BrowseVerifyBackup()
 		{
 			using var openFileDialog = new OpenFileDialog
@@ -985,211 +858,29 @@ namespace SecureServerBackup.WinForms
 			}
 
 			string selectedFile = openFileDialog.FileName;
-			if (TrySelectBackupByPath(verifyBackupsListView, selectedFile))
+			if (TrySelectBackupByPath(verifyBackupsDataGridiew, selectedFile))
 			{
 				verifyStatusLabel.Text = "Selected the existing backup entry. Click Verify Selected to validate it.";
 				return;
 			}
 
 			AvailableBackupInfo backupInfo = CreateAdHocBackupInfo(selectedFile);
-			AddBackupToListView(verifyBackupsListView, backupInfo);
-			TrySelectBackupByPath(verifyBackupsListView, selectedFile);
+			AddBackupToListView(verifyBackupsDataGridiew, backupInfo);
+			TrySelectBackupByPath(verifyBackupsDataGridiew, selectedFile);
 			verifyStatusLabel.Text = $"Backup file added for verify: {Path.GetFileName(selectedFile)}";
-		}
-		/*
-		private async System.Threading.Tasks.Task MountSelectedBackupAsync()
-		{
-			AvailableBackupInfo? backup = GetSelectedBackup(mountBackupsListView);
-			if (backup == null)
-			{
-				CustomDialogService.ShowWarning(this, "Please select a backup to mount.", "No Selection");
-				return;
-			}
-
-			if (mountedBackupSessions.TryGetValue(backup.BackupPath, out MountedBackupSession? existingSession))
-			{
-				mountStatusLabel.Text = $"This backup is already mounted at {existingSession.MountPath}.";
-				return;
-			}
-
-			if (RestoreWorkflowHelper.IsSelectedFilesBackupArchive(backup.BackupPath))
-			{
-				CustomDialogService.ShowWarning(this, "Selected-files backups cannot be mounted as virtual storage. Use the Restore tab to browse or restore their contents.", "Mount Not Supported");
-				return;
-			}
-
-			RestorePoint? restorePoint = PromptForRestorePointSelection(backup, "mount");
-			if (restorePoint == null)
-			{
-				return;
-			}
-
-			PreparedBackupFile? preparedBackup = null;
-
-			try
-			{
-				mountStatusLabel.Text = $"Preparing {backup.BackupName} for mount...";
-				preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms(this, restorePoint.FilePath, backup.BackupName, backup.ProtectedEncryptionPassword);
-				var mountResult = await NativeBackupMountManager.MountBackupAsync(
-					preparedBackup.WorkingPath,
-					backup.BackupName,
-					restorePoint.BackupType,
-					restorePoint.ImageIndex > 0 ? restorePoint.ImageIndex : 1);
-
-				if (!mountResult.Success)
-				{
-					preparedBackup.Dispose();
-					mountStatusLabel.Text = $"Failed to mount {backup.BackupName}.";
-					CustomDialogService.ShowError(this, $"Failed to mount backup:{Environment.NewLine}{mountResult.Error}", "Mount Failed");
-					return;
-				}
-
-				mountedBackupSessions[backup.BackupPath] = new MountedBackupSession
-				{
-					Backup = backup,
-					RestorePoint = restorePoint,
-					PreparedBackup = preparedBackup,
-					MountPath = mountResult.MountPath,
-					MountedAt = DateTime.Now
-				};
-
-				mountStatusLabel.Text = $"Mounted {backup.BackupName} at {mountResult.MountPath}.";
-				LoadMountBackups();
-				TrySelectBackupByPath(mountBackupsListView, backup.BackupPath);
-				TrySelectMountedBackupByPath(mountedBackupsListView, backup.BackupPath);
-			}
-			catch (OperationCanceledException)
-			{
-				preparedBackup?.Dispose();
-				mountStatusLabel.Text = "Mount cancelled.";
-			}
-			catch (Exception ex)
-			{
-				preparedBackup?.Dispose();
-				mountStatusLabel.Text = $"Failed to mount {backup.BackupName}.";
-				CustomDialogService.ShowError(this, $"Failed to mount backup:{Environment.NewLine}{ex.Message}", "Mount Failed");
-			}
-		}
-		*/
-		/*
-		private static MountedBackupSession? GetSelectedMountedBackupSession(DataGridView dgMountedBackups)
-		{
-			ArgumentNullException.ThrowIfNull(dgMountedBackups);
-
-			return dgMountedBackups.SelectedItems.Count > 0 && dgMountedBackups.SelectedItems[0].Tag is MountedBackupSession session
-				? session
-				: null;
-		}
-		*/
-		/*
-		private async System.Threading.Tasks.Task UnmountSelectedBackupAsync()
-		{
-			MountedBackupSession? session = GetSelectedMountedBackupSession(mountedBackupsListView);
-			if (session == null)
-			{
-				CustomDialogService.ShowWarning(this, "Please select a mounted backup to unmount.", "No Selection");
-				return;
-			}
-
-			mountStatusLabel.Text = $"Unmounting {session.Backup.BackupName}...";
-			var unmountResult = await NativeBackupMountManager.UnmountBackupAsync(session.MountPath);
-			if (!unmountResult.Success)
-			{
-				mountStatusLabel.Text = $"Failed to unmount {session.Backup.BackupName}.";
-				CustomDialogService.ShowError(this, $"Failed to unmount backup:{Environment.NewLine}{unmountResult.Error}", "Unmount Failed");
-				return;
-			}
-
-			session.Dispose();
-			mountedBackupSessions.Remove(session.Backup.BackupPath);
-			mountStatusLabel.Text = $"Unmounted {session.Backup.BackupName}.";
-			LoadMountBackups();
-			TrySelectBackupByPath(dgAvailableBackups, session.Backup.BackupPath);
-		}
-		*/
-		/*
-		private async System.Threading.Tasks.Task UnmountAllBackupsAsync()
-		{
-			if (mountedBackupSessions.Count == 0)
-			{
-				mountStatusLabel.Text = "There are no mounted backups to unmount.";
-				return;
-			}
-
-			mountStatusLabel.Text = "Unmounting all mounted backups...";
-
-			foreach (MountedBackupSession session in mountedBackupSessions.Values.ToArray())
-			{
-				var unmountResult = await NativeBackupMountManager.UnmountBackupAsync(session.MountPath);
-				if (!unmountResult.Success)
-				{
-					mountStatusLabel.Text = $"Failed to unmount {session.Backup.BackupName}.";
-					CustomDialogService.ShowError(this, $"Failed to unmount backup:{Environment.NewLine}{unmountResult.Error}", "Unmount Failed");
-					return;
-				}
-
-				session.Dispose();
-				mountedBackupSessions.Remove(session.Backup.BackupPath);
-			}
-
-			LoadMountBackups();
-			mountStatusLabel.Text = "All mounted backups were unmounted.";
-		}
-		*/
-		/*
-		private void OpenSelectedMountedBackupFolder()
-		{
-			MountedBackupSession? session = GetSelectedMountedBackupSession(mountedBackupsListView);
-			if (session == null)
-			{
-				CustomDialogService.ShowWarning(this, "Please select a mounted backup first.", "No Selection");
-				return;
-			}
-
-			try
-			{
-				System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", session.MountPath)
-				{
-					UseShellExecute = true
-				});
-				mountStatusLabel.Text = $"Opened {session.MountPath}.";
-			}
-			catch (Exception ex)
-			{
-				CustomDialogService.ShowError(this, $"Failed to open the mounted backup folder:{Environment.NewLine}{ex.Message}", "Open Mounted Folder");
-			}
-		}
-		*/
-		private RestorePoint? PromptForRestorePointSelection(AvailableBackupInfo backup, string operationName)
-		{
-			ArgumentNullException.ThrowIfNull(backup);
-
-			using var restorePointForm = new RestorePointSelectionForm(backup);
-			if (restorePointForm.RestorePoints.Count == 0)
-			{
-				CustomDialogService.ShowWarning(this, $"No restore points were found for the selected backup, so it cannot be {operationName}ed.", $"Cannot {char.ToUpperInvariant(operationName[0])}{operationName[1..]}");
-				return null;
-			}
-
-			if (restorePointForm.RestorePoints.Count == 1)
-			{
-				return restorePointForm.RestorePoints[0];
-			}
-
-			return restorePointForm.ShowDialog(this) == DialogResult.OK
-				? restorePointForm.SelectedRestorePoint
-				: null;
 		}
 
 		private async System.Threading.Tasks.Task VerifySelectedBackupAsync()
 		{
-			AvailableBackupInfo? backup = GetSelectedBackup(verifyBackupsListView);
+			AvailableBackupInfo? backup = GetSelectedBackup(verifyBackupsDataGridiew);
 			if (backup == null)
 			{
 				CustomDialogService.ShowWarning(this, "Please select a backup to verify.", "No Selection");
 				return;
 			}
-
+			VerifyBackupHelper vh = new VerifyBackupHelper(backup);
+			await vh.VerifyBackup(this, verifyStatusLabel);
+			/*
 			PreparedBackupFile? preparedBackup = null;
 
 			try
@@ -1222,20 +913,7 @@ namespace SecureServerBackup.WinForms
 			finally
 			{
 				preparedBackup?.Dispose();
-			}
-		}
-
-		private static ListView CreatePlaceholderListView()
-		{
-			return new ListView
-			{
-				Dock = DockStyle.Fill,
-				View = View.Details,
-				FullRowSelect = true,
-				GridLines = true,
-				HideSelection = false,
-				BackColor = WinFormsThemeManager.VeryLightTurquoise
-			};
+			}*/
 		}
 
 		private Button CreateHeaderActionButton(string text, EventHandler onClick, int width)
@@ -1386,15 +1064,13 @@ namespace SecureServerBackup.WinForms
 			using var form = new BackupNewEditForm();
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			//LoadAvailableBackups();
-			//LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
 
 		private void OpenRestore()
 		{
-			if (restoreBackupsListView.SelectedItems.Count > 0)
+			if (restoreBackupsDataGridView.SelectedRows.Count > 0)
 			{
 				OpenSelectedRestoreBackup();
 				return;
@@ -1409,7 +1085,7 @@ namespace SecureServerBackup.WinForms
 			try
 			{
 				System.Collections.Generic.List<AvailableBackupInfo> backups = GetAvailableBackups();
-				PopulateBackupListView(restoreBackupsListView, backups, actionLabel: "Restore");
+				PopulateBackupListView(restoreBackupsDataGridView, backups, actionLabel: "Restore");
 
 				emptyRestoreBackupsLabel.Visible = backups.Count == 0;
 				restoreStatusLabel.Text = backups.Count == 0
@@ -1418,7 +1094,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				restoreBackupsListView.Items.Clear();
+				restoreBackupsDataGridView.Rows.Clear();
 				emptyRestoreBackupsLabel.Visible = true;
 				restoreStatusLabel.Text = $"Error loading restore backups: {ex.Message}";
 			}
@@ -1441,8 +1117,8 @@ namespace SecureServerBackup.WinForms
 			}
 
 			string selectedFile = openFileDialog.FileName;
-			bool exists = restoreBackupsListView.Items.Cast<ListViewItem>()
-				.Any(item => item.Tag is AvailableBackupInfo backup && backup.BackupPath.Equals(selectedFile, StringComparison.OrdinalIgnoreCase));
+			bool exists = restoreBackupsDataGridView.Rows.Cast<DataGridViewRow>()
+				.Any(row => row.Tag is AvailableBackupInfo backup && backup.BackupPath.Equals(selectedFile, StringComparison.OrdinalIgnoreCase));
 			if (exists)
 			{
 				global::System.Windows.Forms.MessageBox.Show(this, "This backup is already in the list.", "Already Added", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1450,15 +1126,15 @@ namespace SecureServerBackup.WinForms
 			}
 
 			AvailableBackupInfo backupInfo = CreateAdHocBackupInfo(selectedFile);
-
-			var item = new ListViewItem(backupInfo.BackupName);
-			item.SubItems.Add(backupInfo.BackupType);
-			item.SubItems.Add(backupInfo.BackupDate.ToString("g"));
-			item.SubItems.Add(backupInfo.EncryptionStatus);
-			item.SubItems.Add(backupInfo.BackupPath);
-			item.SubItems.Add("Restore");
-			item.Tag = backupInfo;
-			restoreBackupsListView.Items.Add(item);
+			int rowIndex = restoreBackupsDataGridView.Rows.Add();
+			DataGridViewRow row = restoreBackupsDataGridView.Rows[rowIndex];
+			row.Tag = backupInfo;
+			row.Cells["BackupName"].Value = backupInfo.BackupName;
+			row.Cells["Type"].Value = backupInfo.BackupType;
+			row.Cells["Date"].Value = backupInfo.BackupDate.ToString("g");
+			row.Cells["Encrypted"].Value = backupInfo.EncryptionStatus;
+			row.Cells["Path"].Value = backupInfo.BackupPath;
+			row.Cells["Action"].Value = "Restore";
 			emptyRestoreBackupsLabel.Visible = false;
 			restoreStatusLabel.Text = "Select a backup to open the restore workflow. Restoring the boot/system drive requires the recovery environment.";
 			global::System.Windows.Forms.MessageBox.Show(this, $"Backup file added for restore: {Path.GetFileName(selectedFile)}", "Backup Added", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1466,7 +1142,7 @@ namespace SecureServerBackup.WinForms
 
 		private void OpenSelectedRestoreBackup()
 		{
-			if (restoreBackupsListView.SelectedItems.Count == 0 || restoreBackupsListView.SelectedItems[0].Tag is not AvailableBackupInfo backup)
+			if (restoreBackupsDataGridView.SelectedRows.Count == 0 || restoreBackupsDataGridView.SelectedRows[0].Tag is not AvailableBackupInfo backup)
 			{
 				global::System.Windows.Forms.MessageBox.Show(this, "Please select a valid backup to restore.", "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 				return;
@@ -1783,8 +1459,6 @@ namespace SecureServerBackup.WinForms
 			using var form = new ImportBackupForm();
 			form.ShowDialog(this);
 			LoadBackupJobs();
-			//LoadAvailableBackups();
-			//LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 		}
@@ -1824,26 +1498,12 @@ namespace SecureServerBackup.WinForms
 		{
 			LoadVersion();
 			LoadBackupJobs();
-			//LoadAvailableBackups();
-			//LoadMountedBackups();
 			LoadVerifyBackups();
 			LoadRestoreBackups();
 			EnsureSelectedTabFits();
 			if (SynchronizationContext.Current != null)
 			{
 				NotificationService.ConfigureUiContext(SynchronizationContext.Current, ShowActivityTab);
-			}
-		}
-
-		private async void VerifyBackupsListView_DoubleClick(object? sender, EventArgs e)
-		{
-			try
-			{
-				await VerifySelectedBackupAsync();
-			}
-			catch (Exception ex)
-			{
-				CustomDialogService.ShowError(this, $"Failed to verify the selected backup:{Environment.NewLine}{ex.Message}", "Verify Backup");
 			}
 		}
 
@@ -1857,84 +1517,42 @@ namespace SecureServerBackup.WinForms
 		// Resize the Path column to fill available width; Action column stays fixed.
 		private void ResizeRestoreColumns()
 		{
-			if (restoreBackupsListView.Columns.Count < 6)
+			if (restoreBackupsDataGridView.Columns.Count < 6)
 				return;
 
-			int fixedWidth = restoreBackupsListView.Columns[0].Width
-				+ restoreBackupsListView.Columns[1].Width
-				+ restoreBackupsListView.Columns[2].Width
-				+ restoreBackupsListView.Columns[3].Width
-				+ restoreBackupsListView.Columns[5].Width;
-			int available = restoreBackupsListView.ClientSize.Width - fixedWidth - SystemInformation.VerticalScrollBarWidth;
-			restoreBackupsListView.Columns[4].Width = Math.Max(80, available);
+			int fixWidth = restoreBackupsDataGridView.Columns["BackupName"].Width
+				+ restoreBackupsDataGridView.Columns["Type"].Width
+				+ restoreBackupsDataGridView.Columns["Date"].Width
+				+ restoreBackupsDataGridView.Columns["Encrypted"].Width
+				+ restoreBackupsDataGridView.Columns["Action"].Width;
+			int available = restoreBackupsDataGridView.ClientSize.Width - fixWidth - 30;
+			restoreBackupsDataGridView.Columns["Path"].Width = Math.Max(120, available);
 		}
 
 		private void ResizeVerifyColumns()
 		{
-			if (verifyBackupsListView.Columns.Count < 6)
+			if (verifyBackupsDataGridiew.Columns.Count < 6)
 				return;
 
-			int fixedWidth = verifyBackupsListView.Columns[0].Width
-				+ verifyBackupsListView.Columns[1].Width
-				+ verifyBackupsListView.Columns[2].Width
-				+ verifyBackupsListView.Columns[3].Width
-				+ verifyBackupsListView.Columns[5].Width;
-			int available = verifyBackupsListView.ClientSize.Width - fixedWidth - SystemInformation.VerticalScrollBarWidth;
-			verifyBackupsListView.Columns[4].Width = Math.Max(80, available);
+			int fixWidth = verifyBackupsDataGridiew.Columns["BackupName"].Width
+				+ verifyBackupsDataGridiew.Columns["Type"].Width
+				+ verifyBackupsDataGridiew.Columns["Date"].Width
+				+ verifyBackupsDataGridiew.Columns["Encrypted"].Width
+				+ verifyBackupsDataGridiew.Columns["Action"].Width;
+			int available = verifyBackupsDataGridiew.ClientSize.Width - fixWidth - 30;
+			verifyBackupsDataGridiew.Columns["Path"].Width = Math.Max(120, available);
 		}
 
-		private static void DrawActionButton(DrawListViewSubItemEventArgs e, string label)
+		private async void VerifyBackupsListView_CellContentClick(object? sender, DataGridViewCellEventArgs e)
 		{
-			Rectangle btnRect = Rectangle.Inflate(e.Bounds, -3, -3);
-			ControlPaint.DrawButton(e.Graphics, btnRect, ButtonState.Normal);
-			TextRenderer.DrawText(
-				e.Graphics, label, SystemFonts.DefaultFont, btnRect,
-				SystemColors.ControlText,
-				TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
-		}
-
-		private void RestoreBackupsListView_DrawSubItem(object? sender, DrawListViewSubItemEventArgs e)
-		{
-			if (e.ColumnIndex == restoreBackupsListView.Columns.Count - 1)
-				DrawActionButton(e, "Restore");
-			else
-				e.DrawDefault = true;
-		}
-
-		private void VerifyBackupsListView_DrawSubItem(object? sender, DrawListViewSubItemEventArgs e)
-		{
-			if (e.ColumnIndex == verifyBackupsListView.Columns.Count - 1)
-				DrawActionButton(e, "Verify");
-			else
-				e.DrawDefault = true;
-		}
-
-		private void RestoreBackupsListView_MouseClick(object? sender, MouseEventArgs e)
-		{
-			ListViewHitTestInfo hit = restoreBackupsListView.HitTest(e.Location);
-			if (hit.Item == null || hit.SubItem == null)
+			if (e.RowIndex < 0 || e.ColumnIndex != verifyBackupsDataGridiew.Columns["Action"].Index)
 				return;
 
-			if (hit.Item.SubItems.IndexOf(hit.SubItem) != restoreBackupsListView.Columns.Count - 1)
+			DataGridViewRow row = verifyBackupsDataGridiew.Rows[e.RowIndex];
+			if (row.Tag is not AvailableBackupInfo backup)
 				return;
 
-			if (hit.Item.Tag is not AvailableBackupInfo backup)
-				return;
-
-			OpenRestoreWorkflow(backup);
-		}
-
-		private async void VerifyBackupsListView_MouseClick(object? sender, MouseEventArgs e)
-		{
-			ListViewHitTestInfo hit = verifyBackupsListView.HitTest(e.Location);
-			if (hit.Item == null || hit.SubItem == null)
-				return;
-
-			if (hit.Item.SubItems.IndexOf(hit.SubItem) != verifyBackupsListView.Columns.Count - 1)
-				return;
-
-			hit.Item.Selected = true;
-
+			row.Selected = true;
 			try
 			{
 				await VerifySelectedBackupAsync();
@@ -1943,6 +1561,19 @@ namespace SecureServerBackup.WinForms
 			{
 				CustomDialogService.ShowError(this, $"Failed to verify the selected backup:{Environment.NewLine}{ex.Message}", "Verify Backup");
 			}
+		}
+
+		private void RestoreBackupsListView_CellContentClick(object? sender, DataGridViewCellEventArgs e)
+		{
+			if (e.RowIndex < 0 || e.ColumnIndex != restoreBackupsDataGridView.Columns["Action"].Index)
+				return;
+
+			DataGridViewRow row = restoreBackupsDataGridView.Rows[e.RowIndex];
+			if (row.Tag is not AvailableBackupInfo backup)
+				return;
+
+			row.Selected = true;
+			OpenRestoreWorkflow(backup);
 		}
 
 		protected override void OnFormClosing(FormClosingEventArgs e)
@@ -1956,525 +1587,5 @@ namespace SecureServerBackup.WinForms
 			OpenSelectedRestoreBackup();
 		}
 
-		private void RefreshMounts_Click(object sender, EventArgs e)
-		{
-			//LoadAvailableBackups();
-			//LoadMountedBackups();
-		}
-		/*
-		private void BrowseBackup_Click(object sender, EventArgs e)
-		{
-			var openFileDialog = new Microsoft.Win32.OpenFileDialog
-			{
-				Title = "Select Backup File to Mount",
-				Filter = "Secure Server Backup Files (*.ssb)|*.ssb|All Files (*.*)|*.*",
-				DefaultExt = ".ssb",
-				Multiselect = false
-			};
-
-			if (openFileDialog.ShowDialog() == true)
-			{
-				string selectedFile = openFileDialog.FileName;
-				var fileInfo = new System.IO.FileInfo(selectedFile);
-
-				// Add to available backups list
-				var backups = dgAvailableBackups.DataSource as System.Collections.Generic.List<AvailableBackupInfo>;
-				if (backups == null)
-				{
-					backups = new System.Collections.Generic.List<AvailableBackupInfo>();
-				}
-
-				// Check if already in list
-				bool exists = false;
-				foreach (var b in backups)
-				{
-					if (b.BackupPath.Equals(selectedFile, StringComparison.OrdinalIgnoreCase))
-					{
-						exists = true;
-						break;
-					}
-				}
-
-				if (!exists)
-				{
-					backups.Add(new AvailableBackupInfo
-					{
-						BackupName = System.IO.Path.GetFileNameWithoutExtension(selectedFile),
-						BackupType = GetBackupTypeFromFilename(System.IO.Path.GetFileNameWithoutExtension(selectedFile)),
-						BackupDate = fileInfo.LastWriteTime,
-						BackupPath = selectedFile,
-						IsEncrypted = BackupEncryptionService.IsEncryptedBackupFile(selectedFile)
-					});
-
-					dgAvailableBackups.DataSource = null; // Force refresh
-					dgAvailableBackups.DataSource = backups;
-					
-					if (txtNoBackups != null)
-						txtNoBackups.Visibility = Visibility.Collapsed;
-
-					CustomDialogService.ShowSuccess(this, $"Backup file added: {System.IO.Path.GetFileName(selectedFile)}",
-								  "Backup Added");
-				}
-				else
-				{
-					CustomDialogService.ShowInfo(this, "This backup is already in the list.",
-								  "Already Added");
-				}
-			}
-		}
-		*/
-		private void UnmountAll_Click(object sender, EventArgs e)
-		{
-			var mounted = NativeBackupMountManager.GetMountedBackups();
-
-			if (mounted.Count == 0)
-			{
-				CustomDialogService.ShowInfo(this, "No mounted backups to unmount.",
-							  "No Mounted Backups");
-				return;
-			}
-
-			var result = CustomDialogService.ShowQuestion(this,
-				$"Unmount all {mounted.Count} mounted backup(s)?\n\nIMPORTANT: Please close all Windows Explorer windows that are browsing mounted files before proceeding.",
-				"Unmount All");
-
-			if (result == CustomDialogResult.Yes)
-			{
-				NativeBackupMountManager.UnmountAll();
-				//LoadMountedBackups();
-				CustomDialogService.ShowSuccess(this, "All backups unmounted successfully.",
-							  "Success");
-			}
-		}
-		private string GetBackupPointPath(AvailableBackupInfo backup)
-		{
-			if (backup.BackupType == "Incremental" || backup.BackupType == "Differential")
-			{
-			/*
-				if (cmbBackupPoints?.SelectedItem is BackupPoint point)
-				{
-					return point.VhdxPath;
-				}
-				*/
-				return "";
-			}
-			else
-			{
-				return backup.BackupPath;
-			}
-		}
-		private async void MountBackup_Click(object sender, DataGridViewCellEventArgs e)
-		{
-
-			if (sender is System.Windows.Controls.Button btn && btn.Tag is AvailableBackupInfo backup)
-			{
-				try
-				{
-					// Get selected backup point if Inc/Diff
-					string ssbPath = GetBackupPointPath(backup);
-
-					if (string.IsNullOrEmpty(ssbPath))
-					{
-						CustomDialogService.ShowWarning(this, "Please select a backup point to mount.",
-									  "No Backup Point Selected");
-						return;
-					}
-
-					// Check if backup has multiple images/restore points
-					System.Diagnostics.Debug.WriteLine($"[Mount] Checking image count for: {ssbPath}");
-					var (countSuccess, imageCount, countError) = NativeBackupMountManager.GetImageCount(ssbPath);
-
-					int selectedImageIndex = 1; // Default to first image
-
-					if (!countSuccess)
-					{
-						CustomDialogService.ShowError(this, $"Failed to check backup images:\n{countError}",
-									  "Error");
-						return;
-					}
-
-					// If backup has multiple images, show selection dialog
-					if (imageCount > 1)
-					{
-						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} images - showing selection dialog");
-						
-						// Get detailed image information
-						var (infoSuccess, images, infoError) = NativeBackupMountManager.GetImageInfo(ssbPath);
-
-						if (!infoSuccess || images.Count == 0)
-						{
-							CustomDialogService.ShowError(this, $"Failed to get image details:\n{infoError}",
-										  "Error");
-							return;
-						}
-						using var imageDialog = new ImageSelectionDialog(images, "Mount Selected");
-						if (imageDialog.ShowDialog(this) == DialogResult.OK) // pass owner if you have one
-						{
-							int selected = imageDialog.SelectedImageIndex;
-						}
-						/*
-						if (imageDialog.ShowDialog() != true)
-						{
-							System.Diagnostics.Debug.WriteLine("[Mount] User cancelled image selection");
-							return;
-						}
-						*/
-						selectedImageIndex = imageDialog.SelectedImageIndex;
-						System.Diagnostics.Debug.WriteLine($"[Mount] User selected image index: {selectedImageIndex}");
-					}
-					else
-					{
-						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} image(s) - using first image");
-					}
-					string tempPath = "";
-					using (var dialog = new TempPathSelectionDialog())
-					{
-						if (dialog.ShowDialog(this) == DialogResult.OK)
-						{
-							tempPath = dialog.SelectedTempPath;
-							// proceed with mount operation
-						}
-					}
-					string selectedTempPath = "";
-					if (tempPath != null && tempPath != "")
-					{
-						selectedTempPath = tempPath;
-					}
-					// Diagnostic: Log selected temp path
-					System.Diagnostics.Debug.WriteLine($"[Mount] About to create progress window...");
-
-					// Create and show progress window
-					var progressWindow = new MountProgressForm
-					{
-						Owner = this
-					};
-
-					System.Diagnostics.Debug.WriteLine($"[Mount] Progress window created, setting backup name: {backup.BackupName}");
-					progressWindow.SetBackupName(backup.BackupName);
-
-					System.Diagnostics.Debug.WriteLine($"[Mount] Showing progress window...");
-					progressWindow.Show();
-
-					System.Diagnostics.Debug.WriteLine($"[Mount] Progress window shown, about to call MountBackupAsync...");
-
-					try
-					{
-						// Mount asynchronously with progress updates
-						System.Diagnostics.Debug.WriteLine($"[Mount] Calling NativeBackupMountManager.MountBackupAsync...");
-						System.Diagnostics.Debug.WriteLine($"[Mount] Parameters: ssbPath={ssbPath}, backupName={backup.BackupName}, backupType={backup.BackupType}, imageIndex={selectedImageIndex}, tempPath={selectedTempPath}");
-
-						using var preparedBackup = EncryptedBackupFileService.PrepareForRead(
-							this,
-							ssbPath,
-							backup.BackupName,
-							backup.ProtectedEncryptionPassword);
-
-						var (success, mountPath, error) = await NativeBackupMountManager.MountBackupAsync(
-							preparedBackup.WorkingPath,
-							backup.BackupName,
-							backup.BackupType,
-							selectedImageIndex,
-							(percentage, message) =>
-							{
-								progressWindow.SetStatus(message, percentage);
-							},
-							selectedTempPath);
-
-						// Close progress window
-						progressWindow.CloseProgress();
-
-						if (success)
-						{
-							CustomDialogService.ShowSuccess(this, $"Backup mounted successfully!\n\n" +
-										  $"Mount Path: {mountPath}\n\n" +
-										  $"You can now browse the backup in Windows Explorer.\n" +
-										  $"Backup is READ-ONLY to prevent modifications.",
-										  "Backup Mounted");
-
-							//LoadMountedBackups();
-							OpenExplorer(mountPath);
-						}
-						else
-						{
-							CustomDialogService.ShowError(this, $"Failed to mount backup:\n{error}",
-										  "Mount Error");
-						}
-					}
-					catch (Exception ex)
-					{
-						progressWindow.CloseProgress();
-						CustomDialogService.ShowError(this, $"Error mounting backup:\n{ex.Message}",
-									  "Error");
-					}
-				}
-				catch (Exception ex)
-				{
-					CustomDialogService.ShowError(this, $"Error initializing mount:\n{ex.Message}",
-								  "Error");
-				}
-			}
-
-		}
-		private void OpenExplorer(string folderPath)
-		{
-			if (Directory.Exists(folderPath))
-			{
-				ProcessStartInfo startInfo = new ProcessStartInfo
-				{
-					FileName = folderPath,
-					UseShellExecute = true // Required in .NET Core/.NET 5+ to open paths via OS shell
-				};
-
-				Process.Start(startInfo);
-			}
-			else
-			{
-				 System.Windows.Forms.MessageBox.Show("The specified folder does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-		}
-		//For buttons in the available & mounted backups datagridss mdail 9-23-2026
-		/*
-		private async void MountBackup_Click(object sender, RoutedEventArgs e)
-		{
-			if (sender is System.Windows.Controls.Button btn && btn.Tag is AvailableBackupInfo backup)
-			{
-				try
-				{
-					// Get selected backup point if Inc/Diff
-					string ssbPath = GetBackupPointPath(backup);
-
-					if (string.IsNullOrEmpty(ssbPath))
-					{
-						CustomDialogService.ShowWarning(this, "Please select a backup point to mount.",
-									  "No Backup Point Selected");
-						return;
-					}
-
-					// Check if backup has multiple images/restore points
-					System.Diagnostics.Debug.WriteLine($"[Mount] Checking image count for: {ssbPath}");
-					var (countSuccess, imageCount, countError) = NativeBackupMountManager.GetImageCount(ssbPath);
-
-					int selectedImageIndex = 1; // Default to first image
-
-					if (!countSuccess)
-					{
-						CustomDialogService.ShowError(this, $"Failed to check backup images:\n{countError}",
-									  "Error");
-						return;
-					}
-
-					// If backup has multiple images, show selection dialog
-					if (imageCount > 1)
-					{
-						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} images - showing selection dialog");
-
-						// Get detailed image information
-						var (infoSuccess, images, infoError) = NativeBackupMountManager.GetImageInfo(ssbPath);
-
-						if (!infoSuccess || images.Count == 0)
-						{
-							CustomDialogService.ShowError(this, $"Failed to get image details:\n{infoError}",
-										  "Error");
-							return;
-						}
-
-						// Show image selection dialog
-						var imageDialog = new SecureServerBackup.Windows.ImageSelectionDialog(images)
-						{
-							Owner = this
-						};
-
-						if (imageDialog.ShowDialog() != true)
-						{
-							System.Diagnostics.Debug.WriteLine("[Mount] User cancelled image selection");
-							return;
-						}
-
-						selectedImageIndex = imageDialog.SelectedImageIndex;
-						System.Diagnostics.Debug.WriteLine($"[Mount] User selected image index: {selectedImageIndex}");
-					}
-					else
-					{
-						System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} image(s) - using first image");
-					}
-
-					// Show temp path selection dialog
-					var tempPathDialog = new SecureServerBackup.Windows.TempPathSelectionDialog
-					{
-						Owner = this
-					};
-
-					System.Diagnostics.Debug.WriteLine("[Mount] Showing TempPathSelectionDialog...");
-
-					if (tempPathDialog.ShowDialog() != true)
-					{
-						System.Diagnostics.Debug.WriteLine("[Mount] User cancelled temp path selection");
-						// User cancelled
-						return;
-					}
-
-					string selectedTempPath = tempPathDialog.SelectedTempPath;
-
-					// Diagnostic: Log selected temp path
-					System.Diagnostics.Debug.WriteLine($"[Mount] User selected temp path: '{selectedTempPath}'");
-					System.Diagnostics.Debug.WriteLine($"[Mount] Path length: {selectedTempPath?.Length ?? 0}");
-					System.Diagnostics.Debug.WriteLine($"[Mount] Path is null or empty: {string.IsNullOrEmpty(selectedTempPath)}");
-					System.Diagnostics.Debug.WriteLine($"[Mount] About to create progress window...");
-
-					// Create and show progress window
-					var progressWindow = new SecureServerBackup.Windows.MountProgressWindow
-					{
-						Owner = this
-					};
-
-					System.Diagnostics.Debug.WriteLine($"[Mount] Progress window created, setting backup name: {backup.BackupName}");
-					progressWindow.SetBackupName(backup.BackupName);
-
-					System.Diagnostics.Debug.WriteLine($"[Mount] Showing progress window...");
-					progressWindow.Show();
-
-					System.Diagnostics.Debug.WriteLine($"[Mount] Progress window shown, about to call MountBackupAsync...");
-
-					try
-					{
-						// Mount asynchronously with progress updates
-						System.Diagnostics.Debug.WriteLine($"[Mount] Calling NativeBackupMountManager.MountBackupAsync...");
-						System.Diagnostics.Debug.WriteLine($"[Mount] Parameters: ssbPath={ssbPath}, backupName={backup.BackupName}, backupType={backup.BackupType}, imageIndex={selectedImageIndex}, tempPath={selectedTempPath}");
-
-						using var preparedBackup = EncryptedBackupFileService.PrepareForRead(
-							this,
-							ssbPath,
-							backup.BackupName,
-							backup.ProtectedEncryptionPassword);
-
-						var (success, mountPath, error) = await NativeBackupMountManager.MountBackupAsync(
-							preparedBackup.WorkingPath,
-							backup.BackupName,
-							backup.BackupType,
-							selectedImageIndex,
-							(percentage, message) =>
-							{
-								progressWindow.SetStatus(message, percentage);
-							},
-							selectedTempPath);
-
-						// Close progress window
-						progressWindow.CloseProgress();
-
-						if (success)
-						{
-							CustomDialogService.ShowSuccess(this, $"Backup mounted successfully!\n\n" +
-										  $"Mount Path: {mountPath}\n\n" +
-										  $"You can now browse the backup in Windows Explorer.\n" +
-										  $"Backup is READ-ONLY to prevent modifications.",
-										  "Backup Mounted");
-
-							LoadMountedBackups();
-							OpenExplorer(mountPath);
-						}
-						else
-						{
-							CustomDialogService.ShowError(this, $"Failed to mount backup:\n{error}",
-										  "Mount Error");
-						}
-					}
-					catch (Exception ex)
-					{
-						progressWindow.CloseProgress();
-						CustomDialogService.ShowError(this, $"Error mounting backup:\n{ex.Message}",
-									  "Error");
-					}
-				}
-				catch (Exception ex)
-				{
-					CustomDialogService.ShowError(this, $"Error initializing mount:\n{ex.Message}",
-								  "Error");
-				}
-			}
-		}
-
-		private async void UnmountBackup_Click(object sender, RoutedEventArgs e)
-		{
-			if (sender is System.Windows.Controls.Button btn && btn.Tag is string mountPath)
-			{
-				var result = CustomDialogService.ShowQuestion(this,
-					$"Unmount backup from {mountPath}?\n\nIMPORTANT: Please close all Windows Explorer windows that are browsing mounted files before proceeding.",
-					"Unmount Backup");
-
-				if (result == CustomDialogResult.Yes)
-				{
-					// Create and show progress window
-					var progressWindow = new SecureServerBackup.Windows.MountProgressWindow
-					{
-						Owner = this,
-						Title = "Unmounting Backup"
-					};
-
-					progressWindow.SetBackupName("Unmounting...");
-					progressWindow.Show();
-
-					try
-					{
-						// Unmount asynchronously with progress updates
-						var (success, error) = await NativeBackupMountManager.UnmountBackupAsync(
-							mountPath,
-							(percentage, message) =>
-							{
-								progressWindow.SetStatus(message, percentage);
-							});
-
-						// Close progress window
-						progressWindow.CloseProgress();
-
-						if (success)
-						{
-							LoadMountedBackups();
-							CustomDialogService.ShowSuccess($"Backup unmounted successfully from {mountPath}",
-										  "Success");
-						}
-						else
-						{
-							CustomDialogService.ShowError($"Failed to unmount:\n{error}",
-										  "Unmount Error");
-						}
-					}
-					catch (Exception ex)
-					{
-						progressWindow.CloseProgress();
-						CustomDialogService.ShowError($"Error unmounting backup:\n{ex.Message}",
-									  "Error");
-					}
-				}
-			}
-		}
-
-		private void OpenExplorer(string driveLetter)
-		{
-			try
-			{
-				System.Diagnostics.Process.Start("explorer.exe", driveLetter);
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"Failed to open Explorer: {ex.Message}");
-			}
-		}
-
-		private string GetBackupPointPath(AvailableBackupInfo backup)
-		{
-			if (backup.BackupType == "Incremental" || backup.BackupType == "Differential")
-			{
-				if (cmbBackupPoints?.SelectedItem is BackupPoint point)
-				{
-					return point.VhdxPath;
-				}
-				return "";
-			}
-			else
-			{
-				return backup.BackupPath;
-			}
-		}
-		*/
 	}
 }

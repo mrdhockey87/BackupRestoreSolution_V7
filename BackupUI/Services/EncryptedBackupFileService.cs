@@ -9,131 +9,131 @@ using System.Windows.Forms;
 
 namespace SecureServerBackup.Services
 {
-    public sealed class PreparedBackupFile : IDisposable
-    {
-        private bool _disposed;
+	public sealed class PreparedBackupFile : IDisposable
+	{
+		private bool _disposed;
 
-        public string OriginalPath { get; init; } = string.Empty;
-        public string WorkingPath { get; init; } = string.Empty;
-        public bool IsTemporary { get; init; }
+		public string OriginalPath { get; init; } = string.Empty;
+		public string WorkingPath { get; init; } = string.Empty;
+		public bool IsTemporary { get; init; }
 
-        ~PreparedBackupFile()
-        {
-            Dispose(false);
-        }
+		~PreparedBackupFile()
+		{
+			Dispose(false);
+		}
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
 
-        private void Dispose(bool disposing)
-        {
-            if (_disposed)
-            {
-                return;
-            }
+		private void Dispose(bool disposing)
+		{
+			if (_disposed)
+			{
+				return;
+			}
 
-            if (IsTemporary)
-            {
-                BackupEncryptionService.DeleteTemporaryFile(WorkingPath);
-            }
+			if (IsTemporary)
+			{
+				BackupEncryptionService.DeleteTemporaryFile(WorkingPath);
+			}
 
-            _disposed = true;
-        }
-    }
+			_disposed = true;
+		}
+	}
 
-    public static class EncryptedBackupFileService
-    {
-        public static PreparedBackupFile PrepareForRead(Form? owner, string backupPath, string backupName, string? protectedPassword = null)
-        {
-            Forms.IWin32Window? formsOwner = null;
-            if (owner != null)
-            {
-                var helper = owner.Handle;
-                if (helper != IntPtr.Zero)
-                {
-                    formsOwner = new NativeWindowOwner(helper);
-                }
-            }
+	public static class EncryptedBackupFileService
+	{
+		public static PreparedBackupFile PrepareForRead(Form? owner, string backupPath, string backupName, string? protectedPassword = null)
+		{
+			/*
+			Forms.IWin32Window? formsOwner = null;
+			if (owner != null)
+			{
+				var helper = owner.Handle;
+				if (helper != IntPtr.Zero)
+				{
+				formsOwner = new NativeWindowOwner(helper);
+				}
+			}*/
+			return PrepareForReadForWinForms(owner!, backupPath, backupName, protectedPassword);
+		}
 
-            return PrepareForReadForWinForms(formsOwner, backupPath, backupName, protectedPassword);
-        }
+		public static PreparedBackupFile PrepareForReadForWinForms(Form owner, string backupPath, string backupName, string? protectedPassword = null)
+		{
+			if (!BackupEncryptionService.IsEncryptedBackupFile(backupPath))
+			{
+				return new PreparedBackupFile
+				{
+					OriginalPath = backupPath,
+					WorkingPath = backupPath,
+					IsTemporary = false
+				};
+			}
 
-        public static PreparedBackupFile PrepareForReadForWinForms(Forms.IWin32Window? owner, string backupPath, string backupName, string? protectedPassword = null)
-        {
-            if (!BackupEncryptionService.IsEncryptedBackupFile(backupPath))
-            {
-                return new PreparedBackupFile
-                {
-                    OriginalPath = backupPath,
-                    WorkingPath = backupPath,
-                    IsTemporary = false
-                };
-            }
+			string? promptError = null;
+			bool allowStoredPassword = !string.IsNullOrWhiteSpace(protectedPassword);
 
-            string? promptError = null;
-            bool allowStoredPassword = !string.IsNullOrWhiteSpace(protectedPassword);
+			while (true)
+			{
+				try
+				{
+					string password;
+					if (allowStoredPassword)
+					{
+						password = BackupEncryptionService.UnprotectPassword(protectedPassword!);
+						allowStoredPassword = false;
+					}
+					else
+					{
+						using var prompt = new BackupPasswordPromptForm(backupName);
 
-            while (true)
-            {
-                try
-                {
-                    string password;
-                    if (allowStoredPassword)
-                    {
-                        password = BackupEncryptionService.UnprotectPassword(protectedPassword!);
-                        allowStoredPassword = false;
-                    }
-                    else
-                    {
-                        using var prompt = new BackupPasswordPromptForm(backupName);
+						if (!string.IsNullOrWhiteSpace(promptError))
+						{
+							prompt.SetError(promptError);
+						}
 
-                        if (!string.IsNullOrWhiteSpace(promptError))
-                        {
-                            prompt.SetError(promptError);
-                        }
+						if (prompt.ShowDialog(owner) != Forms.DialogResult.OK)
+						{
+							throw new OperationCanceledException("The encrypted backup password prompt was cancelled.");
+						}
 
-                        if (prompt.ShowDialog(owner) != Forms.DialogResult.OK)
-                        {
-                            throw new OperationCanceledException("The encrypted backup password prompt was cancelled.");
-                        }
+						password = prompt.EnteredPassword;
+					}
 
-                        password = prompt.EnteredPassword;
-                    }
+					string tempPath = BackupEncryptionService.DecryptFileToTemporaryLocation(backupPath, password);
+					return new PreparedBackupFile
+					{
+						OriginalPath = backupPath,
+						WorkingPath = tempPath,
+						IsTemporary = true
+					};
+				}
+				catch (OperationCanceledException)
+				{
+					throw;
+				}
+				catch (Exception ex)
+				{
+					promptError = ex.Message;
+					if (owner == null)
+					{
+						throw;
+					}
+				}
+			}
+		}
 
-                    string tempPath = BackupEncryptionService.DecryptFileToTemporaryLocation(backupPath, password);
-                    return new PreparedBackupFile
-                    {
-                        OriginalPath = backupPath,
-                        WorkingPath = tempPath,
-                        IsTemporary = true
-                    };
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    promptError = ex.Message;
-                    if (owner == null)
-                    {
-                        throw;
-                    }
-                }
-            }
-        }
+		private sealed class NativeWindowOwner : Forms.IWin32Window
+		{
+			public NativeWindowOwner(IntPtr handle)
+			{
+				Handle = handle;
+			}
 
-        private sealed class NativeWindowOwner : Forms.IWin32Window
-        {
-            public NativeWindowOwner(IntPtr handle)
-            {
-                Handle = handle;
-            }
-
-            public IntPtr Handle { get; }
-        }
-    }
+			public IntPtr Handle { get; }
+		}
+	}
 }

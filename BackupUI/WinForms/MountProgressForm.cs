@@ -13,7 +13,16 @@ namespace SecureServerBackup.WinForms
 		public MountProgressForm()
 		{
 			InitializeComponent();
+			this.ShowInTaskbar = false;
+			this.StartPosition = FormStartPosition.CenterParent;
 			this.Paint += MountProgressForm_Paint;
+		}
+
+		public MountProgressForm(Form owner, String Title)
+		{
+			InitializeComponent();
+			this.Paint += MountProgressForm_Paint;
+			this.Text = Title;
 		}
 
 		private void MountProgressForm_Paint(object? sender, PaintEventArgs e)

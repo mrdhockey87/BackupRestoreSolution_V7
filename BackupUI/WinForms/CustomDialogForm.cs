@@ -13,6 +13,8 @@ namespace SecureServerBackup.WinForms
 		public CustomDialogForm()
 		{
 			InitializeComponent();
+			this.ShowInTaskbar = false;
+			this.StartPosition = FormStartPosition.CenterParent;
 		}
 
 		public void Configure(string message, string title, DialogButtons buttons, DialogIcon icon, string? primaryButtonText = null, string? secondaryButtonText = null, string? tertiaryButtonText = null)

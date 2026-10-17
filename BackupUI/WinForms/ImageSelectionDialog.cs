@@ -18,6 +18,8 @@ namespace SecureServerBackup.WinForms
 		public ImageSelectionDialog(List<BackupImageInfo> images, string actionLabel = "Mount Selected", string? subtitleText = null)
 		{
 			InitializeComponent();
+			this.ShowInTaskbar = false;
+			this.StartPosition = FormStartPosition.CenterParent;
 
 			if (images == null)
 				throw new ArgumentNullException(nameof(images));

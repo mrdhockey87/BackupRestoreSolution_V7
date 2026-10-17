@@ -30,11 +30,11 @@ namespace SecureServerBackup.WinForms
 		private Label mountStatusLabel;
 		private TableLayoutPanel verifyRootLayout;
 		private FlowLayoutPanel verifyActionsPanel;
-		private ListView verifyBackupsListView;
+		private DataGridView verifyBackupsDataGridiew;
 		private Label verifyStatusLabel;
 		private TableLayoutPanel restoreRootLayout;
 		private FlowLayoutPanel restoreActionsPanel;
-		private ListView restoreBackupsListView;
+		private DataGridView restoreBackupsDataGridView;
 		private Label emptyRestoreBackupsLabel;
 		private Label restoreStatusLabel;
 		private Panel schedulesTabPanel;
@@ -71,11 +71,11 @@ namespace SecureServerBackup.WinForms
 			mountedBackupsListView = new ListView();
 			mountStatusLabel = new Label();
 			verifyTabPage = new TabPage();
-			verifyBackupsListView = new ListView();
+			verifyBackupsDataGridiew = new DataGridView();
 			restoreTabPage = new TabPage();
 			restoreRootLayout = new TableLayoutPanel();
 			restoreActionsPanel = new FlowLayoutPanel();
-			restoreBackupsListView = new ListView();
+			restoreBackupsDataGridView = new DataGridView();
 			emptyRestoreBackupsLabel = new Label();
 			restoreStatusLabel = new Label();
 			schedulesTabPage = new TabPage();
@@ -93,8 +93,10 @@ namespace SecureServerBackup.WinForms
 			mountHeaderLayout.SuspendLayout();
 			mountedBackupsGroupBox.SuspendLayout();
 			verifyTabPage.SuspendLayout();
+			((ISupportInitialize)verifyBackupsDataGridiew).BeginInit();
 			restoreTabPage.SuspendLayout();
 			restoreRootLayout.SuspendLayout();
+			((ISupportInitialize)restoreBackupsDataGridView).BeginInit();
 			schedulesTabPage.SuspendLayout();
 			SuspendLayout();
 			// 
@@ -112,7 +114,7 @@ namespace SecureServerBackup.WinForms
 			// 
 			mainStatusStrip.ImageScalingSize = new Size(20, 20);
 			mainStatusStrip.Items.AddRange(new ToolStripItem[] { versionStatusLabel });
-			mainStatusStrip.Location = new Point(0, 641);
+			mainStatusStrip.Location = new Point(0, 649);
 			mainStatusStrip.Name = "mainStatusStrip";
 			mainStatusStrip.Padding = new Padding(1, 0, 12, 0);
 			mainStatusStrip.Size = new Size(805, 22);
@@ -140,7 +142,7 @@ namespace SecureServerBackup.WinForms
 			mainTabControl.Name = "mainTabControl";
 			mainTabControl.Padding = new Point(12, 4);
 			mainTabControl.SelectedIndex = 0;
-			mainTabControl.Size = new Size(805, 617);
+			mainTabControl.Size = new Size(805, 625);
 			mainTabControl.SizeMode = TabSizeMode.Fixed;
 			mainTabControl.TabIndex = 2;
 			mainTabControl.TabTextColor = Color.Empty;
@@ -153,7 +155,7 @@ namespace SecureServerBackup.WinForms
 			backupTabPage.Location = new Point(4, 32);
 			backupTabPage.Name = "backupTabPage";
 			backupTabPage.Padding = new Padding(5);
-			backupTabPage.Size = new Size(797, 581);
+			backupTabPage.Size = new Size(797, 589);
 			backupTabPage.TabIndex = 0;
 			backupTabPage.Text = "Backup";
 			backupTabPage.UseVisualStyleBackColor = true;
@@ -168,7 +170,7 @@ namespace SecureServerBackup.WinForms
 			backupJobsPanel.Location = new Point(5, 5);
 			backupJobsPanel.Name = "backupJobsPanel";
 			backupJobsPanel.Padding = new Padding(10, 8, 10, 8);
-			backupJobsPanel.Size = new Size(787, 571);
+			backupJobsPanel.Size = new Size(787, 579);
 			backupJobsPanel.TabIndex = 0;
 			backupJobsPanel.WrapContents = false;
 			// 
@@ -188,7 +190,7 @@ namespace SecureServerBackup.WinForms
 			activityTabPage.Location = new Point(4, 32);
 			activityTabPage.Name = "activityTabPage";
 			activityTabPage.Padding = new Padding(5);
-			activityTabPage.Size = new Size(797, 581);
+			activityTabPage.Size = new Size(797, 585);
 			activityTabPage.TabIndex = 1;
 			activityTabPage.Text = "Activity";
 			activityTabPage.UseVisualStyleBackColor = true;
@@ -200,7 +202,7 @@ namespace SecureServerBackup.WinForms
 			activityTabPanel.Location = new Point(5, 5);
 			activityTabPanel.Name = "activityTabPanel";
 			activityTabPanel.Padding = new Padding(10);
-			activityTabPanel.Size = new Size(787, 571);
+			activityTabPanel.Size = new Size(787, 575);
 			activityTabPanel.TabIndex = 0;
 			// 
 			// mountBackupsTabPage
@@ -209,7 +211,7 @@ namespace SecureServerBackup.WinForms
 			mountBackupsTabPage.Location = new Point(4, 32);
 			mountBackupsTabPage.Name = "mountBackupsTabPage";
 			mountBackupsTabPage.Padding = new Padding(5);
-			mountBackupsTabPage.Size = new Size(797, 577);
+			mountBackupsTabPage.Size = new Size(797, 585);
 			mountBackupsTabPage.TabIndex = 2;
 			mountBackupsTabPage.Text = "Mount Backups";
 			mountBackupsTabPage.UseVisualStyleBackColor = true;
@@ -231,7 +233,7 @@ namespace SecureServerBackup.WinForms
 			mountRootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));
 			mountRootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
 			mountRootLayout.RowStyles.Add(new RowStyle());
-			mountRootLayout.Size = new Size(787, 567);
+			mountRootLayout.Size = new Size(787, 575);
 			mountRootLayout.TabIndex = 0;
 			// 
 			// mountHeaderLayout
@@ -280,7 +282,7 @@ namespace SecureServerBackup.WinForms
 			availableBackupsGroupBox.Location = new Point(12, 46);
 			availableBackupsGroupBox.Name = "availableBackupsGroupBox";
 			availableBackupsGroupBox.Padding = new Padding(6, 4, 6, 6);
-			availableBackupsGroupBox.Size = new Size(763, 268);
+			availableBackupsGroupBox.Size = new Size(763, 272);
 			availableBackupsGroupBox.TabIndex = 1;
 			availableBackupsGroupBox.TabStop = false;
 			availableBackupsGroupBox.Text = "Available Backups";
@@ -289,10 +291,10 @@ namespace SecureServerBackup.WinForms
 			// 
 			mountedBackupsGroupBox.Controls.Add(mountedBackupsListView);
 			mountedBackupsGroupBox.Dock = DockStyle.Fill;
-			mountedBackupsGroupBox.Location = new Point(12, 320);
+			mountedBackupsGroupBox.Location = new Point(12, 324);
 			mountedBackupsGroupBox.Name = "mountedBackupsGroupBox";
 			mountedBackupsGroupBox.Padding = new Padding(6, 4, 6, 6);
-			mountedBackupsGroupBox.Size = new Size(763, 218);
+			mountedBackupsGroupBox.Size = new Size(763, 222);
 			mountedBackupsGroupBox.TabIndex = 2;
 			mountedBackupsGroupBox.TabStop = false;
 			mountedBackupsGroupBox.Text = "Mounted Backups";
@@ -308,7 +310,7 @@ namespace SecureServerBackup.WinForms
 			// mountStatusLabel
 			// 
 			mountStatusLabel.AutoSize = true;
-			mountStatusLabel.Location = new Point(18, 541);
+			mountStatusLabel.Location = new Point(18, 549);
 			mountStatusLabel.Margin = new Padding(9, 0, 9, 0);
 			mountStatusLabel.Name = "mountStatusLabel";
 			mountStatusLabel.Size = new Size(0, 17);
@@ -316,23 +318,24 @@ namespace SecureServerBackup.WinForms
 			// 
 			// verifyTabPage
 			// 
-			verifyTabPage.Controls.Add(verifyBackupsListView);
+			verifyTabPage.Controls.Add(verifyBackupsDataGridiew);
 			verifyTabPage.Location = new Point(4, 32);
 			verifyTabPage.Name = "verifyTabPage";
 			verifyTabPage.Padding = new Padding(5);
-			verifyTabPage.Size = new Size(797, 577);
+			verifyTabPage.Size = new Size(797, 589);
 			verifyTabPage.TabIndex = 3;
 			verifyTabPage.Text = "Verify";
 			verifyTabPage.UseVisualStyleBackColor = true;
 			// 
-			// verifyBackupsListView
+			// verifyBackupsDataGridiew
 			// 
-			verifyBackupsListView.Dock = DockStyle.Fill;
-			verifyBackupsListView.Location = new Point(5, 5);
-			verifyBackupsListView.Name = "verifyBackupsListView";
-			verifyBackupsListView.Size = new Size(787, 567);
-			verifyBackupsListView.TabIndex = 0;
-			verifyBackupsListView.UseCompatibleStateImageBehavior = false;
+			verifyBackupsDataGridiew.ColumnHeadersHeight = 25;
+			verifyBackupsDataGridiew.Dock = DockStyle.Fill;
+			verifyBackupsDataGridiew.Location = new Point(5, 5);
+			verifyBackupsDataGridiew.Name = "verifyBackupsDataGridiew";
+			verifyBackupsDataGridiew.RowHeadersWidth = 45;
+			verifyBackupsDataGridiew.Size = new Size(787, 579);
+			verifyBackupsDataGridiew.TabIndex = 0;
 			// 
 			// restoreTabPage
 			// 
@@ -340,7 +343,7 @@ namespace SecureServerBackup.WinForms
 			restoreTabPage.Location = new Point(4, 32);
 			restoreTabPage.Name = "restoreTabPage";
 			restoreTabPage.Padding = new Padding(5);
-			restoreTabPage.Size = new Size(797, 577);
+			restoreTabPage.Size = new Size(797, 585);
 			restoreTabPage.TabIndex = 4;
 			restoreTabPage.Text = "Restore";
 			restoreTabPage.UseVisualStyleBackColor = true;
@@ -350,7 +353,7 @@ namespace SecureServerBackup.WinForms
 			restoreRootLayout.ColumnCount = 1;
 			restoreRootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 			restoreRootLayout.Controls.Add(restoreActionsPanel, 0, 0);
-			restoreRootLayout.Controls.Add(restoreBackupsListView, 0, 1);
+			restoreRootLayout.Controls.Add(restoreBackupsDataGridView, 0, 1);
 			restoreRootLayout.Controls.Add(emptyRestoreBackupsLabel, 0, 2);
 			restoreRootLayout.Controls.Add(restoreStatusLabel, 0, 3);
 			restoreRootLayout.Dock = DockStyle.Fill;
@@ -362,7 +365,7 @@ namespace SecureServerBackup.WinForms
 			restoreRootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			restoreRootLayout.RowStyles.Add(new RowStyle());
 			restoreRootLayout.RowStyles.Add(new RowStyle());
-			restoreRootLayout.Size = new Size(787, 567);
+			restoreRootLayout.Size = new Size(787, 575);
 			restoreRootLayout.TabIndex = 0;
 			// 
 			// restoreActionsPanel
@@ -374,20 +377,21 @@ namespace SecureServerBackup.WinForms
 			restoreActionsPanel.Size = new Size(0, 0);
 			restoreActionsPanel.TabIndex = 0;
 			// 
-			// restoreBackupsListView
+			// restoreBackupsDataGridView
 			// 
-			restoreBackupsListView.Dock = DockStyle.Fill;
-			restoreBackupsListView.Location = new Point(12, 18);
-			restoreBackupsListView.Name = "restoreBackupsListView";
-			restoreBackupsListView.Size = new Size(763, 483);
-			restoreBackupsListView.TabIndex = 1;
-			restoreBackupsListView.UseCompatibleStateImageBehavior = false;
-			restoreBackupsListView.DoubleClick += RestoreBackupsListView_DoubleClick;
+			restoreBackupsDataGridView.ColumnHeadersHeight = 25;
+			restoreBackupsDataGridView.Dock = DockStyle.Fill;
+			restoreBackupsDataGridView.Location = new Point(12, 18);
+			restoreBackupsDataGridView.Name = "restoreBackupsDataGridView";
+			restoreBackupsDataGridView.RowHeadersWidth = 45;
+			restoreBackupsDataGridView.Size = new Size(763, 491);
+			restoreBackupsDataGridView.TabIndex = 1;
+			restoreBackupsDataGridView.DoubleClick += RestoreBackupsListView_DoubleClick;
 			// 
 			// emptyRestoreBackupsLabel
 			// 
 			emptyRestoreBackupsLabel.AutoSize = true;
-			emptyRestoreBackupsLabel.Location = new Point(18, 511);
+			emptyRestoreBackupsLabel.Location = new Point(18, 519);
 			emptyRestoreBackupsLabel.Margin = new Padding(9, 7, 9, 7);
 			emptyRestoreBackupsLabel.Name = "emptyRestoreBackupsLabel";
 			emptyRestoreBackupsLabel.Size = new Size(205, 17);
@@ -397,7 +401,7 @@ namespace SecureServerBackup.WinForms
 			// restoreStatusLabel
 			// 
 			restoreStatusLabel.AutoSize = true;
-			restoreStatusLabel.Location = new Point(18, 535);
+			restoreStatusLabel.Location = new Point(18, 543);
 			restoreStatusLabel.Margin = new Padding(9, 0, 9, 7);
 			restoreStatusLabel.Name = "restoreStatusLabel";
 			restoreStatusLabel.Size = new Size(675, 17);
@@ -410,7 +414,7 @@ namespace SecureServerBackup.WinForms
 			schedulesTabPage.Location = new Point(4, 32);
 			schedulesTabPage.Name = "schedulesTabPage";
 			schedulesTabPage.Padding = new Padding(5);
-			schedulesTabPage.Size = new Size(797, 577);
+			schedulesTabPage.Size = new Size(797, 585);
 			schedulesTabPage.TabIndex = 5;
 			schedulesTabPage.Text = "Schedules";
 			schedulesTabPage.UseVisualStyleBackColor = true;
@@ -421,7 +425,7 @@ namespace SecureServerBackup.WinForms
 			schedulesTabPanel.Location = new Point(5, 5);
 			schedulesTabPanel.Name = "schedulesTabPanel";
 			schedulesTabPanel.Padding = new Padding(10);
-			schedulesTabPanel.Size = new Size(787, 567);
+			schedulesTabPanel.Size = new Size(787, 575);
 			schedulesTabPanel.TabIndex = 0;
 			// 
 			// verifyRootLayout
@@ -449,7 +453,7 @@ namespace SecureServerBackup.WinForms
 			// 
 			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(805, 663);
+			ClientSize = new Size(805, 671);
 			Controls.Add(mainTabControl);
 			Controls.Add(mainStatusStrip);
 			Controls.Add(mainMenuStrip);
@@ -474,9 +478,11 @@ namespace SecureServerBackup.WinForms
 			mountHeaderLayout.PerformLayout();
 			mountedBackupsGroupBox.ResumeLayout(false);
 			verifyTabPage.ResumeLayout(false);
+			((ISupportInitialize)verifyBackupsDataGridiew).EndInit();
 			restoreTabPage.ResumeLayout(false);
 			restoreRootLayout.ResumeLayout(false);
 			restoreRootLayout.PerformLayout();
+			((ISupportInitialize)restoreBackupsDataGridView).EndInit();
 			schedulesTabPage.ResumeLayout(false);
 			ResumeLayout(false);
 			PerformLayout();

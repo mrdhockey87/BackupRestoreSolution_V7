@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.9.84";
+        private static readonly string version_fallback_number = "7.4.9.86";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,12 @@ namespace SecureServerBackup
 
 /*
  *
+ *  Version 7.4.9.86 Replaced the Verify and Restore tab ListViews with DataGridView controls and added per-row action buttons for both tabs while keeping the same column layout
+ *                   and resizing behavior so the Action column remains visible with the correct backup data. mdail 10/17/2026
+ *  Version 7.4.9.85 Used the old code from the wpf main windows to create the VerifyBackupHelper class when when create a instance of with a backup, then 
+ *                   run vh.VerifyBackup(this,verifyStatusLabel); with the verifyStatusLabel being a label on the form to show the status of the verification, the
+ *                   verification shows the pick volume form, then runs the verification then shows the results form. Also set the custom dialog and progress forms
+ *                   to open in the center of the parent form. mdail 10/17/2026
  *  Version 7.4.9.84 After several attempt to get Copilot to add the Verify button to the Verify tab list and the Restore button to the Restore tab list I gave up for now and they
  *                   still aren't there. It added the button the first time to the restore tab but then it blew up the MainForm code file and kept hanging up I gave up it cost
  *                   me 11% after I tried setting it to auto. mdail 10/16/2026

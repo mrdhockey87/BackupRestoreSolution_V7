@@ -251,7 +251,7 @@ namespace SecureServerBackup.WinForms
 			{
 				try
 				{
-					using var preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms((IWin32Window)this, restoreSelection.RestorePoint.FilePath, Path.GetFileNameWithoutExtension(restoreSelection.RestorePoint.FilePath), restoreSelection.Backup.ProtectedEncryptionPassword);
+					using var preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms(this, restoreSelection.RestorePoint.FilePath, Path.GetFileNameWithoutExtension(restoreSelection.RestorePoint.FilePath), restoreSelection.Backup.ProtectedEncryptionPassword);
 					var planResult = NativeBackupMountManager.BuildDiskRestorePlan(preparedBackup.WorkingPath);
 					diskRestorePlan = planResult.Success ? planResult.Plan : null;
 				}
@@ -1091,7 +1091,7 @@ namespace SecureServerBackup.WinForms
 
 			try
 			{
-				using var preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms((IWin32Window)this, restoreSelection.RestorePoint.FilePath, Path.GetFileNameWithoutExtension(restoreSelection.RestorePoint.FilePath), restoreSelection.Backup.ProtectedEncryptionPassword);
+				using var preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms(this, restoreSelection.RestorePoint.FilePath, Path.GetFileNameWithoutExtension(restoreSelection.RestorePoint.FilePath), restoreSelection.Backup.ProtectedEncryptionPassword);
 				var imageInfoResult = NativeBackupMountManager.GetImageInfoWithRestoreMetadata(preparedBackup.WorkingPath);
 				if (!imageInfoResult.Success || imageInfoResult.Images.Count != 1)
 				{
@@ -1148,7 +1148,7 @@ namespace SecureServerBackup.WinForms
 
 			try
 			{
-				using var preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms((IWin32Window)this, restoreSelection.RestorePoint.FilePath, Path.GetFileNameWithoutExtension(restoreSelection.RestorePoint.FilePath), restoreSelection.Backup.ProtectedEncryptionPassword);
+				using var preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms(this, restoreSelection.RestorePoint.FilePath, Path.GetFileNameWithoutExtension(restoreSelection.RestorePoint.FilePath), restoreSelection.Backup.ProtectedEncryptionPassword);
 				var planResult = NativeBackupMountManager.BuildDiskRestorePlan(preparedBackup.WorkingPath);
 				diskRestorePlan = planResult.Success ? planResult.Plan : null;
 			}
@@ -1203,7 +1203,7 @@ namespace SecureServerBackup.WinForms
 		{
 			await Task.Run(() =>
 			{
-				using var preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms((IWin32Window)this, restoreSelection.RestorePoint.FilePath, Path.GetFileNameWithoutExtension(restoreSelection.RestorePoint.FilePath), restoreSelection.Backup.ProtectedEncryptionPassword);
+				using var preparedBackup = EncryptedBackupFileService.PrepareForReadForWinForms(this, restoreSelection.RestorePoint.FilePath, Path.GetFileNameWithoutExtension(restoreSelection.RestorePoint.FilePath), restoreSelection.Backup.ProtectedEncryptionPassword);
 				int result;
 				string destination = restoreTargetKind switch
 				{
