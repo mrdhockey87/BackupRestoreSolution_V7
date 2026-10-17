@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.9.86";
+        private static readonly string version_fallback_number = "7.4.9.87";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,7 @@ namespace SecureServerBackup
 
 /*
  *
+ *  Version 7.4.9.87 Fixed the BackupNewEditForm disposal race so closing the form before the drive tree finishes loading no longer throws while the form is being torn down. mdail 10/17/2026
  *  Version 7.4.9.86 Replaced the Verify and Restore tab ListViews with DataGridView controls and added per-row action buttons for both tabs while keeping the same column layout
  *                   and resizing behavior so the Action column remains visible with the correct backup data. mdail 10/17/2026
  *  Version 7.4.9.85 Used the old code from the wpf main windows to create the VerifyBackupHelper class when when create a instance of with a backup, then 

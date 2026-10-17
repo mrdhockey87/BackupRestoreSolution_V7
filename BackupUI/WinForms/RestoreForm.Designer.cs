@@ -157,7 +157,7 @@ namespace SecureServerBackup.WinForm
 			mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
 			mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
-			mainLayout.Size = new Size(1000, 754);
+			mainLayout.Size = new Size(1000, 756);
 			mainLayout.TabIndex = 0;
 			// 
 			// lblTitle
@@ -181,7 +181,7 @@ namespace SecureServerBackup.WinForm
 			wizardHost.Dock = DockStyle.Fill;
 			wizardHost.Location = new Point(13, 58);
 			wizardHost.Name = "wizardHost";
-			wizardHost.Size = new Size(974, 593);
+			wizardHost.Size = new Size(974, 595);
 			wizardHost.TabIndex = 1;
 			// 
 			// pnlStep3
@@ -197,7 +197,7 @@ namespace SecureServerBackup.WinForm
 			pnlStep3.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
 			pnlStep3.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			pnlStep3.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
-			pnlStep3.Size = new Size(974, 593);
+			pnlStep3.Size = new Size(974, 595);
 			pnlStep3.TabIndex = 0;
 			// 
 			// optionsScroll
@@ -463,7 +463,7 @@ namespace SecureServerBackup.WinForm
 			// 
 			step3Buttons.Controls.Add(btnStartRestore);
 			step3Buttons.Controls.Add(btnStep3Back);
-			step3Buttons.Location = new Point(3, 551);
+			step3Buttons.Location = new Point(3, 553);
 			step3Buttons.Name = "step3Buttons";
 			step3Buttons.Size = new Size(200, 39);
 			step3Buttons.TabIndex = 2;
@@ -499,7 +499,7 @@ namespace SecureServerBackup.WinForm
 			pnlStep2.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
 			pnlStep2.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			pnlStep2.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
-			pnlStep2.Size = new Size(974, 593);
+			pnlStep2.Size = new Size(974, 595);
 			pnlStep2.TabIndex = 1;
 			// 
 			// contentsGroup
@@ -581,7 +581,7 @@ namespace SecureServerBackup.WinForm
 			// 
 			step2Buttons.Controls.Add(btnStep2Next);
 			step2Buttons.Controls.Add(btnStep2Back);
-			step2Buttons.Location = new Point(3, 551);
+			step2Buttons.Location = new Point(3, 553);
 			step2Buttons.Name = "step2Buttons";
 			step2Buttons.Size = new Size(200, 39);
 			step2Buttons.TabIndex = 2;
@@ -618,7 +618,7 @@ namespace SecureServerBackup.WinForm
 			pnlStep1.RowStyles.Add(new RowStyle(SizeType.Absolute, 125F));
 			pnlStep1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			pnlStep1.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
-			pnlStep1.Size = new Size(974, 593);
+			pnlStep1.Size = new Size(974, 595);
 			pnlStep1.TabIndex = 2;
 			// 
 			// step1Title
@@ -723,7 +723,7 @@ namespace SecureServerBackup.WinForm
 			// step1Buttons
 			// 
 			step1Buttons.Controls.Add(btnStep1Next);
-			step1Buttons.Location = new Point(3, 551);
+			step1Buttons.Location = new Point(3, 553);
 			step1Buttons.Name = "step1Buttons";
 			step1Buttons.Size = new Size(200, 39);
 			step1Buttons.TabIndex = 3;
@@ -741,7 +741,7 @@ namespace SecureServerBackup.WinForm
 			progressLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
 			progressLayout.Controls.Add(progressBar, 0, 0);
 			progressLayout.Controls.Add(txtProgress, 0, 1);
-			progressLayout.Location = new Point(13, 657);
+			progressLayout.Location = new Point(13, 659);
 			progressLayout.Name = "progressLayout";
 			progressLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 23F));
 			progressLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 23F));
@@ -770,7 +770,7 @@ namespace SecureServerBackup.WinForm
 			// actionButtons
 			// 
 			actionButtons.Controls.Add(btnCancel);
-			actionButtons.Location = new Point(13, 705);
+			actionButtons.Location = new Point(13, 707);
 			actionButtons.Name = "actionButtons";
 			actionButtons.Size = new Size(200, 36);
 			actionButtons.TabIndex = 3;
@@ -788,7 +788,7 @@ namespace SecureServerBackup.WinForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(1000, 754);
+			ClientSize = new Size(1000, 756);
 			Controls.Add(mainLayout);
 			MinimumSize = new Size(760, 600);
 			Name = "RestoreForm";

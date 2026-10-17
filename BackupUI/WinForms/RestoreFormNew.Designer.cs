@@ -74,7 +74,6 @@ namespace SecureServerBackup.WinForm
 			chkStartHyperVVm = new CheckBox();
 			chkRestoreToHyperVDisk = new CheckBox();
 			pnlRegularHyperVRestore = new TableLayoutPanel();
-			lblVhdPath = new Label();
 			tlpHyperVDiskRow = new TableLayoutPanel();
 			txtHyperVVirtualDiskPath = new TextBox();
 			btnBrowseHyperVDisk = new Button();
@@ -95,13 +94,13 @@ namespace SecureServerBackup.WinForm
 			lblNewVmGen = new Label();
 			cmbNewHyperVGeneration = new ComboBox();
 			chkStartCreatedHyperVVm = new CheckBox();
+			lblVhdPath = new Label();
 			pnlLocationChoice = new TableLayoutPanel();
 			lblFileFolderTarget = new Label();
 			btnBrowseRestoreDestination = new Button();
 			lblTargetLocation = new Label();
 			txtFolderRestoreDestination = new TextBox();
 			pnlHyperVCloneDestination = new TableLayoutPanel();
-			lblCloneDestination = new Label();
 			rbHyperVCloneDefault = new RadioButton();
 			rbHyperVCloneAlternate = new RadioButton();
 			pnlHyperVCloneAlternate = new TableLayoutPanel();
@@ -113,9 +112,10 @@ namespace SecureServerBackup.WinForm
 			tlpCloneDiskRow = new TableLayoutPanel();
 			txtHyperVCloneDiskFolder = new TextBox();
 			btnBrowseCloneDisk = new Button();
-			chkOverwrite = new CheckBox();
+			lblCloneDestination = new Label();
 			chkPreservePermissions = new CheckBox();
 			chkVerifyAfterRestore = new CheckBox();
+			chkOverwrite = new CheckBox();
 			grpRestoreTarget = new GroupBox();
 			tlpTarget = new TableLayoutPanel();
 			txtDriveTreeHelp = new Label();
@@ -833,14 +833,6 @@ namespace SecureServerBackup.WinForm
 			pnlRegularHyperVRestore.TabIndex = 10;
 			pnlRegularHyperVRestore.Visible = false;
 			// 
-			// lblVhdPath
-			// 
-			lblVhdPath.Location = new Point(3, 0);
-			lblVhdPath.Name = "lblVhdPath";
-			lblVhdPath.Size = new Size(146, 17);
-			lblVhdPath.TabIndex = 0;
-			lblVhdPath.Text = "Hyper-V virtual disk file:";
-			// 
 			// tlpHyperVDiskRow
 			// 
 			tlpHyperVDiskRow.ColumnCount = 2;
@@ -1061,6 +1053,14 @@ namespace SecureServerBackup.WinForm
 			chkStartCreatedHyperVVm.Text = "Start the new virtual machine after restore";
 			chkStartCreatedHyperVVm.UseVisualStyleBackColor = true;
 			// 
+			// lblVhdPath
+			// 
+			lblVhdPath.Location = new Point(3, 0);
+			lblVhdPath.Name = "lblVhdPath";
+			lblVhdPath.Size = new Size(146, 17);
+			lblVhdPath.TabIndex = 0;
+			lblVhdPath.Text = "Hyper-V virtual disk file:";
+			// 
 			// pnlLocationChoice
 			// 
 			pnlLocationChoice.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -1136,16 +1136,6 @@ namespace SecureServerBackup.WinForm
 			pnlHyperVCloneDestination.Size = new Size(477, 207);
 			pnlHyperVCloneDestination.TabIndex = 12;
 			pnlHyperVCloneDestination.Visible = false;
-			// 
-			// lblCloneDestination
-			// 
-			lblCloneDestination.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-			lblCloneDestination.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-			lblCloneDestination.Location = new Point(3, 12);
-			lblCloneDestination.Name = "lblCloneDestination";
-			lblCloneDestination.Size = new Size(143, 19);
-			lblCloneDestination.TabIndex = 0;
-			lblCloneDestination.Text = "Restore Destination:";
 			// 
 			// rbHyperVCloneDefault
 			// 
@@ -1275,15 +1265,15 @@ namespace SecureServerBackup.WinForm
 			btnBrowseCloneDisk.UseVisualStyleBackColor = true;
 			btnBrowseCloneDisk.Click += BrowseHyperVCloneDiskFolder_Click;
 			// 
-			// chkOverwrite
+			// lblCloneDestination
 			// 
-			chkOverwrite.Location = new Point(3, 584);
-			chkOverwrite.Margin = new Padding(3, 11, 3, 3);
-			chkOverwrite.Name = "chkOverwrite";
-			chkOverwrite.Size = new Size(158, 21);
-			chkOverwrite.TabIndex = 13;
-			chkOverwrite.Text = "Overwrite existing files";
-			chkOverwrite.UseVisualStyleBackColor = true;
+			lblCloneDestination.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+			lblCloneDestination.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+			lblCloneDestination.Location = new Point(3, 12);
+			lblCloneDestination.Name = "lblCloneDestination";
+			lblCloneDestination.Size = new Size(143, 19);
+			lblCloneDestination.TabIndex = 0;
+			lblCloneDestination.Text = "Restore Destination:";
 			// 
 			// chkPreservePermissions
 			// 
@@ -1306,6 +1296,16 @@ namespace SecureServerBackup.WinForm
 			chkVerifyAfterRestore.TabIndex = 15;
 			chkVerifyAfterRestore.Text = "Verify files after restore";
 			chkVerifyAfterRestore.UseVisualStyleBackColor = true;
+			// 
+			// chkOverwrite
+			// 
+			chkOverwrite.Location = new Point(3, 584);
+			chkOverwrite.Margin = new Padding(3, 11, 3, 3);
+			chkOverwrite.Name = "chkOverwrite";
+			chkOverwrite.Size = new Size(158, 21);
+			chkOverwrite.TabIndex = 13;
+			chkOverwrite.Text = "Overwrite existing files";
+			chkOverwrite.UseVisualStyleBackColor = true;
 			// 
 			// grpRestoreTarget
 			// 

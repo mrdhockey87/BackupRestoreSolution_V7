@@ -199,7 +199,10 @@ namespace SecureServerBackup.WinForms
 		/// </summary>
 		private void FitToContent(bool onlyGrow)
 		{
-			if (DesignMode || WindowState != FormWindowState.Normal) return;
+			if (DesignMode || IsDisposed || Disposing || WindowState != FormWindowState.Normal || !IsHandleCreated)
+			{
+				return;
+			}
 
 			Size chrome = Size - ClientSize;
 			Size needed = new Size(tlpRoot.PreferredSize.Width + 24, tlpRoot.PreferredSize.Height + 24) + chrome;
@@ -220,8 +223,18 @@ namespace SecureServerBackup.WinForms
 			}
 		}
 
+		private bool IsFormClosingOrDisposed()
+		{
+			return IsDisposed || Disposing || ShutdownToken.IsCancellationRequested;
+		}
+
 		private void SetBusy(bool busy)
 		{
+			if (IsFormClosingOrDisposed())
+			{
+				return;
+			}
+
 			progressBar.Visible = busy;
 			lblProgress.Visible = busy;
 			pnlProgress.Visible = busy;
@@ -234,10 +247,15 @@ namespace SecureServerBackup.WinForms
 
 		private void ReportProgress(int percentage, string? message)
 		{
-			if (IsDisposed || !IsHandleCreated) return;
+			if (IsFormClosingOrDisposed() || !IsHandleCreated) return;
 
 			BeginInvoke(new Action(() =>
 			{
+				if (IsFormClosingOrDisposed() || !IsHandleCreated)
+				{
+					return;
+				}
+
 				progressBar.Value = Math.Clamp(percentage, 0, 100);
 				lblProgress.Text = message ?? $"Progress: {percentage}%";
 			}));
@@ -245,9 +263,17 @@ namespace SecureServerBackup.WinForms
 
 		private void ReportStatus(string message)
 		{
-			if (IsDisposed || !IsHandleCreated) return;
+			if (IsFormClosingOrDisposed() || !IsHandleCreated) return;
 
-			BeginInvoke(new Action(() => lblProgress.Text = message));
+			BeginInvoke(new Action(() =>
+			{
+				if (IsFormClosingOrDisposed() || !IsHandleCreated)
+				{
+					return;
+				}
+
+				lblProgress.Text = message;
+			}));
 		}
 
 		// =====================================================================
@@ -397,13 +423,21 @@ namespace SecureServerBackup.WinForms
 
 		private async Task ReloadDriveTreeForBackupTypeAsync()
 		{
+			if (IsFormClosingOrDisposed())
+			{
+				return;
+			}
+
 			try
 			{
 				await LoadDrives();
 			}
 			catch (Exception ex)
 			{
-				ShowError($"Error reloading drives: {ex.Message}", "Error");
+				if (!IsFormClosingOrDisposed())
+				{
+					ShowError($"Error reloading drives: {ex.Message}", "Error");
+				}
 			}
 		}
 
@@ -629,6 +663,11 @@ namespace SecureServerBackup.WinForms
 
 		private void SetLoading(bool loading)
 		{
+			if (IsDisposed || Disposing || ShutdownToken.IsCancellationRequested)
+			{
+				return;
+			}
+
 			lblLoading.Visible = loading;
 			UseWaitCursor = loading;
 			FitToContent(onlyGrow: true);
@@ -636,6 +675,11 @@ namespace SecureServerBackup.WinForms
 
 		private void RebuildTreeView()
 		{
+			if (IsDisposed || Disposing || ShutdownToken.IsCancellationRequested)
+			{
+				return;
+			}
+
 			treeDrives.BeginUpdate();
 			try
 			{
@@ -994,7 +1038,7 @@ namespace SecureServerBackup.WinForms
 
 		private void ShowMissingSavedSelectionsWarning()
 		{
-			if (_editingJob == null || _missingSavedSelectionPaths.Count == 0) return;
+			if (IsFormClosingOrDisposed() || _editingJob == null || _missingSavedSelectionPaths.Count == 0) return;
 
 			List<string> missing = _missingSavedSelectionPaths
 				.Where(path => !string.IsNullOrWhiteSpace(path))
@@ -1007,6 +1051,36 @@ namespace SecureServerBackup.WinForms
 
 			CustomDialogService.ShowWarning(BuildMissingSavedSelectionsWarningMessage(_editingJob.Type, missing),
 				"Missing Saved Selections");
+		}
+
+		private void ShowWarning(string message, string title)
+		{
+			if (IsFormClosingOrDisposed())
+			{
+				return;
+			}
+
+			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+		}
+
+		private void ShowError(string message, string title)
+		{
+			if (IsFormClosingOrDisposed())
+			{
+				return;
+			}
+
+			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
+
+		private void ShowSuccess(string message, string title)
+		{
+			if (IsFormClosingOrDisposed())
+			{
+				return;
+			}
+
+			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
 		}
 		private static string BuildMissingSavedSelectionsWarningMessage(BackupType backupType, IReadOnlyCollection<string> missingSelections)
 		{
@@ -1454,34 +1528,5 @@ namespace SecureServerBackup.WinForms
 
 		// These route through one place so the rest of the port reads like the WPF original.
 		// Swap the bodies for CustomDialogService if it is usable from WinForms.
-		private void ShowWarning(string message, string title)
-		{
-			if (IsDisposed || Disposing || ShutdownToken.IsCancellationRequested)
-			{
-				return;
-			}
-
-			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-		}
-
-		private void ShowError(string message, string title)
-		{
-			if (IsDisposed || Disposing || ShutdownToken.IsCancellationRequested)
-			{
-				return;
-			}
-
-			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
-		}
-
-		private void ShowSuccess(string message, string title)
-		{
-			if (IsDisposed || Disposing || ShutdownToken.IsCancellationRequested)
-			{
-				return;
-			}
-
-			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
 	}
 }
