@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.9.88";
+        private static readonly string version_fallback_number = "7.4.9.89";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,7 @@ namespace SecureServerBackup
 
 /*
  *
+ *  Version 7.4.9.89 Removed unused controls and layout from mainform for the mount backup tab, as now it uses a form mdail 10/19/2026
  *  Version 7.4.9.88 Restored the Verify tab header and actions so the Verify Backup Integrity title, Refresh button, and Browse .ssb button are visible again; Browse adds 
  *                   external .ssb files to the verify list for validation. mdail 10/17/2026
  *  Version 7.4.9.87 Fixed the BackupNewEditForm disposal race so closing the form before the drive tree finishes loading no longer throws while the form is being torn down. mdail 10/17/2026
