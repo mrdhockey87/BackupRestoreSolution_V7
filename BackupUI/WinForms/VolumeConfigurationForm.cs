@@ -1,12 +1,14 @@
+using SecureServerBackup.Enums;
+using SecureServerBackup.Helpers;
+using SecureServerBackup.Models;
+using SecureServerBackup.WinForms.Controls;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using SecureServerBackup.Models;
-using SecureServerBackup.Helpers;
-using SecureServerBackup.WinForms.Controls;
 
 namespace SecureServerBackup.WinForms
 {
@@ -33,10 +35,7 @@ namespace SecureServerBackup.WinForms
 		public VolumeConfigurationForm(List<VolumeInfo> sourceVols, long targetSize, int sourceAUS, int targetAUS)
 		{
 			ArgumentNullException.ThrowIfNull(sourceVols);
-			if (targetSize <= 0)
-			{
-				throw new ArgumentOutOfRangeException(nameof(targetSize));
-			}
+			ArgumentOutOfRangeException.ThrowIfNegativeOrZero(targetSize);
 
 			sourceVolumes = sourceVols.Select(CloneVolumeInfo).ToList();
 			targetTotalSize = targetSize;
@@ -168,17 +167,15 @@ namespace SecureServerBackup.WinForms
 			long totalSize = resizeVolumes.Sum(volume => volume.TargetSize);
 			if (!isValid)
 			{
-				MessageBox.Show(this, errorMessage, "Invalid Configuration", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, errorMessage, "Invalid Configuration");
 				return;
 			}
 
 			if (totalSize > targetTotalSize)
 			{
-				MessageBox.Show(this,
+				CustomDialogService.ShowWarning(this,
 					$"Total size ({FormatSize(totalSize)}) exceeds target disk capacity ({FormatSize(targetTotalSize)}). Please adjust volume sizes before accepting.",
-					"Invalid Configuration",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Warning);
+					"Invalid Configuration");
 				return;
 			}
 

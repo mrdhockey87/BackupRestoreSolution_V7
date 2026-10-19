@@ -34,7 +34,6 @@ namespace SecureServerBackup.WinForms
 		private List<string>? _tempUserExclusions;
 		private List<string> _missingSavedSelectionPaths = new();
 		private HashSet<string> _pendingSelectionPaths = new(StringComparer.OrdinalIgnoreCase);
-
 		private bool _hasSavedEncryptionPassword;
 		private string? _decryptedEncryptionPassword;
 		private bool _isLoadingDrives;

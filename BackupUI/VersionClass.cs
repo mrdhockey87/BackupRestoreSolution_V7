@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.9.89";
+        private static readonly string version_fallback_number = "7.4.9.90";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,10 @@ namespace SecureServerBackup
 
 /*
  *
+ *  Version 7.4.9.90 Converted the remaining WinForms service-management dialogs to the themed CustomDialogService flow so all MessageBox calls in this form use the custom 
+ *                   dialog form. There are still some Message Box calls inthe solution that need to be converted. mdail 10/19/2026
+ *  Version 7.4.9.89 Removed a local class VolumeInfo from inside the VolumeSelectionForm and moved it to the Models folder 
+ *                   so it can be shared with other forms that need to use it. And convert some MessageBox to CustomDialogService Messages mdail 10/19/2026
  *  Version 7.4.9.89 Removed unused controls and layout from mainform for the mount backup tab, as now it uses a form mdail 10/19/2026
  *  Version 7.4.9.88 Restored the Verify tab header and actions so the Verify Backup Integrity title, Refresh button, and Browse .ssb button are visible again; Browse adds 
  *                   external .ssb files to the verify list for validation. mdail 10/17/2026

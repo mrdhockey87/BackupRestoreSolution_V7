@@ -5,20 +5,12 @@ using System.Linq;
 using System.Management;
 using System.Windows.Forms;
 
+using SecureServerBackup.Models;
+
 namespace SecureServerBackup.WinForms
 {
 	public partial class VolumeSelectionForm : Form
 	{
-		public class VolumeInfo
-		{
-			public string VolumePath { get; set; } = string.Empty;
-			public string DisplayName { get; set; } = string.Empty;
-			public string FileSystem { get; set; } = string.Empty;
-			public bool IsBootVolume { get; set; }
-			/// <summary>True for no-drive-letter system partitions (EFI, Recovery, System Reserved).</summary>
-			public bool IsHiddenPartition { get; set; }
-		}
-
 		public VolumeInfo? SelectedVolume { get; private set; }
 
 		private readonly HashSet<string> _excludedVolumes = new(StringComparer.OrdinalIgnoreCase);

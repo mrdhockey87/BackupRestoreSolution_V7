@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+
 using SecureServerBackup.Models;
 using SecureServerBackup.Helpers;
 
@@ -26,11 +27,7 @@ namespace SecureServerBackup.WinForms
             Populate(sourceVolumes, targetDiskSize, sourceAllocationUnitSize, targetAllocationUnitSize);
         }
 
-        private void Populate(
-            IReadOnlyList<VolumeInfo> volumes,
-            long targetDiskSize,
-            int sourceAus,
-            int targetAus)
+        private void Populate(IReadOnlyList<VolumeInfo> volumes,long targetDiskSize,int sourceAus,int targetAus)
         {
             foreach (VolumeInfo volume in volumes)
             {

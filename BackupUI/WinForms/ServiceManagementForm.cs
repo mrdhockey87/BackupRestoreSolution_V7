@@ -6,6 +6,7 @@ using System.ServiceProcess;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SecureServerBackup.Enums;
 using SecureServerBackup.Models;
 using SecureServerBackup.Services;
 using SecureServerBackupCommon;
@@ -128,69 +129,37 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(this, $"Failed to refresh status: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-		}
-
-		private async Task CheckServiceVersionAsync()
-		{
-			try
-			{
-				var serviceClient = new BackupServiceClient();
-				Task<string?> versionTask = serviceClient.GetServiceVersionAsync();
-				Task completedTask = await Task.WhenAny(versionTask, Task.Delay(3000));
-				string? serviceVersion = completedTask == versionTask ? await versionTask : null;
-
-				if (!string.IsNullOrWhiteSpace(serviceVersion))
-				{
-					serviceVersionValueLabel.Text = serviceVersion;
-					string uiVersion = VersionClass.GetAssemblyVersion();
-					if (!string.Equals(serviceVersion, uiVersion, StringComparison.Ordinal))
-					{
-						versionWarningLabel.Text = "VERSION MISMATCH";
-						versionWarningLabel.ForeColor = Color.DarkRed;
-						versionWarningLabel.Visible = true;
-					}
-					else
-					{
-						versionWarningLabel.Visible = false;
-					}
-				}
-				else
-				{
-					serviceVersionValueLabel.Text = "Unknown (old version)";
-					versionWarningLabel.Text = "Reinstall Required";
-					versionWarningLabel.ForeColor = Color.DarkOrange;
-					versionWarningLabel.Visible = true;
-				}
-			}
-			catch
-			{
-				serviceVersionValueLabel.Text = "Unknown (check failed)";
-				versionWarningLabel.Text = "Check Failed";
-				versionWarningLabel.ForeColor = Color.DarkOrange;
-				versionWarningLabel.Visible = true;
+				CustomDialogService.ShowError(this, $"Failed to refresh status: {ex.Message}", "Error");
 			}
 		}
 
 		private async Task StartServiceAsync()
 		{
 			bool success = await serviceManager.StartServiceAsync();
-			MessageBox.Show(this, success ? "Service started successfully." : "Failed to start service.", success ? "Success" : "Error", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+			CustomDialogService.Show(this, success ? "Service started successfully." : "Failed to start service.",
+				success ? "Success" : "Error",
+				DialogButtons.OK,
+				success ? DialogIcon.Information : DialogIcon.Error);
 			await RefreshStatusAsync();
 		}
 
 		private async Task StopServiceAsync()
 		{
 			bool success = await serviceManager.StopServiceAsync();
-			MessageBox.Show(this, success ? "Service stopped successfully." : "Failed to stop service.", success ? "Success" : "Error", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+			CustomDialogService.Show(this, success ? "Service stopped successfully." : "Failed to stop service.",
+				success ? "Success" : "Error",
+				DialogButtons.OK,
+				success ? DialogIcon.Information : DialogIcon.Error);
 			await RefreshStatusAsync();
 		}
 
 		private async Task RestartServiceAsync()
 		{
 			bool success = await serviceManager.RestartServiceAsync();
-			MessageBox.Show(this, success ? "Service restarted successfully." : "Failed to restart service.", success ? "Success" : "Error", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+			CustomDialogService.Show(this, success ? "Service restarted successfully." : "Failed to restart service.",
+				success ? "Success" : "Error",
+				DialogButtons.OK,
+				success ? DialogIcon.Information : DialogIcon.Error);
 			await RefreshStatusAsync();
 		}
 
@@ -199,32 +168,38 @@ namespace SecureServerBackup.WinForms
 			string? servicePath = ServiceInstaller.GetServiceExecutablePath();
 			if (string.IsNullOrWhiteSpace(servicePath) || !File.Exists(servicePath))
 			{
-				MessageBox.Show(this, $"Service executable not found in: {AppDomain.CurrentDomain.BaseDirectory}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Service executable not found in: {AppDomain.CurrentDomain.BaseDirectory}", "Error");
 				return;
 			}
 
 			bool installSuccess = await serviceManager.InstallServiceAsync(servicePath);
 			if (!installSuccess)
 			{
-				MessageBox.Show(this, "Failed to install service. Make sure you run as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, "Failed to install service. Make sure you run as Administrator.", "Error");
 				return;
 			}
 
 			await Task.Delay(1000);
 			bool startSuccess = await serviceManager.StartServiceAsync();
-			MessageBox.Show(this, startSuccess ? "Service installed and started successfully!" : "Service installed successfully, but failed to start automatically.", startSuccess ? "Success" : "Partial Success", MessageBoxButtons.OK, startSuccess ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+			CustomDialogService.Show(this, startSuccess ? "Service installed and started successfully!" : "Service installed successfully, but failed to start automatically.",
+				startSuccess ? "Success" : "Partial Success",
+				DialogButtons.OK,
+				startSuccess ? DialogIcon.Success : DialogIcon.Warning);
 			await RefreshStatusAsync();
 		}
 
 		private async Task UninstallServiceAsync()
 		{
-			if (MessageBox.Show(this, "Are you sure you want to uninstall the service?", "Confirm Uninstall", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+			if (CustomDialogService.ShowQuestion(this, "Are you sure you want to uninstall the service?", "Confirm Uninstall") != CustomDialogResult.Yes)
 			{
 				return;
 			}
 
 			bool success = await serviceManager.UninstallServiceAsync();
-			MessageBox.Show(this, success ? "Service uninstalled successfully." : "Failed to uninstall service. Make sure you run as Administrator.", success ? "Success" : "Error", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+			CustomDialogService.Show(this, success ? "Service uninstalled successfully." : "Failed to uninstall service. Make sure you run as Administrator.",
+				success ? "Success" : "Error",
+				DialogButtons.OK,
+				success ? DialogIcon.Success : DialogIcon.Error);
 			await RefreshStatusAsync();
 		}
 
@@ -232,11 +207,9 @@ namespace SecureServerBackup.WinForms
 		{
 			try
 			{
-				if (MessageBox.Show(this,
+				if (CustomDialogService.ShowQuestion(this,
 					"This will cancel all pending retry attempts for failed backups.\n\nFailed jobs will be rescheduled for their next normal run time.\n\nDo you want to continue?",
-					"Abort Failed Retries",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Question) != DialogResult.Yes)
+					"Abort Failed Retries") != CustomDialogResult.Yes)
 				{
 					return;
 				}
@@ -244,7 +217,7 @@ namespace SecureServerBackup.WinForms
 				string jobsFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "SecureServerBackupService", "jobs.json");
 				if (!File.Exists(jobsFilePath))
 				{
-					MessageBox.Show(this, "No backup jobs found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					CustomDialogService.ShowInfo(this, "No backup jobs found.", "Information");
 					return;
 				}
 
@@ -252,7 +225,7 @@ namespace SecureServerBackup.WinForms
 				var jobs = JsonSerializer.Deserialize<System.Collections.Generic.List<BackupJob>>(json);
 				if (jobs == null || jobs.Count == 0)
 				{
-					MessageBox.Show(this, "No backup jobs found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					CustomDialogService.ShowInfo(this, "No backup jobs found.", "Information");
 					return;
 				}
 
@@ -278,29 +251,30 @@ namespace SecureServerBackup.WinForms
 
 				if (abortedCount == 0)
 				{
-					MessageBox.Show(this, "No jobs found in retry mode.\n\nAll jobs are already scheduled for their normal run times.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					CustomDialogService.ShowInfo(this, "No jobs found in retry mode.\n\nAll jobs are already scheduled for their normal run times.", "Information");
 					return;
 				}
 
 				json = JsonSerializer.Serialize(jobs, new JsonSerializerOptions { WriteIndented = true });
 				await File.WriteAllTextAsync(jobsFilePath, json);
 
-				if (MessageBox.Show(this,
+				if (CustomDialogService.ShowQuestion(this,
 					$"Aborted retry attempts for {abortedCount} job(s).\n\nJobs have been rescheduled for their next normal run time.\n\nDo you want to restart the service now to immediately stop all retries?",
-					"Success - Restart Service?",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Question) == DialogResult.Yes)
+					"Success - Restart Service?") == CustomDialogResult.Yes)
 				{
 					bool stopped = await serviceManager.StopServiceAsync();
 					if (stopped)
 					{
 						await Task.Delay(2000);
 						bool started = await serviceManager.StartServiceAsync();
-						MessageBox.Show(this, started ? "Service restarted successfully.\nAll retries have been stopped." : "Service stopped but failed to restart.\nPlease start it manually.", started ? "Service Restarted" : "Restart Failed", MessageBoxButtons.OK, started ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+						CustomDialogService.Show(started ? "Service restarted successfully.\nAll retries have been stopped." : "Service stopped but failed to restart.\nPlease start it manually.",
+							started ? "Service Restarted" : "Restart Failed",
+							DialogButtons.OK,
+							started ? DialogIcon.Success : DialogIcon.Warning);
 					}
 					else
 					{
-						MessageBox.Show(this, "Failed to stop service. Changes saved but may take effect on next service restart.", "Restart Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						CustomDialogService.ShowWarning(this, "Failed to stop service. Changes saved but may take effect on next service restart.", "Restart Failed");
 					}
 				}
 
@@ -308,7 +282,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(this, $"Failed to abort retries: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Failed to abort retries: {ex.Message}", "Error");
 			}
 		}
 
@@ -362,6 +336,47 @@ namespace SecureServerBackup.WinForms
 				ServiceControllerStatus.PausePending => "Pause Pending",
 				_ => status.ToString()
 			};
+		}
+
+		private async Task CheckServiceVersionAsync()
+		{
+			try
+			{
+				var serviceClient = new BackupServiceClient();
+				Task<string?> versionTask = serviceClient.GetServiceVersionAsync();
+				Task completedTask = await Task.WhenAny(versionTask, Task.Delay(3000));
+				string? serviceVersion = completedTask == versionTask ? await versionTask : null;
+
+				if (!string.IsNullOrWhiteSpace(serviceVersion))
+				{
+					serviceVersionValueLabel.Text = serviceVersion;
+					string uiVersion = VersionClass.GetAssemblyVersion();
+					if (!string.Equals(serviceVersion, uiVersion, StringComparison.Ordinal))
+					{
+						versionWarningLabel.Text = "VERSION MISMATCH";
+						versionWarningLabel.ForeColor = Color.DarkRed;
+						versionWarningLabel.Visible = true;
+					}
+					else
+					{
+						versionWarningLabel.Visible = false;
+					}
+				}
+				else
+				{
+					serviceVersionValueLabel.Text = "Unknown (old version)";
+					versionWarningLabel.Text = "Reinstall Required";
+					versionWarningLabel.ForeColor = Color.DarkOrange;
+					versionWarningLabel.Visible = true;
+				}
+			}
+			catch
+			{
+				serviceVersionValueLabel.Text = "Unknown (check failed)";
+				versionWarningLabel.Text = "Check Failed";
+				versionWarningLabel.ForeColor = Color.DarkOrange;
+				versionWarningLabel.Visible = true;
+			}
 		}
 	}
 }
