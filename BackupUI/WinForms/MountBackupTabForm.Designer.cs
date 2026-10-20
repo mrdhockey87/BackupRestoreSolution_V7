@@ -41,26 +41,23 @@
 			MountedBackupName = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			MountedBackupType = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			MountedIsEncrypted = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-			MountedBackupDate = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+			MountedBackupDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			MountedBackupPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			UnmountBtn = new System.Windows.Forms.DataGridViewButtonColumn();
 			label3 = new System.Windows.Forms.Label();
 			dgAvailableBackups = new System.Windows.Forms.DataGridView();
-			pnlBackupPoints = new System.Windows.Forms.FlowLayoutPanel();
-			lblSelectPoints = new System.Windows.Forms.Label();
-			cmbBackupPoints = new System.Windows.Forms.ComboBox();
 			BackupName = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			BackupType = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			IsEncrypted = new System.Windows.Forms.DataGridViewCheckBoxColumn();
 			BackupDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			BackupPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			Mount = new System.Windows.Forms.DataGridViewButtonColumn();
+			pnlBackupPoints = new System.Windows.Forms.FlowLayoutPanel();
 			mountTabPanel.SuspendLayout();
 			tableLayoutPanel1.SuspendLayout();
 			flowLayoutPanel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)dgMountedBackups).BeginInit();
 			((System.ComponentModel.ISupportInitialize)dgAvailableBackups).BeginInit();
-			pnlBackupPoints.SuspendLayout();
 			SuspendLayout();
 			// 
 			// mountTabPanel
@@ -70,7 +67,7 @@
 			mountTabPanel.Location = new System.Drawing.Point(0, 0);
 			mountTabPanel.Name = "mountTabPanel";
 			mountTabPanel.Padding = new System.Windows.Forms.Padding(10);
-			mountTabPanel.Size = new System.Drawing.Size(800, 495);
+			mountTabPanel.Size = new System.Drawing.Size(800, 497);
 			mountTabPanel.TabIndex = 1;
 			// 
 			// tableLayoutPanel1
@@ -96,13 +93,13 @@
 			tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 21F));
 			tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
 			tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-			tableLayoutPanel1.Size = new System.Drawing.Size(780, 475);
+			tableLayoutPanel1.Size = new System.Drawing.Size(780, 477);
 			tableLayoutPanel1.TabIndex = 0;
 			// 
 			// lblNoBackups
 			// 
 			lblNoBackups.AutoSize = true;
-			lblNoBackups.Location = new System.Drawing.Point(3, 455);
+			lblNoBackups.Location = new System.Drawing.Point(3, 457);
 			lblNoBackups.Name = "lblNoBackups";
 			lblNoBackups.Size = new System.Drawing.Size(133, 17);
 			lblNoBackups.TabIndex = 1;
@@ -166,7 +163,7 @@
 			// label2
 			// 
 			label2.AutoSize = true;
-			label2.Location = new System.Drawing.Point(3, 266);
+			label2.Location = new System.Drawing.Point(3, 267);
 			label2.Name = "label2";
 			label2.Size = new System.Drawing.Size(112, 17);
 			label2.TabIndex = 7;
@@ -177,10 +174,10 @@
 			dgMountedBackups.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			dgMountedBackups.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { MountedBackupName, MountedBackupType, MountedIsEncrypted, MountedBackupDate, MountedBackupPath, UnmountBtn });
 			dgMountedBackups.Dock = System.Windows.Forms.DockStyle.Fill;
-			dgMountedBackups.Location = new System.Drawing.Point(3, 290);
+			dgMountedBackups.Location = new System.Drawing.Point(3, 291);
 			dgMountedBackups.Name = "dgMountedBackups";
 			dgMountedBackups.RowHeadersWidth = 45;
-			dgMountedBackups.Size = new System.Drawing.Size(774, 162);
+			dgMountedBackups.Size = new System.Drawing.Size(774, 163);
 			dgMountedBackups.TabIndex = 8;
 			// 
 			// MountedBackupName
@@ -223,6 +220,7 @@
 			UnmountBtn.HeaderText = "Unmount";
 			UnmountBtn.MinimumWidth = 6;
 			UnmountBtn.Name = "UnmountBtn";
+			UnmountBtn.Text = "Unmount";
 			UnmountBtn.Width = 110;
 			// 
 			// label3
@@ -242,37 +240,8 @@
 			dgAvailableBackups.Location = new System.Drawing.Point(3, 61);
 			dgAvailableBackups.Name = "dgAvailableBackups";
 			dgAvailableBackups.RowHeadersWidth = 45;
-			dgAvailableBackups.Size = new System.Drawing.Size(774, 162);
+			dgAvailableBackups.Size = new System.Drawing.Size(774, 163);
 			dgAvailableBackups.TabIndex = 10;
-			// 
-			// pnlBackupPoints
-			// 
-			pnlBackupPoints.Controls.Add(lblSelectPoints);
-			pnlBackupPoints.Controls.Add(cmbBackupPoints);
-			pnlBackupPoints.Dock = System.Windows.Forms.DockStyle.Fill;
-			pnlBackupPoints.Location = new System.Drawing.Point(3, 229);
-			pnlBackupPoints.Name = "pnlBackupPoints";
-			pnlBackupPoints.Size = new System.Drawing.Size(774, 34);
-			pnlBackupPoints.TabIndex = 11;
-			// 
-			// lblSelectPoints
-			// 
-			lblSelectPoints.AutoSize = true;
-			lblSelectPoints.Font = new System.Drawing.Font("Segoe UI", 8.830189F, System.Drawing.FontStyle.Bold);
-			lblSelectPoints.Location = new System.Drawing.Point(20, 10);
-			lblSelectPoints.Margin = new System.Windows.Forms.Padding(20, 10, 0, 10);
-			lblSelectPoints.Name = "lblSelectPoints";
-			lblSelectPoints.Size = new System.Drawing.Size(133, 17);
-			lblSelectPoints.TabIndex = 12;
-			lblSelectPoints.Text = "Select Backup Point:";
-			// 
-			// cmbBackupPoints
-			// 
-			cmbBackupPoints.FormattingEnabled = true;
-			cmbBackupPoints.Location = new System.Drawing.Point(156, 3);
-			cmbBackupPoints.Name = "cmbBackupPoints";
-			cmbBackupPoints.Size = new System.Drawing.Size(294, 25);
-			cmbBackupPoints.TabIndex = 13;
 			// 
 			// BackupName
 			// 
@@ -321,11 +290,19 @@
 			Mount.Text = "Mount";
 			Mount.Width = 110;
 			// 
+			// pnlBackupPoints
+			// 
+			pnlBackupPoints.Dock = System.Windows.Forms.DockStyle.Fill;
+			pnlBackupPoints.Location = new System.Drawing.Point(3, 230);
+			pnlBackupPoints.Name = "pnlBackupPoints";
+			pnlBackupPoints.Size = new System.Drawing.Size(774, 34);
+			pnlBackupPoints.TabIndex = 11;
+			// 
 			// MountBackupTabForm
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(800, 495);
+			ClientSize = new System.Drawing.Size(800, 497);
 			Controls.Add(mountTabPanel);
 			Name = "MountBackupTabForm";
 			Text = "MountBackupTabForm";
@@ -336,8 +313,6 @@
 			flowLayoutPanel1.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)dgMountedBackups).EndInit();
 			((System.ComponentModel.ISupportInitialize)dgAvailableBackups).EndInit();
-			pnlBackupPoints.ResumeLayout(false);
-			pnlBackupPoints.PerformLayout();
 			ResumeLayout(false);
 		}
 
@@ -353,22 +328,20 @@
 		private System.Windows.Forms.Button UnmountAll;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.DataGridView dgMountedBackups;
-		private System.Windows.Forms.DataGridViewTextBoxColumn MountedBackupName;
-		private System.Windows.Forms.DataGridViewTextBoxColumn MountedBackupType;
-		private System.Windows.Forms.DataGridViewCheckBoxColumn MountedIsEncrypted;
-		private System.Windows.Forms.DataGridViewCheckBoxColumn MountedBackupDate;
-		private System.Windows.Forms.DataGridViewTextBoxColumn MountedBackupPath;
-		private System.Windows.Forms.DataGridViewButtonColumn UnmountBtn;
 		private System.Windows.Forms.Label label3;
 		private System.Windows.Forms.DataGridView dgAvailableBackups;
 		private System.Windows.Forms.FlowLayoutPanel pnlBackupPoints;
-		private System.Windows.Forms.Label lblSelectPoints;
-		private System.Windows.Forms.ComboBox cmbBackupPoints;
 		private System.Windows.Forms.DataGridViewTextBoxColumn BackupName;
 		private System.Windows.Forms.DataGridViewTextBoxColumn BackupType;
 		private System.Windows.Forms.DataGridViewCheckBoxColumn IsEncrypted;
 		private System.Windows.Forms.DataGridViewTextBoxColumn BackupDate;
 		private System.Windows.Forms.DataGridViewTextBoxColumn BackupPath;
 		private System.Windows.Forms.DataGridViewButtonColumn Mount;
+		private System.Windows.Forms.DataGridViewTextBoxColumn MountedBackupName;
+		private System.Windows.Forms.DataGridViewTextBoxColumn MountedBackupType;
+		private System.Windows.Forms.DataGridViewCheckBoxColumn MountedIsEncrypted;
+		private System.Windows.Forms.DataGridViewTextBoxColumn MountedBackupDate;
+		private System.Windows.Forms.DataGridViewTextBoxColumn MountedBackupPath;
+		private System.Windows.Forms.DataGridViewButtonColumn UnmountBtn;
 	}
 }

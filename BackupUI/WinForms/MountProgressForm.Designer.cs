@@ -69,6 +69,7 @@
 			layout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			layout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			layout.RowStyles.Add(new System.Windows.Forms.RowStyle());
+			layout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
 			layout.Size = new System.Drawing.Size(392, 226);
 			layout.TabIndex = 0;
 			// 
@@ -120,7 +121,7 @@
 			// txtCurrentFile
 			// 
 			txtCurrentFile.AutoEllipsis = true;
-			txtCurrentFile.Font = new System.Drawing.Font("Segoe UI", 10F);
+			txtCurrentFile.Font = new System.Drawing.Font("Segoe UI", 8F);
 			txtCurrentFile.ForeColor = System.Drawing.Color.Gray;
 			txtCurrentFile.Location = new System.Drawing.Point(0, 186);
 			txtCurrentFile.Margin = new System.Windows.Forms.Padding(0, 0, 0, 6);

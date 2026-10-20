@@ -10,30 +10,47 @@ namespace SecureServerBackup.WinForms
 
 		private static readonly Color BorderColor = Color.FromArgb(200, 200, 200);
 
-		public MountProgressForm()
+		public MountProgressForm(Form owner)
 		{
 			InitializeComponent();
 			this.ShowInTaskbar = false;
 			this.StartPosition = FormStartPosition.CenterParent;
 			this.Paint += MountProgressForm_Paint;
+			txtCurrentFile.Paint += txtCurrentFile_Paint;
 		}
 
 		public MountProgressForm(Form owner, String Title)
 		{
 			InitializeComponent();
+			this.ShowInTaskbar = false;
+			this.StartPosition = FormStartPosition.CenterParent;
 			this.Paint += MountProgressForm_Paint;
 			this.Text = Title;
+			txtCurrentFile.Paint += txtCurrentFile_Paint;
 		}
 
+		private void txtCurrentFile_Paint(object? sender, PaintEventArgs e)
+		{
+			Label lbl = (Label)sender!;
+
+			// TextBoxControl forces character-level wrapping when no spaces exist
+			TextFormatFlags flags = TextFormatFlags.TextBoxControl |
+									TextFormatFlags.WordBreak |
+									TextFormatFlags.EndEllipsis;
+
+			// Clear the background
+			e.Graphics.Clear(lbl.BackColor);
+
+			// Draw the text using the label's dimensions, font, and color
+			TextRenderer.DrawText(e.Graphics, lbl.Text, lbl.Font, lbl.ClientRectangle, lbl.ForeColor, flags);
+		}
 		private void MountProgressForm_Paint(object? sender, PaintEventArgs e)
 		{
 			using var pen = new Pen(BorderColor, 1);
 			e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
 		}
 
-		/// <summary>
 		/// Update backup name
-		/// </summary>
 		public void SetBackupName(string name)
 		{
 			if (_isClosed || txtBackupName == null) return;
@@ -60,6 +77,7 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
+			System.Diagnostics.Debug.WriteLine($"status: {status}");
 			// Parse message to distinguish file-level vs general progress (v6.0.1.19)
 			if (status.Contains("Processing:") || status.Contains("Backing up:"))
 			{

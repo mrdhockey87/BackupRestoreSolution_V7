@@ -19,6 +19,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
+
 namespace SecureServerBackup.WinForms
 {
 	public partial class MountBackupTabForm : Form
@@ -117,12 +119,9 @@ namespace SecureServerBackup.WinForms
 						return;
 					}
 
-					var imageDialog = new SecureServerBackup.WinForms.ImageSelectionDialog(images)
-					{
-						Owner = this
-					};
+					ImageSelectionDialog imageDialog = new(images);
 
-					if (imageDialog.Visible != true)
+					if (imageDialog.ShowDialog(this) == DialogResult.Cancel)
 					{
 						System.Diagnostics.Debug.WriteLine("[Mount] User cancelled image selection");
 						return;
@@ -136,14 +135,11 @@ namespace SecureServerBackup.WinForms
 					System.Diagnostics.Debug.WriteLine($"[Mount] Backup has {imageCount} image(s) - using first image");
 				}
 
-				var tempPathDialog = new SecureServerBackup.WinForms.TempPathSelectionDialog
-				{
-					Owner = this
-				};
+				TempPathSelectionDialog tempPathDialog = new();
 
 				System.Diagnostics.Debug.WriteLine("[Mount] Showing TempPathSelectionDialog...");
 
-				if (tempPathDialog.Visible != true)
+				if (tempPathDialog.ShowDialog(this) == DialogResult.Cancel)
 				{
 					System.Diagnostics.Debug.WriteLine("[Mount] User cancelled temp path selection");
 					return;
@@ -156,15 +152,12 @@ namespace SecureServerBackup.WinForms
 				System.Diagnostics.Debug.WriteLine($"[Mount] Path is null or empty: {string.IsNullOrEmpty(selectedTempPath)}");
 				System.Diagnostics.Debug.WriteLine("[Mount] About to create progress window...");
 
-				var progressWindow = new SecureServerBackup.WinForms.MountProgressForm
-				{
-					Owner = this
-				};
+				MountProgressForm progressWindow = new(this);
 
 				System.Diagnostics.Debug.WriteLine($"[Mount] Progress window created, setting backup name: {backup.BackupName}");
 				progressWindow.SetBackupName(backup.BackupName);
 				System.Diagnostics.Debug.WriteLine("[Mount] Showing progress window...");
-				progressWindow.Show();
+				progressWindow.Show(this);
 
 				try
 				{
@@ -240,11 +233,7 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			var progressWindow = new SecureServerBackup.WinForms.MountProgressForm
-			{
-				Owner = this,
-				Text = "Unmounting Backup"
-			};
+			MountProgressForm progressWindow = new(this, "Unmounting Backup");
 
 			progressWindow.SetBackupName("Unmounting...");
 			progressWindow.Show();
@@ -263,19 +252,19 @@ namespace SecureServerBackup.WinForms
 				if (success)
 				{
 					LoadMountedBackups();
-					CustomDialogService.ShowSuccess($"Backup unmounted successfully from {mountPath}",
+					CustomDialogService.ShowSuccess(this, $"Backup unmounted successfully from {mountPath}",
 									  "Success");
 				}
 				else
 				{
-					CustomDialogService.ShowError($"Failed to unmount:\n{error}",
+					CustomDialogService.ShowError(this, $"Failed to unmount:\n{error}",
 									  "Unmount Error");
 				}
 			}
 			catch (Exception ex)
 			{
 				progressWindow.CloseProgress();
-				CustomDialogService.ShowError($"Error unmounting backup:\n{ex.Message}",
+				CustomDialogService.ShowError(this, $"Error unmounting backup:\n{ex.Message}",
 								  "Error");
 			}
 		}
@@ -351,7 +340,7 @@ namespace SecureServerBackup.WinForms
 			{
 				if (backup.BackupType == "Incremental" || backup.BackupType == "Differential")
 				{
-					LoadBackupPoints(backup);
+					//LoadBackupPoints(backup);
 					pnlBackupPoints.Visible = true;
 				}
 				else
@@ -424,13 +413,8 @@ namespace SecureServerBackup.WinForms
 			dgMountedBackups.DataSource = mounted;
 		}
 
-		private void LoadBackupPoints(AvailableBackupInfo backup)
+		private string GetBackupPointPath(AvailableBackupInfo backup)
 		{
-			if (cmbBackupPoints == null)
-				return;
-
-			// For now, just show the main backup
-			// In a full implementation, scan for incremental/differential points
 			var points = new System.Collections.Generic.List<BackupPoint>
 			{
 				new() {
@@ -440,17 +424,9 @@ namespace SecureServerBackup.WinForms
 				}
 			};
 
-			cmbBackupPoints.DataSource = points;
-			cmbBackupPoints.DisplayMember = "DisplayName";
-			if (points.Count > 0)
-				cmbBackupPoints.SelectedIndex = 0;
-		}
-
-		private string GetBackupPointPath(AvailableBackupInfo backup)
-		{
 			if (backup.BackupType == "Incremental" || backup.BackupType == "Differential")
 			{
-				if (cmbBackupPoints?.SelectedItem is BackupPoint point)
+				if (points[0] is BackupPoint point)
 				{
 					return point.VhdxPath;
 				}
@@ -460,20 +436,6 @@ namespace SecureServerBackup.WinForms
 			{
 				return backup.BackupPath;
 			}
-		}
-
-		private string GetBackupTypeFromFilename(string filenameWithoutExt)
-		{
-			string lower = filenameWithoutExt.ToLower();
-
-			if (lower.Contains("full"))
-				return "Full";
-			else if (lower.Contains("incremental") || lower.Contains("incr"))
-				return "Incremental";
-			else if (lower.Contains("differential") || lower.Contains("diff"))
-				return "Differential";
-			else
-				return "Full"; // Default for job name only (WDrive1.ssb = full backup)
 		}
 
 		private void OpenExplorer(string driveLetter)

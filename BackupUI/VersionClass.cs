@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.9.90";
+        private static readonly string version_fallback_number = "7.4.9.93";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,13 @@ namespace SecureServerBackup
 
 /*
  *
+ *  Version 7.4.9.93 Fixed the mount progress so the file names wrap properly. mdail 10/20/2026
+ *  Version 7.4.9.92 Fix the MountBackupTabForm because I accidently made the date field a checkmark and missed the text for the unmount button.
+ *                   Also removed the unrequired cmbBackupPoints that listed the breakpoints for a backup when it was selected. It was never used 
+ *                   so I removed it. WHen the user clicked mount a form is shown to select the breakpoint to restore and the selected one from the
+ *                   cmbBackupPoints was ignored. Also remove the label that was infront of the combo box. mdail 10/20/2026
+ *  Version 7.4.9.91 Fix the MountBackupTabForm stll trying to display form like their WPF counterparts, so it now shows the forms instead of trying to show 
+ *                   them like WPF forms. mdail 10/20/2026
  *  Version 7.4.9.90 Converted the remaining WinForms service-management dialogs to the themed CustomDialogService flow so all MessageBox calls in this form use the custom 
  *                   dialog form. There are still some Message Box calls inthe solution that need to be converted. mdail 10/19/2026
  *  Version 7.4.9.89 Removed a local class VolumeInfo from inside the VolumeSelectionForm and moved it to the Models folder 
