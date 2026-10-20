@@ -1,3 +1,5 @@
+using SecureServerBackup.Services;
+
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -86,7 +88,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(this, $"Failed to open website: {ex.Message}\n\nPlease manually visit: https://rufus.ie", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Failed to open website: {ex.Message}\n\nPlease manually visit: https://rufus.ie", "Error");
 			}
 		}
 
@@ -96,7 +98,7 @@ namespace SecureServerBackup.WinForms
 			{
 				if (!File.Exists(isoPath))
 				{
-					MessageBox.Show(this, "ISO file not found. Please ensure the file exists at the specified location.", "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					CustomDialogService.ShowWarning(this, "ISO file not found. Please ensure the file exists at the specified location.", "File Not Found");
 					return;
 				}
 
@@ -104,7 +106,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(this, $"Failed to open folder: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Failed to open folder: {ex.Message}", "Error");
 			}
 		}
 
@@ -122,7 +124,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(this, $"Failed to create printable instructions: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Failed to create printable instructions: {ex.Message}", "Error");
 			}
 		}
 

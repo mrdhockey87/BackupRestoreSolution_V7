@@ -1,5 +1,8 @@
+using SecureServerBackup.Enums;
+
 using System;
 using System.Threading;
+
 using Forms = System.Windows.Forms;
 
 namespace SecureServerBackup.Services
@@ -32,11 +35,9 @@ namespace SecureServerBackup.Services
                 // Show tray balloon notification (fallback for now)
                 InvokeOnUiThread(() =>
                 {
-                    Forms.MessageBox.Show(
+                    CustomDialogService.ShowError(
                         $"Backup Failed!\n\nJob: {jobName}\n\n{message}\n\nCheck the Activity tab for details.",
-                        "Backup Failed",
-                        Forms.MessageBoxButtons.OK,
-                        Forms.MessageBoxIcon.Warning);
+                        "Backup Failed");
                 });
             }
             catch (Exception ex)
@@ -54,13 +55,11 @@ namespace SecureServerBackup.Services
             {
                 InvokeOnUiThread(() =>
                 {
-                    var result = Forms.MessageBox.Show(
+                    var result = CustomDialogService.ShowQuestion(
                         $"Backup Validation Failed!\n\nJob: {jobName}\n\nAuto-recovery initiated.\nFailed backup renamed and new full backup will be created.\n\nView Activity tab for details?",
-                        "Backup Validation Failed",
-                        Forms.MessageBoxButtons.YesNo,
-                        Forms.MessageBoxIcon.Warning);
+                        "Backup Validation Failed");
 
-                    if (result == Forms.DialogResult.Yes)
+                    if (result == CustomDialogResult.Yes)
                     {
                         if (showActivityAction != null)
                         {

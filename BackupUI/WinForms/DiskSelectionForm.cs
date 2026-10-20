@@ -1,10 +1,12 @@
-﻿using System;
+﻿using SecureServerBackup.Enums;
+using SecureServerBackup.Models;
+using SecureServerBackup.Services;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management;
 using System.Windows.Forms;
-
-using SecureServerBackup.Models;
 
 namespace SecureServerBackup.WinForms
 {
@@ -99,18 +101,14 @@ namespace SecureServerBackup.WinForms
 
 				if (disks.Count == 0)
 				{
-					MessageBox.Show(this, "No available target disks found.\n\nAll disks may be in use as source disks.",
-						"No Disks Available",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Warning);
+					CustomDialogService.ShowWarning(this, "No available target disks found.\n\nAll disks may be in use as source disks.",
+						"No Disks Available");
 				}
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(this, $"Error loading disks: {ex.Message}",
-					"Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+				CustomDialogService.ShowWarning(this, $"Error loading disks: {ex.Message}",
+					"Error");
 			}
 		}
 
@@ -238,16 +236,15 @@ namespace SecureServerBackup.WinForms
 		{
 			if (lstDisks.SelectedItem is DiskInfo disk)
 			{
-				var result = MessageBox.Show(this,
+				CustomDialogResult result = CustomDialogService.Show(this,
 					$"You have selected:\n\n{disk.DisplayName}\n{disk.Details}\n\n" +
 					$"WARNING: All data on this disk will be REPLACED!\n\n" +
 					$"Are you sure you want to use this disk as the clone target?",
 					"Confirm Target Disk",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Warning,
-					MessageBoxDefaultButton.Button2);
+					DialogButtons.YesNo,
+					DialogIcon.Warning);
 
-				if (result == DialogResult.Yes)
+				if (result == CustomDialogResult.Yes)
 				{
 					SelectedDisk = disk;
 					DialogResult = DialogResult.OK;

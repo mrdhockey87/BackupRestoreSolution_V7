@@ -855,11 +855,9 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			if (MessageBox.Show(this,
+			if (CustomDialogService.ShowQuestion(
 					$"Do you really want to delete this saved network path?\n\n{item.FullPath}",
-					"Delete Network Path",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Question) != DialogResult.Yes)
+					"Delete Network Path") != CustomDialogResult.Yes)
 			{
 				return;
 			}
@@ -1059,7 +1057,7 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			CustomDialogService.ShowWarning(message, title);
 		}
 
 		private void ShowError(string message, string title)
@@ -1069,7 +1067,7 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+			CustomDialogService.ShowError(message, title);
 		}
 
 		private void ShowSuccess(string message, string title)
@@ -1079,7 +1077,7 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+			CustomDialogService.ShowSuccess(message, title);
 		}
 		private static string BuildMissingSavedSelectionsWarningMessage(BackupType backupType, IReadOnlyCollection<string> missingSelections)
 		{

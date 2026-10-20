@@ -1,9 +1,11 @@
+using SecureServerBackup.Enums;
+using SecureServerBackup.Services;
+
 using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SecureServerBackup.Services;
 
 namespace SecureServerBackup.WinForms
 {
@@ -56,7 +58,7 @@ namespace SecureServerBackup.WinForms
 				isCompleted = true;
 				progressLabel.Text = $"Restore failed: {ex.Message}";
 				closeButton.Text = "Close";
-				MessageBox.Show(this, $"Restore failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Restore failed: {ex.Message}", "Error");
 			}
 		}
 
@@ -85,12 +87,12 @@ namespace SecureServerBackup.WinForms
 		{
 			if (!isCompleted)
 			{
-				DialogResult result = MessageBox.Show(this,
+				CustomDialogResult result = CustomDialogService.Show(this,
 					"Restore is still running in the background.\n\nClosing this window will not stop the restore.",
 					"Restore Still Running",
-					MessageBoxButtons.OKCancel,
-					MessageBoxIcon.Information);
-				if (result == DialogResult.Cancel)
+					DialogButtons.OKCancel,
+					DialogIcon.Information);
+				if (result == CustomDialogResult.Cancel)
 				{
 					e.Cancel = true;
 					return;

@@ -1,3 +1,7 @@
+using SecureServerBackup.Services;
+using SecureServerBackup.Enums;
+
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -147,7 +151,7 @@ namespace SecureServerBackup.WinForms
 			string pattern = extensionPatternTextBox.Text.Trim();
 			if (string.IsNullOrWhiteSpace(pattern))
 			{
-				MessageBox.Show(this, "Please enter a file extension pattern.", "No Pattern", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				CustomDialogService.ShowInfo(this, "Please enter a file extension pattern.", "No Pattern");
 				return;
 			}
 
@@ -158,12 +162,11 @@ namespace SecureServerBackup.WinForms
 
 			if (!pattern.Contains('.') && !pattern.Contains('?'))
 			{
-				DialogResult result = MessageBox.Show(this,
+				CustomDialogResult result = CustomDialogService.ShowQuestion(this,
 					$"The pattern '{pattern}' doesn't contain a file extension.\n\nDid you mean to add '.' (e.g., '*.tmp' instead of '*tmp')?\n\nAdd it anyway?",
-					"Confirm Pattern",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Question);
-				if (result != DialogResult.Yes)
+					"Confirm Pattern");
+
+				if (result != CustomDialogResult.Yes)
 				{
 					return;
 				}
@@ -195,12 +198,10 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			DialogResult result = MessageBox.Show(this,
+			CustomDialogResult result = CustomDialogService.ShowQuestion(this,
 				$"Remove {exclusionsListBox.SelectedIndices.Count} exclusion(s)?",
-				"Confirm Removal",
-				MessageBoxButtons.YesNo,
-				MessageBoxIcon.Question);
-			if (result != DialogResult.Yes)
+				"Confirm Removal");
+			if (result != CustomDialogResult.Yes)
 			{
 				return;
 			}
@@ -223,12 +224,10 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			DialogResult result = MessageBox.Show(this,
+			CustomDialogResult result = CustomDialogService.ShowQuestion(this,
 				$"Remove ALL {Exclusions.Count} custom exclusions?\n\nSystem exclusions will remain and cannot be removed.",
-				"Confirm Clear All",
-				MessageBoxButtons.YesNo,
-				MessageBoxIcon.Warning);
-			if (result != DialogResult.Yes)
+				"Confirm Clear All");
+			if (result != CustomDialogResult.Yes)
 			{
 				return;
 			}

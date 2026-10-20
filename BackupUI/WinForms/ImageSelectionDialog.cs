@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+
 using SecureServerBackup.Models;
+using SecureServerBackup.Services;
 
 namespace SecureServerBackup.WinForms
 {
@@ -21,10 +23,11 @@ namespace SecureServerBackup.WinForms
 			this.ShowInTaskbar = false;
 			this.StartPosition = FormStartPosition.CenterParent;
 
-			if (images == null)
-				throw new ArgumentNullException(nameof(images));
-			if (images.Count == 0)
-				throw new ArgumentException("No images provided", nameof(images));
+			if(images == null || images.Count == 0)
+			{
+				CustomDialogService.ShowError(this, "Error, No Images loaded", "Error");
+				return;	
+			}
 
 			btnAction.Text = actionLabel;
 			if (subtitleText != null)
@@ -54,11 +57,9 @@ namespace SecureServerBackup.WinForms
 			}
 			else
 			{
-				MessageBox.Show(
+				CustomDialogService.ShowInfo(this,
 					"Please select a restore point.",
-					"No Selection",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Warning);
+					"No Selection");
 			}
 		}
 

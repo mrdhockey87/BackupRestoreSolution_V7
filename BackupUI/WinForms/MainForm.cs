@@ -230,14 +230,11 @@ namespace SecureServerBackup.WinForms
 
 		private void DeleteBackupJob(BackupJob job)
 		{
-			DialogResult result = global::System.Windows.Forms.MessageBox.Show(
-				this,
-				$"Are you sure you want to delete the backup job '{job.Name}'?",
-				"Confirm Delete",
-				MessageBoxButtons.YesNo,
-				MessageBoxIcon.Question);
+			CustomDialogResult result = CustomDialogService.ShowQuestion(this, 
+					$"Are you sure you want to delete the backup job '{job.Name}'?",
+					"Confirm Delete");
 
-			if (result != DialogResult.Yes)
+			if (result != CustomDialogResult.Yes)
 			{
 				return;
 			}
@@ -249,21 +246,11 @@ namespace SecureServerBackup.WinForms
 				LoadVerifyBackups();
 				LoadRestoreBackups();
 
-				global::System.Windows.Forms.MessageBox.Show(
-					this,
-					"Backup job deleted successfully.",
-					"Success",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Information);
+				CustomDialogService.ShowInfo(this,"Backup job deleted successfully.","Success");
 			}
 			catch (Exception ex)
 			{
-				global::System.Windows.Forms.MessageBox.Show(
-					this,
-					$"Failed to delete backup job: {ex.Message}",
-					"Delete Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+				CustomDialogService.ShowInfo(this,$"Failed to delete backup job: {ex.Message}","Delete Error");
 			}
 		}
 		public void ShowActivityTab()
@@ -1121,7 +1108,7 @@ namespace SecureServerBackup.WinForms
 				.Any(row => row.Tag is AvailableBackupInfo backup && backup.BackupPath.Equals(selectedFile, StringComparison.OrdinalIgnoreCase));
 			if (exists)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "This backup is already in the list.", "Already Added", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				CustomDialogService.ShowInfo(this, "This backup is already in the list.", "Already Added");
 				return;
 			}
 
@@ -1137,14 +1124,14 @@ namespace SecureServerBackup.WinForms
 			row.Cells["Action"].Value = "Restore";
 			emptyRestoreBackupsLabel.Visible = false;
 			restoreStatusLabel.Text = "Select a backup to open the restore workflow. Restoring the boot/system drive requires the recovery environment.";
-			global::System.Windows.Forms.MessageBox.Show(this, $"Backup file added for restore: {Path.GetFileName(selectedFile)}", "Backup Added", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			CustomDialogService.ShowInfo(this, $"Backup file added for restore: {Path.GetFileName(selectedFile)}", "Backup Added");
 		}
 
 		private void OpenSelectedRestoreBackup()
 		{
 			if (restoreBackupsDataGridView.SelectedRows.Count == 0 || restoreBackupsDataGridView.SelectedRows[0].Tag is not AvailableBackupInfo backup)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Please select a valid backup to restore.", "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please select a valid backup to restore.", "Restore Error");
 				return;
 			}
 
@@ -1158,20 +1145,19 @@ namespace SecureServerBackup.WinForms
 				bool requireAlternateDestination = false;
 				if (IsBootRelatedBackup(backup))
 				{
-					DialogResult bootRestoreDecision = global::System.Windows.Forms.MessageBox.Show(
-						this,
+					CustomDialogResult bootRestoreDecision = CustomDialogService.Show(this,
 						"This backup includes the currently booted disk/volume.\n\nDo you want to restore it to a non-boot disk/volume from Windows?",
 						"Boot Drive Restore Detected",
-						MessageBoxButtons.YesNoCancel,
-						MessageBoxIcon.Warning);
+						DialogButtons.YesNoCancel,
+						DialogIcon.Warning);
 
-					if (bootRestoreDecision == DialogResult.No)
+					if (bootRestoreDecision == CustomDialogResult.No)
 					{
-						global::System.Windows.Forms.MessageBox.Show(this, "To restore the currently booted disk/volume in place, boot from the recovery disk and perform the restore from there.", "Recovery Disk Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						CustomDialogService.ShowWarning(this, "To restore the currently booted disk/volume in place, boot from the recovery disk and perform the restore from there.", "Recovery Disk Required");
 						return;
 					}
 
-					if (bootRestoreDecision != DialogResult.Yes)
+					if (bootRestoreDecision != CustomDialogResult.Yes)
 					{
 						return;
 					}
@@ -1202,7 +1188,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, $"Error opening restore workflow: {ex.Message}", "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Error opening restore workflow: {ex.Message}", "Restore Error");
 			}
 		}
 
@@ -1228,19 +1214,18 @@ namespace SecureServerBackup.WinForms
 				};
 			}
 
-			DialogResult restoreAllDecision = global::System.Windows.Forms.MessageBox.Show(
-				this,
+			CustomDialogResult restoreAllDecision = CustomDialogService.Show(this,
 				"Do you want to restore all files or volumes from the selected restore point?\n\nChoose Yes to restore everything, No to choose specific items, or Cancel to stop.",
 				"Restore Scope",
-				MessageBoxButtons.YesNoCancel,
-				MessageBoxIcon.Question);
+				DialogButtons.YesNoCancel,
+				DialogIcon.Question);
 
-			if (restoreAllDecision == DialogResult.Cancel)
+			if (restoreAllDecision == CustomDialogResult.Cancel)
 			{
 				return null;
 			}
 
-			if (restoreAllDecision == DialogResult.Yes)
+			if (restoreAllDecision == CustomDialogResult.Yes)
 			{
 				return new RestoreSelectionContext
 				{
@@ -1280,7 +1265,7 @@ namespace SecureServerBackup.WinForms
 			System.Collections.Generic.IReadOnlyList<string> items = RestoreWorkflowHelper.GetBackupItemsForRestorePoint(selectedRestorePoint);
 			if (items.Count == 0)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "No selectable files or folders were found for the selected restore point.", "Restore Items Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "No selectable files or folders were found for the selected restore point.", "Restore Items Unavailable");
 				return null;
 			}
 

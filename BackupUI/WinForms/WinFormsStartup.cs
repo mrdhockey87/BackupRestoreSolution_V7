@@ -59,11 +59,9 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(
+				CustomDialogService.ShowError(
 					$"Error during application startup: {ex.Message}",
-					"Startup Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+					"Startup Error");
 			}
 			finally
 			{
@@ -110,11 +108,9 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(
+				CustomDialogService.ShowError(
 					$"Initialization failed: {ex.Message}",
-					"Startup Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+					"Startup Error");
 			}
 			finally
 			{
@@ -234,11 +230,9 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception)
 			{
-				MessageBox.Show(
+				CustomDialogService.ShowWarning(
 					"This application requires administrator privileges to access backup services, VSS snapshots, and Hyper-V.\n\nPlease run as Administrator.",
-					"Administrator Rights Required",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Warning);
+					"Administrator Rights Required");
 			}
 
 			return false;

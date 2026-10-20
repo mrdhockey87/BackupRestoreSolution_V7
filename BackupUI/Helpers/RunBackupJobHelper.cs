@@ -1,11 +1,12 @@
-﻿using SecureServerBackup.Services;
+﻿using SecureServerBackup.Enums;
+using SecureServerBackup.Services;
 using SecureServerBackup.WinForms;
 
 using SecureServerBackupCommon;
 
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,14 +23,12 @@ namespace SecureServerBackup.Helpers
 				return;
 			}
 
-			DialogResult result = global::System.Windows.Forms.MessageBox.Show(
+			CustomDialogResult result = CustomDialogService.ShowQuestion(
 				anyForm,
 				$"Run backup job '{job.Name}' now?\n\nThe backup will run in the background service and continue even if you close this window.",
-				"Run Backup",
-				MessageBoxButtons.YesNo,
-				MessageBoxIcon.Question);
+				"Run Backup");
 
-			if (result != DialogResult.Yes)
+			if (result != CustomDialogResult.Yes)
 			{
 				return;
 			}
@@ -52,23 +51,19 @@ namespace SecureServerBackup.Helpers
 
 				BackupLogger.LogError(job.Name, "Failed to communicate with Secure Server Backup Service - backup was not started");
 
-				global::System.Windows.Forms.MessageBox.Show(
+				CustomDialogService.ShowError(
 					anyForm,
 					"Failed to start backup. The service may be busy or not responding.\n\nTry again in a few moments, or restart the Secure Server Backup Service from Windows Services.",
-					"Service Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+					"Service Error");
 			}
 			catch (Exception ex)
 			{
 				BackupLogger.LogError(job.Name, $"Error starting backup job from the Backup tab: {ex.Message}");
 
-				global::System.Windows.Forms.MessageBox.Show(
+				CustomDialogService.ShowError(
 					anyForm,
 					$"Error starting backup job: {ex.Message}",
-					"Run Backup Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+					"Run Backup Error");
 			}
 		}
 
@@ -82,14 +77,12 @@ namespace SecureServerBackup.Helpers
 				{
 					BackupLogger.LogWarning("System", $"Secure Server Backup Service is not running (Status: {service.Status})");
 
-					DialogResult result = global::System.Windows.Forms.MessageBox.Show(
+					CustomDialogResult result = CustomDialogService.ShowQuestion(
 						anyForm,
 						$"The Secure Server Backup Service is not running (Status: {service.Status}).\n\nWould you like to start it now?\n\nNote: You may need to run this application as Administrator to start the service.",
-						"Service Not Running",
-						MessageBoxButtons.YesNo,
-						MessageBoxIcon.Warning);
+						"Service Not Running");
 
-					if (result == DialogResult.Yes)
+					if (result == CustomDialogResult.Yes)
 					{
 						try
 						{
@@ -98,12 +91,10 @@ namespace SecureServerBackup.Helpers
 							service.WaitForStatus(System.ServiceProcess.ServiceControllerStatus.Running, TimeSpan.FromSeconds(10));
 							BackupLogger.LogInfo("System", "Secure Server Backup Service started successfully");
 
-							global::System.Windows.Forms.MessageBox.Show(
+							CustomDialogService.ShowInfo(
 								anyForm,
 								"Secure Server Backup Service started successfully.",
-								"Service Started",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Information);
+								"Service Started");
 
 							return true;
 						}
@@ -111,12 +102,10 @@ namespace SecureServerBackup.Helpers
 						{
 							BackupLogger.LogError("System", $"Failed to start Secure Server Backup Service: {ex.Message}");
 
-							global::System.Windows.Forms.MessageBox.Show(
+							CustomDialogService.ShowError(
 								anyForm,
 								$"Failed to start service: {ex.Message}\n\nPlease start the service manually from Windows Services (services.msc) or run this application as Administrator.",
-								"Service Start Failed",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
+								"Service Start Failed");
 
 							return false;
 						}
@@ -131,14 +120,11 @@ namespace SecureServerBackup.Helpers
 			{
 				BackupLogger.LogError("System", "Secure Server Backup Service is not installed on this system");
 
-				DialogResult result = global::System.Windows.Forms.MessageBox.Show(
-					anyForm,
+				CustomDialogResult result = CustomDialogService.ShowQuestion(anyForm,
 					"The Secure Server Backup Service is not installed on this system.\n\nThe service must be installed before backups can run.\n\nTo install the service:\n1. Open PowerShell as Administrator\n2. Navigate to the solution folder\n3. Run: .\\Install-BackupService.ps1\n\nWould you like to open the solution folder now?",
-					"Service Not Installed",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Error);
+					"Service Not Installed");
 
-				if (result == DialogResult.Yes)
+				if (result == CustomDialogResult.Yes)
 				{
 					try
 					{
@@ -160,12 +146,10 @@ namespace SecureServerBackup.Helpers
 			{
 				BackupLogger.LogError("System", $"Error checking Secure Server Backup Service status: {ex.Message}");
 
-				global::System.Windows.Forms.MessageBox.Show(
+				CustomDialogService.ShowError(
 					anyForm,
 					$"Error checking service status: {ex.Message}",
-					"Service Check Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+					"Service Check Error");
 
 				return false;
 			}

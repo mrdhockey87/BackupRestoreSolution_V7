@@ -1,6 +1,8 @@
 using SecureServerBackup.Enums;
 using SecureServerBackup.Helpers;
 using SecureServerBackup.Models;
+using SecureServerBackup.Services;
+
 using SecureServerBackup.WinForms.Controls;
 
 using System;
@@ -139,12 +141,12 @@ namespace SecureServerBackup.WinForms
 
 		private void ResetVolumes()
 		{
-			DialogResult result = MessageBox.Show(this,
+			CustomDialogResult result = CustomDialogService.Show(this,
 				"Reset all volumes to the default calculated layout?",
 				"Confirm Reset",
-				MessageBoxButtons.YesNo,
-				MessageBoxIcon.Question);
-			if (result != DialogResult.Yes)
+				DialogButtons.YesNo,
+				DialogIcon.Question);
+			if (result != CustomDialogResult.Yes)
 			{
 				return;
 			}

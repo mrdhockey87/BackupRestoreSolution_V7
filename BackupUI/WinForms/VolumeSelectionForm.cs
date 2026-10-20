@@ -1,11 +1,12 @@
-﻿using System;
+﻿using SecureServerBackup.Models;
+using SecureServerBackup.Services;
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Management;
 using System.Windows.Forms;
-
-using SecureServerBackup.Models;
 
 namespace SecureServerBackup.WinForms
 {
@@ -117,8 +118,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(this, $"Error loading volumes: {ex.Message}", "Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Error loading volumes: {ex.Message}", "Error");
 			}
 		}
 

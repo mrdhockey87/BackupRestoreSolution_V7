@@ -339,8 +339,8 @@ namespace SecureServerBackup.WinForm
 		{
 			if (string.IsNullOrWhiteSpace(txtBackupSource.Text))
 			{
-				ShowOwnedMessage("Please select a backup source.", "Validation Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+				CustomDialogService.ShowWarning(this,"Please select a backup source.", "Validation Error");
 				return;
 			}
 
@@ -350,8 +350,7 @@ namespace SecureServerBackup.WinForm
 			}
 			catch (Exception ex)
 			{
-				ShowOwnedMessage($"Error scanning backup: {ex.Message}", "Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this,$"Error scanning backup: {ex.Message}", "Error");
 			}
 		}
 
@@ -406,8 +405,7 @@ namespace SecureServerBackup.WinForm
 
 			if (error != null)
 			{
-				ShowOwnedMessage($"Error scanning backup: {error}", "Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this,$"Error scanning backup: {error}", "Error");
 				return;
 			}
 
@@ -1185,29 +1183,29 @@ namespace SecureServerBackup.WinForm
 
 			if (_restoreTargetKind == RestoreTargetKind.FileOrFolder && chkOverwrite.Checked)
 			{
-				bool confirmed = ShowStartRestoreConfirmation(
+				CustomDialogResult confirmed = CustomDialogService.ShowConfirmation(
 					"WARNING: Existing files in the target location may be overwritten when the restore starts.\n\nDo you want to continue?",
 					"Confirm File Restore");
 
-				if (!confirmed)
+				if (confirmed != CustomDialogResult.Yes)
 					return;
 			}
 			else if (_restoreTargetKind == RestoreTargetKind.Disk)
 			{
-				bool confirmed = ShowStartRestoreConfirmation(
+				CustomDialogResult confirmed = CustomDialogService.ShowConfirmation(
 					"WARNING: The selected target disk will be formatted and repartitioned. ALL DATA ON THE TARGET DISK WILL BE LOST.\n\nDo you want to continue?",
 					"Confirm Disk Format");
 
-				if (!confirmed)
+				if (confirmed != CustomDialogResult.Yes)
 					return;
 			}
 			else if (_restoreTargetKind == RestoreTargetKind.Volume)
 			{
-				bool confirmed = ShowStartRestoreConfirmation(
+				CustomDialogResult confirmed = CustomDialogService.ShowConfirmation(
 					"WARNING: The selected target volume will be formatted. ALL DATA ON THE TARGET VOLUME WILL BE LOST.\n\nDo you want to continue?",
 					"Confirm Volume Format");
 
-				if (!confirmed)
+				if (confirmed != CustomDialogResult.Yes)
 					return;
 			}
 
@@ -1240,11 +1238,9 @@ namespace SecureServerBackup.WinForm
 					return true;
 				}
 
-				ShowOwnedMessage(
+				CustomDialogService.ShowWarning(this,
 					"This disk backup does not contain the reconstruction metadata required to size partitions and rebuild the target disk. Disk restore cannot continue.",
-					"Restore Metadata Required",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Warning);
+					"Restore Metadata Required");
 				return false;
 			}
 
@@ -1566,8 +1562,7 @@ namespace SecureServerBackup.WinForm
 		{
 			if (_activeRestorePoint == null)
 			{
-				ShowOwnedMessage("Please select a restore point.", "Validation Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this,"Please select a restore point.", "Validation Error");
 				return false;
 			}
 
@@ -1576,15 +1571,13 @@ namespace SecureServerBackup.WinForm
 				string destinationPath = txtFolderRestoreDestination.Text.Trim();
 				if (string.IsNullOrWhiteSpace(destinationPath))
 				{
-					ShowOwnedMessage("Please enter a target location for the file or folder restore.", "Validation Error",
-						MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					CustomDialogService.ShowError(this,"Please enter a target location for the file or folder restore.", "Validation Error");
 					return false;
 				}
 
 				if (!IsValidRestoreTargetPath(destinationPath))
 				{
-					ShowOwnedMessage("Please enter a valid target path. Local and network paths are supported.", "Validation Error",
-						MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					CustomDialogService.ShowError(this,"Please enter a valid target path. Local and network paths are supported.", "Validation Error");
 					return false;
 				}
 
@@ -1596,10 +1589,8 @@ namespace SecureServerBackup.WinForm
 					if (!string.IsNullOrWhiteSpace(destinationRoot) &&
 						string.Equals(destinationRoot, systemRoot, StringComparison.OrdinalIgnoreCase))
 					{
-						ShowOwnedMessage("Please select a restore destination that is not on the currently booted drive.",
-							"Validation Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Warning);
+						CustomDialogService.ShowError(this,"Please select a restore destination that is not on the currently booted drive.",
+							"Validation Error");
 						return false;
 					}
 				}
@@ -1609,10 +1600,9 @@ namespace SecureServerBackup.WinForm
 
 			if (_restoreTargetKind == RestoreTargetKind.Disk && !_selectedTargetDiskNumber.HasValue)
 			{
-				ShowOwnedMessage("Please select the target disk to restore to.", "Validation Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowError(this,"Please select the target disk to restore to.", "Validation Error");
 				return false;
-			}
+			}	
 
 			if (_restoreTargetKind == RestoreTargetKind.HyperVVm)
 			{
@@ -1621,8 +1611,7 @@ namespace SecureServerBackup.WinForm
 				{
 					if (cmbHyperVVmToReplace.SelectedItem == null || string.IsNullOrWhiteSpace(cmbHyperVVmToReplace.SelectedItem.ToString()))
 					{
-						ShowOwnedMessage("Please select a non-running Hyper-V virtual machine to replace.", "Validation Error",
-							MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						CustomDialogService.ShowError(this,"Please select a non-running Hyper-V virtual machine to replace.", "Validation Error");
 						return false;
 					}
 				}
@@ -1630,24 +1619,21 @@ namespace SecureServerBackup.WinForm
 				{
 					if (string.IsNullOrWhiteSpace(txtHyperVRestoreDirectory.Text))
 					{
-						ShowOwnedMessage("Please select an empty directory to restore the Hyper-V virtual machine into.", "Validation Error",
-							MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						CustomDialogService.ShowError(this,"Please select an empty directory to restore the Hyper-V virtual machine into.", "Validation Error");
 						return false;
 					}
 
 					string restoreDir = txtHyperVRestoreDirectory.Text.Trim();
 					if (Directory.Exists(restoreDir) && Directory.EnumerateFileSystemEntries(restoreDir).Any())
 					{
-						ShowOwnedMessage("The selected restore directory is not empty. Please choose an empty directory.", "Validation Error",
-							MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						CustomDialogService.ShowError(this,"The selected restore directory is not empty. Please choose an empty directory.", "Validation Error");
 						return false;
 					}
 				}
 
 				if (string.IsNullOrWhiteSpace(txtHyperVVmName.Text))
 				{
-					ShowOwnedMessage("Please enter a virtual machine name for the restored VM.", "Validation Error",
-						MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					CustomDialogService.ShowError(this,"Please enter a virtual machine name for the restored VM.", "Validation Error");
 					return false;
 				}
 			}
@@ -1656,8 +1642,7 @@ namespace SecureServerBackup.WinForm
 			{
 				if (string.IsNullOrWhiteSpace(txtHyperVVirtualDiskPath.Text))
 				{
-					ShowOwnedMessage("Please select the Hyper-V virtual disk file to create or update.", "Validation Error",
-						MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					CustomDialogService.ShowError(this,"Please select the Hyper-V virtual disk file to create or update.", "Validation Error");
 					return false;
 				}
 
@@ -1666,8 +1651,7 @@ namespace SecureServerBackup.WinForm
 					string selectedVm = cmbExistingHyperVVm.SelectedItem?.ToString() ?? string.Empty;
 					if (string.IsNullOrWhiteSpace(selectedVm))
 					{
-						ShowOwnedMessage("Please select the existing Hyper-V virtual machine that should receive the restored virtual disk.", "Validation Error",
-							MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						CustomDialogService.ShowError(this,"Please select the existing Hyper-V virtual machine that should receive the restored virtual disk.", "Validation Error");
 						return false;
 					}
 				}
@@ -1676,15 +1660,13 @@ namespace SecureServerBackup.WinForm
 				{
 					if (string.IsNullOrWhiteSpace(txtNewHyperVVmName.Text))
 					{
-						ShowOwnedMessage("Please enter the name for the new Hyper-V virtual machine.", "Validation Error",
-							MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						CustomDialogService.ShowError(this,"Please enter the name for the new Hyper-V virtual machine.", "Validation Error");
 						return false;
 					}
 
 					if (string.IsNullOrWhiteSpace(txtNewHyperVVmPath.Text))
 					{
-						ShowOwnedMessage("Please select the storage folder for the new Hyper-V virtual machine.", "Validation Error",
-							MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						CustomDialogService.ShowError(this,"Please select the storage folder for the new Hyper-V virtual machine.", "Validation Error");
 						return false;
 					}
 				}
@@ -1692,15 +1674,13 @@ namespace SecureServerBackup.WinForm
 
 			if (_restoreTargetKind == RestoreTargetKind.Volume && string.IsNullOrWhiteSpace(_selectedTargetPath))
 			{
-				ShowOwnedMessage("Please select the target disk or volume to restore to.", "Validation Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowError(this,"Please select the target disk or volume to restore to.", "Validation Error");
 				return false;
 			}
 
 			if (_isHyperVBackupPoint && (_restoreTargetKind == RestoreTargetKind.Disk || _restoreTargetKind == RestoreTargetKind.Volume) && _activeRestorePoint != null && HyperVRestorePointHelper.FindPrimaryVirtualDisk(_activeRestorePoint.FilePath) == null)
 			{
-				ShowOwnedMessage("The selected Hyper-V backup point does not contain a guest VHD or VHDX file that can be restored to a disk or volume target.", "Validation Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowError(this,"The selected Hyper-V backup point does not contain a guest VHD or VHDX file that can be restored to a disk or volume target.", "Validation Error");
 				return false;
 			}
 
@@ -1711,14 +1691,6 @@ namespace SecureServerBackup.WinForm
 
 			return true;
 		}
-
-		private bool ShowStartRestoreConfirmation(string message, string title)
-		{
-			// Replace with your WinForms CustomDialog if you have one.
-			return MessageBox.Show(this, message, title, MessageBoxButtons.OKCancel, MessageBoxIcon.Warning,
-				MessageBoxDefaultButton.Button2) == DialogResult.OK;
-		}
-
 		/// <summary>
 		/// Handles Hyper-V system restore: either replaces an existing non-running VM or
 		/// imports the backup into an empty directory as a new VM.
@@ -2148,11 +2120,9 @@ namespace SecureServerBackup.WinForm
 					}
 					catch (Exception ex)
 					{
-						ShowOwnedMessage(
+						CustomDialogService.ShowError(this,
 							$"Error loading restore targets: {ex.Message}",
-							"Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
+							"Error");
 					}
 				});
 			}
@@ -2235,16 +2205,14 @@ namespace SecureServerBackup.WinForm
 
 				if (isRunning)
 				{
-					var result = ShowOwnedMessage(
+					CustomDialogResult result = CustomDialogService.ShowConfirmation(
 						$"The virtual machine '{vmName}' is currently running.\n\n" +
 						"It must be shut down before the restore can proceed. " +
 						"All unsaved data inside the VM will be lost.\n\n" +
 						"Do you want to shut it down now and continue?",
-						"Virtual Machine Running",
-						MessageBoxButtons.OKCancel,
-						MessageBoxIcon.Warning);
+						"Virtual Machine Running");
 
-					if (result != DialogResult.OK)
+					if (result != CustomDialogResult.Yes)
 					{
 						UncheckAllRestoreTargetItems(treeViewRestoreTarget.Nodes);
 						_selectedTargetPath = null;
@@ -2269,11 +2237,9 @@ namespace SecureServerBackup.WinForm
 					}
 					catch (Exception ex)
 					{
-						ShowOwnedMessage(
+						CustomDialogService.ShowError(
 							$"Failed to shut down '{vmName}': {ex.Message}\n\nPlease stop the VM manually and try again.",
-							"Shutdown Failed",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
+							"Shutdown Failed");
 						UncheckAllRestoreTargetItems(treeViewRestoreTarget.Nodes);
 						_selectedTargetPath = null;
 						_selectedTargetDiskNumber = null;
@@ -2314,11 +2280,7 @@ namespace SecureServerBackup.WinForm
 				UncheckAllRestoreTargetItems(node.Nodes, except);
 			}
 		}
-
 		#endregion
-
-		#region Cancel / messages
-
 		private void Cancel_Click(object? sender, EventArgs e)
 		{
 			DialogResult = DialogResult.Cancel;
@@ -2327,23 +2289,6 @@ namespace SecureServerBackup.WinForm
 				Close();
 			}
 		}
-
-		private DialogResult ShowOwnedMessage(
-			string messageBoxText,
-			string caption,
-			MessageBoxButtons buttons,
-			MessageBoxIcon icon)
-		{
-			if (InvokeRequired)
-			{
-				return (DialogResult)Invoke(new Func<DialogResult>(() =>
-					MessageBox.Show(this, messageBoxText, caption, buttons, icon)));
-			}
-
-			return MessageBox.Show(this, messageBoxText, caption, buttons, icon);
-		}
-
-		#endregion
 		private static DateTime GetEntryTimestamp(string path)
 		{
 			return File.Exists(path)

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SecureServerBackup.Services;
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
@@ -109,27 +111,23 @@ namespace SecureServerBackup.WinForm
 
 		private static string BrowseForFolder(string currentPath)
 		{
-			using (var dialog = new FolderBrowserDialog())
-			{
-				if (Directory.Exists(currentPath))
-					dialog.SelectedPath = currentPath;
+			using var dialog = new FolderBrowserDialog();
+			if (Directory.Exists(currentPath))
+				dialog.SelectedPath = currentPath;
 
-				return dialog.ShowDialog() == DialogResult.OK
-					? dialog.SelectedPath
-					: currentPath;
-			}
+			return dialog.ShowDialog() == DialogResult.OK
+				? dialog.SelectedPath
+				: currentPath;
 		}
 
 		private void BrowseBackup_Click(object sender, EventArgs e)
 		{
-			using (var dialog = new OpenFileDialog())
-			{
-				dialog.Title = "Select backup file";
-				dialog.Filter = "All files (*.*)|*.*";
+			using var dialog = new OpenFileDialog();
+			dialog.Title = "Select backup file";
+			dialog.Filter = "All files (*.*)|*.*";
 
-				if (dialog.ShowDialog(this) == DialogResult.OK)
-					txtBackupSource.Text = dialog.FileName;
-			}
+			if (dialog.ShowDialog(this) == DialogResult.OK)
+				txtBackupSource.Text = dialog.FileName;
 
 			// A folder path can also be entered directly in txtBackupSource.
 		}
@@ -138,14 +136,14 @@ namespace SecureServerBackup.WinForm
 		{
 			if (string.IsNullOrWhiteSpace(txtBackupSource.Text))
 			{
-				MessageBox.Show(this, "Select a backup source first.");
+				CustomDialogService.ShowError(this, "Select a backup source first.", "Validation Error!");
 				return;
 			}
 
 			if (BackupLoadRequested == null)
 			{
-				MessageBox.Show(this,
-					"Connect BackupLoadRequested to your backup-loading code.");
+				CustomDialogService.ShowError(this,
+					"Connection Error to your backup-loading code.", "Backup Load Requested!");
 				return;
 			}
 
@@ -156,7 +154,7 @@ namespace SecureServerBackup.WinForm
 		{
 			if (lstBackupDates.SelectedItems.Count == 0)
 			{
-				MessageBox.Show(this, "Select a backup date first.");
+				CustomDialogService.ShowInfo(this, "Select a backup date first.", "Validation Error");
 				return;
 			}
 
@@ -189,7 +187,7 @@ namespace SecureServerBackup.WinForm
 			{
 				if (!nodes.MoveNext())
 				{
-					MessageBox.Show(this, "Check at least one item to restore.");
+					CustomDialogService.ShowInfo(this, "Check at least one item to restore.", "Validation Error");
 					return;
 				}
 			}
@@ -225,7 +223,7 @@ namespace SecureServerBackup.WinForm
 			if (rbNewLocation.Checked &&
 				string.IsNullOrWhiteSpace(txtRestoreDestination.Text))
 			{
-				MessageBox.Show(this, "Select a new restore path.");
+				CustomDialogService.ShowInfo(this, "Select a new restore path.", "Select Path");
 				return;
 			}
 
@@ -233,14 +231,14 @@ namespace SecureServerBackup.WinForm
 				(string.IsNullOrWhiteSpace(txtVMName.Text) ||
 				 string.IsNullOrWhiteSpace(txtVMStorage.Text)))
 			{
-				MessageBox.Show(this, "Enter a VM name and storage path.");
+				CustomDialogService.ShowInfo(this, "Enter a VM name and storage path.", "Enter VM Details");
 				return;
 			}
 
 			if (RestoreRequested == null)
 			{
-				MessageBox.Show(this,
-					"Connect RestoreRequested to your restore code.");
+				CustomDialogService.ShowInfo(this,
+					"Connect RestoreRequested to your restore code.", "Restore Requested");
 				return;
 			}
 

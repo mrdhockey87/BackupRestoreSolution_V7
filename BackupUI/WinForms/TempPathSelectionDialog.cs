@@ -1,4 +1,7 @@
-﻿using System;
+﻿using SecureServerBackup.Services;
+using SecureServerBackup.Enums;
+
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Forms;
@@ -152,10 +155,8 @@ namespace SecureServerBackup.WinForms
 			// Validate path
 			if (string.IsNullOrEmpty(SelectedTempPath))
 			{
-				MessageBox.Show(this, "Please select a temporary path.",
-					"No Path Selected",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please select a temporary path.",
+					"No Path Selected");
 				return;
 			}
 			// Check if directory exists or can be created
@@ -163,13 +164,12 @@ namespace SecureServerBackup.WinForms
 			{
 				if (!Directory.Exists(SelectedTempPath))
 				{
-					var result = MessageBox.Show(
-						this,
+					var result = CustomDialogService.Show(this,
 						$"Directory does not exist:\n{SelectedTempPath}\n\nCreate it now?",
 						"Create Directory",
-						MessageBoxButtons.YesNo,
-						MessageBoxIcon.Question);
-					if (result == DialogResult.Yes)
+						DialogButtons.YesNo,
+						DialogIcon.Question);
+					if (result == CustomDialogResult.Yes)
 					{
 						Directory.CreateDirectory(SelectedTempPath);
 						System.Diagnostics.Debug.WriteLine($"[TempPathDialog] Created directory: {SelectedTempPath}");
@@ -193,12 +193,10 @@ namespace SecureServerBackup.WinForms
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine($"[TempPathDialog] Error during validation: {ex.Message}");
-				MessageBox.Show(
+				CustomDialogService.ShowError(
 					this,
 					$"Cannot use selected path:\n{ex.Message}\n\nPlease select a different location.",
-					"Invalid Path",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+					"Invalid Path");
 			}
 		}
 		private void Cancel_Click(object sender, EventArgs e)

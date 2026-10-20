@@ -1258,7 +1258,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, $"Failed to open exclusions management.\n\n{ex.Message}", "Exclusions Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Failed to open exclusions management.\n\n{ex.Message}", "Exclusions Error");
 			}
 		}
 
@@ -3222,12 +3222,9 @@ namespace SecureServerBackup.WinForms
 				if (!started)
 				{
 					BackupLogger.LogError(job.Name, "Failed to communicate with Secure Server Backup Service - backup was not started");
-					global::System.Windows.Forms.MessageBox.Show(
-						this,
+					CustomDialogService.ShowError(this,
 						"Failed to start backup. The service may be busy or not responding.\n\nTry again in a few moments, or restart the Secure Server Backup Service from Windows Services.",
-						"Service Error",
-						global::System.Windows.Forms.MessageBoxButtons.OK,
-						global::System.Windows.Forms.MessageBoxIcon.Error);
+						"Service Error");
 					return;
 				}
 
@@ -3239,7 +3236,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, $"Failed to start backup now.\n\n{ex.Message}", "Start Backup Failed", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Failed to start backup now.\n\n{ex.Message}", "Start Backup Failed");
 			}
 			finally
 			{
@@ -3294,12 +3291,9 @@ namespace SecureServerBackup.WinForms
 
 		private void OpenAdvancedEditor_Click(object? sender, EventArgs e)
 		{
-			global::System.Windows.Forms.MessageBox.Show(
-				this,
+			CustomDialogService.ShowInfo(this,
 				"All backup types are now expected to be configured directly from this WinForms screen. If something is still missing here, it should be implemented on this form instead of using a separate editor.",
-				"WinForms Backup Editor",
-				global::System.Windows.Forms.MessageBoxButtons.OK,
-				global::System.Windows.Forms.MessageBoxIcon.Information);
+				"WinForms Backup Editor");
 		}
 
 		private void SaveJob_Click(object? sender, EventArgs e)
@@ -3317,7 +3311,7 @@ namespace SecureServerBackup.WinForms
 			}
 			catch (Exception ex)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, $"ERROR: Failed to save backup job!\n\n{ex.Message}", "Save Failed", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"ERROR: Failed to save backup job!\n\n{ex.Message}", "Save Failed");
 			}
 		}
 
@@ -3346,12 +3340,9 @@ namespace SecureServerBackup.WinForms
 
 				if (showSuccessMessage)
 				{
-					global::System.Windows.Forms.MessageBox.Show(
-						this,
+					CustomDialogService.ShowInfo(this,
 						$"Backup job '{job.Name}' updated successfully!\n\nThe current WinForms selections and settings were saved with the job.",
-						"Success",
-						global::System.Windows.Forms.MessageBoxButtons.OK,
-						global::System.Windows.Forms.MessageBoxIcon.Information);
+						"Success");
 				}
 			}
 			else
@@ -3361,12 +3352,9 @@ namespace SecureServerBackup.WinForms
 
 				if (showSuccessMessage)
 				{
-					global::System.Windows.Forms.MessageBox.Show(
-						this,
+					CustomDialogService.ShowInfo(this,
 						$"Backup job '{job.Name}' created successfully!\n\nThe current WinForms selections and settings were saved with the job.",
-						"Success",
-						global::System.Windows.Forms.MessageBoxButtons.OK,
-						global::System.Windows.Forms.MessageBoxIcon.Information);
+						"Success");
 				}
 			}
 
@@ -3389,7 +3377,7 @@ namespace SecureServerBackup.WinForms
 					if (!success)
 					{
 						BackupLogger.LogServiceError($"Failed to install service: {message}");
-						global::System.Windows.Forms.MessageBox.Show(this, $"Failed to install service:\n\n{message}\n\nPlease ensure the application has Administrator privileges.", "Installation Failed", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Error);
+						CustomDialogService.ShowError(this, $"Failed to install service:\n\n{message}\n\nPlease ensure the application has Administrator privileges.", "Installation Failed");
 						return false;
 					}
 
@@ -3405,7 +3393,7 @@ namespace SecureServerBackup.WinForms
 					if (!success)
 					{
 						BackupLogger.LogServiceError($"Failed to start service: {message}");
-						global::System.Windows.Forms.MessageBox.Show(this, $"Failed to start service:\n\n{message}", "Start Failed", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Error);
+						CustomDialogService.ShowError(this, $"Failed to start service:\n\n{message}", "Start Failed");
 						return false;
 					}
 
@@ -3417,7 +3405,7 @@ namespace SecureServerBackup.WinForms
 			catch (Exception ex)
 			{
 				BackupLogger.LogServiceError($"Error checking service status: {ex.Message}");
-				global::System.Windows.Forms.MessageBox.Show(this, $"Error checking service status:\n\n{ex.Message}", "Service Check Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Error);
+				CustomDialogService.ShowError(this, $"Error checking service status:\n\n{ex.Message}", "Service Check Error");
 				return false;
 			}
 		}
@@ -3426,13 +3414,13 @@ namespace SecureServerBackup.WinForms
 		{
 			if (string.IsNullOrWhiteSpace(backupNameTextBox.Text))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Please enter a backup name.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please enter a backup name.", "Validation Error");
 				return false;
 			}
 
 			if (string.IsNullOrWhiteSpace(destinationTextBox.Text))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Please select a backup destination.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please select a backup destination.", "Validation Error");
 				return false;
 			}
 
@@ -3442,68 +3430,68 @@ namespace SecureServerBackup.WinForms
 
 			if (IsNativeSourceSelectionSupportedForCurrentState() && selectedSourceState.SourcePaths.Count == 0 && selectedSourceState.HyperVMachines.Count == 0)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Please select at least one backup source.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please select at least one backup source.", "Validation Error");
 				return false;
 			}
 
 			bool allowsDiskPlusHyperV = backupType == BackupType.CloneHyperVSystem;
 			if (!allowsDiskPlusHyperV && selectedSourceState.HasHyperVSelection && (selectedSourceState.HasDiskSelection || selectedSourceState.HasVolumeSelection || selectedSourceState.HasFileSystemSelection))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Hyper-V system selections cannot be combined with disk, volume, file, or network selections in the same backup job.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Hyper-V system selections cannot be combined with disk, volume, file, or network selections in the same backup job.", "Validation Error");
 				return false;
 			}
 
 			if (backupType == BackupType.SelectedFilesAndFolders && (selectedSourceState.HasDiskSelection || selectedSourceState.HasVolumeSelection || selectedSourceState.HasHyperVSelection))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Selected Files & Folder backups only support file, folder, and network-share sources.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Selected Files & Folder backups only support file, folder, and network-share sources.", "Validation Error");
 				return false;
 			}
 
 			if (backupType == BackupType.CloneToVirtualDisk && (selectedSourceState.HasFileSystemSelection || selectedSourceState.HasHyperVSelection || (!selectedSourceState.HasDiskSelection && !selectedSourceState.HasVolumeSelection)))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Clone to Virtual Disk requires at least one disk or volume source and does not support file, network, or Hyper-V system selections.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Clone to Virtual Disk requires at least one disk or volume source and does not support file, network, or Hyper-V system selections.", "Validation Error");
 				return false;
 			}
 
 			if (backupType == BackupType.CloneHyperVSystem && selectedSourceState.HasVolumeSelection)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Clone Hyper-V System supports either a Hyper-V system selection or a disk selection. Volume selections are not supported for this backup type.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Clone Hyper-V System supports either a Hyper-V system selection or a disk selection. Volume selections are not supported for this backup type.", "Validation Error");
 				return false;
 			}
 
 			if (backupType == BackupType.CloneHyperVSystem && selectedSourceState.HasFileSystemSelection)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Clone Hyper-V System does not support file or network selections. Choose a Hyper-V system or a disk source.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Clone Hyper-V System does not support file or network selections. Choose a Hyper-V system or a disk source.", "Validation Error");
 				return false;
 			}
 
 			if (backupType == BackupType.CloneHyperVSystem && !selectedSourceState.HasHyperVSelection && !selectedSourceState.HasDiskSelection)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Clone Hyper-V System requires either a selected Hyper-V system or a selected disk.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Clone Hyper-V System requires either a selected Hyper-V system or a selected disk.", "Validation Error");
 				return false;
 			}
 
 			if (backupType == BackupType.ExportHyperVSystem && (selectedSourceState.HasDiskSelection || selectedSourceState.HasVolumeSelection || selectedSourceState.HasFileSystemSelection || !selectedSourceState.HasHyperVSelection))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Export Hyper-V System requires a selected Hyper-V system and does not support disk, volume, file, or network selections.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Export Hyper-V System requires a selected Hyper-V system and does not support disk, volume, file, or network selections.", "Validation Error");
 				return false;
 			}
 
 			if (backupType == BackupType.CloneHyperVSystem && renameHyperVSystemCheckBox.Checked && !IsValidWindowsComputerName(renameHyperVSystemNameTextBox.Text.Trim()))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Please enter a valid new Hyper-V system name. Use letters, numbers, or hyphens, and do not start or end the name with a hyphen.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please enter a valid new Hyper-V system name. Use letters, numbers, or hyphens, and do not start or end the name with a hyphen.", "Validation Error");
 				return false;
 			}
 
 			if (enableScheduleCheckBox.Checked && !TryGetScheduledTime(out _, out _))
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Please enter a valid scheduled time. Minutes must be between 00 and 59.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please enter a valid scheduled time. Minutes must be between 00 and 59.", "Validation Error");
 				return false;
 			}
 
 			if (!int.TryParse(retainCountTextBox.Text, out int retainCount) || retainCount < 1)
 			{
-				global::System.Windows.Forms.MessageBox.Show(this, "Please enter a full backup retention value of 1 or greater.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please enter a full backup retention value of 1 or greater.", "Validation Error");
 				return false;
 			}
 
@@ -3511,13 +3499,13 @@ namespace SecureServerBackup.WinForms
 			{
 				if (string.IsNullOrWhiteSpace(encryptionPasswordTextBox.Text))
 				{
-					global::System.Windows.Forms.MessageBox.Show(this, "Please enter a password for backup encryption.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+					CustomDialogService.ShowWarning(this, "Please enter a password for backup encryption.", "Validation Error");
 					return false;
 				}
 
 				if (!string.Equals(encryptionPasswordTextBox.Text, verifyEncryptionPasswordTextBox.Text, StringComparison.Ordinal))
 				{
-					global::System.Windows.Forms.MessageBox.Show(this, "The encryption passwords do not match.", "Validation Error", global::System.Windows.Forms.MessageBoxButtons.OK, global::System.Windows.Forms.MessageBoxIcon.Warning);
+					CustomDialogService.ShowWarning(this, "The encryption passwords do not match.", "Validation Error");
 					return false;
 				}
 			}

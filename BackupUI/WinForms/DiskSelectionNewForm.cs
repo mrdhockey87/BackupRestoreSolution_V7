@@ -6,6 +6,7 @@ using System.Management;
 using System.Windows.Forms;
 
 using SecureServerBackup.Helpers;
+using SecureServerBackup.Services;
 
 namespace SecureServerBackup.WinForms
 {
@@ -42,8 +43,7 @@ namespace SecureServerBackup.WinForms
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"Error enumerating disks: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomDialogService.ShowError(this, $"Error enumerating disks: {ex.Message}", "Error");
             }
         }
 
@@ -73,8 +73,7 @@ namespace SecureServerBackup.WinForms
         {
             if (lvDisks.SelectedItems.Count == 0)
             {
-                MessageBox.Show(this, "Select a disk first.", "No Disk Selected",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomDialogService.ShowError(this, "Select a disk first.", "No Disk Selected");
                 return;
             }
 

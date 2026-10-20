@@ -1,5 +1,7 @@
 ﻿using SecureServerBackupCommon;
+
 using SecureServerBackup.Models;
+using SecureServerBackup.Services;
 
 using System;
 using System.Collections.Generic;
@@ -26,7 +28,7 @@ namespace SecureServerBackup.Helpers
 					Dictionary<string, DriveTreeItem> systemLookup = new(StringComparer.OrdinalIgnoreCase);
 
 					var vmBuffer = new StringBuilder(4096);
-					var vmResult = BackupEngineInterop.EnumerateHyperVMachines(vmBuffer, vmBuffer.Capacity);
+					var vmResult = SecureServerBackupCommon.BackupEngineInterop.EnumerateHyperVMachines(vmBuffer, vmBuffer.Capacity);
 					if (vmResult == 0)
 					{
 						foreach (string vm in vmBuffer.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries))
@@ -141,7 +143,7 @@ namespace SecureServerBackup.Helpers
 		public static IReadOnlyList<HyperVVirtualDiskInfo> EnumerateHyperVVirtualDiskInfos()
 		{
 			var diskBuffer = new StringBuilder(32768);
-			var diskResult = BackupEngineInterop.EnumerateHyperVVirtualMachineDisks(diskBuffer, diskBuffer.Capacity);
+			var diskResult = SecureServerBackupCommon.BackupEngineInterop.EnumerateHyperVVirtualMachineDisks(diskBuffer, diskBuffer.Capacity);
 			IReadOnlyList<HyperVVirtualDiskInfo> disks = HyperVBackupTreeHelper.ParseVirtualDiskEnumeration(diskBuffer.ToString());
 			if (disks.Count > 0)
 			{
@@ -149,7 +151,7 @@ namespace SecureServerBackup.Helpers
 			}
 
 			var error = new StringBuilder(1024);
-			BackupEngineInterop.GetLastErrorMessage(error, error.Capacity);
+			SecureServerBackupCommon.BackupEngineInterop.GetLastErrorMessage(error, error.Capacity);
 			Debug.WriteLine($"EnumerateHyperVVirtualMachineDisks returned {diskResult}: {error}");
 
 			disks = EnumerateHyperVVirtualDiskInfosFromWmi();

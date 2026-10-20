@@ -1,10 +1,13 @@
+using SecureServerBackup.Enums;
+using SecureServerBackup.Models;
+using SecureServerBackup.Services;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using SecureServerBackup.Models;
 
 namespace SecureServerBackup.WinForms
 {
@@ -53,7 +56,7 @@ namespace SecureServerBackup.WinForms
 
 			if (selectedItems.Count == 0)
 			{
-				MessageBox.Show(this, "Please select at least one file or folder to continue.", "Restore Items Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please select at least one file or folder to continue.", "Restore Items Required");
 				return;
 			}
 

@@ -1,10 +1,13 @@
+using SecureServerBackup.Enums;
+using SecureServerBackup.Services;
+
+using SecureServerBackupCommon;
+
 using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SecureServerBackup.Services;
-using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
@@ -109,13 +112,13 @@ namespace SecureServerBackup.WinForms
 
 		private async Task AbortBackupAsync()
 		{
-			DialogResult result = MessageBox.Show(this,
+			CustomDialogResult result = CustomDialogService.Show(this,
 				$"Are you sure you want to abort the backup '{jobName}'?{Environment.NewLine}{Environment.NewLine}This cannot be undone.",
 				"Abort Backup",
-				MessageBoxButtons.YesNo,
-				MessageBoxIcon.Warning);
+				DialogButtons.YesNo,
+				DialogIcon.Warning);
 
-			if (result != DialogResult.Yes)
+			if (result != CustomDialogResult.Yes)
 			{
 				return;
 			}
@@ -129,20 +132,16 @@ namespace SecureServerBackup.WinForms
 			{
 				isCompleted = true;
 				progressTimer.Stop();
-				MessageBox.Show(this,
+				CustomDialogService.ShowWarning(this,
 					"Backup abort has been requested.\n\nIMPORTANT: The backup process may continue running in the background for a short time while it safely stops the current operation.\n\nThe backup file may be incomplete and should be deleted.",
-					"Backup Abort Requested",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Warning);
+					"Backup Abort Requested");
 				Close();
 				return;
 			}
 
-			MessageBox.Show(this,
+			CustomDialogService.ShowWarning(this,
 				"Failed to send abort request. Please try again or check if the service is running.",
-				"Abort Failed",
-				MessageBoxButtons.OK,
-				MessageBoxIcon.Error);
+				"Abort Failed");
 			abortButton.Enabled = true;
 			abortRequested = false;
 		}
@@ -151,12 +150,12 @@ namespace SecureServerBackup.WinForms
 		{
 			if (!isCompleted && !abortRequested)
 			{
-				DialogResult result = MessageBox.Show(this,
+				CustomDialogResult result = CustomDialogService.Show(this,
 					"Backup is still running in the background.\n\nClosing this window will not stop the backup.\n\nYou can reopen this window from the main window to view progress again.",
 					"Backup Still Running",
-					MessageBoxButtons.OKCancel,
-					MessageBoxIcon.Information);
-				if (result == DialogResult.Cancel)
+					DialogButtons.OKCancel,
+					DialogIcon.Information);
+				if (result == CustomDialogResult.Cancel)
 				{
 					e.Cancel = true;
 					return;

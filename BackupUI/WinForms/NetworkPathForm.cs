@@ -1,4 +1,7 @@
-﻿using System;
+﻿using SecureServerBackup.Enums;
+using SecureServerBackup.Services;
+
+using System;
 using System.IO;
 using System.Windows.Forms;
 
@@ -43,16 +46,14 @@ namespace SecureServerBackup.WinForms
 			// Validate UNC path format
 			if (string.IsNullOrWhiteSpace(path))
 			{
-				MessageBox.Show("Please enter a network path.", "Validation Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning("Please enter a network path.", "Validation Error");
 				return;
 			}
 
 			if (!path.StartsWith("\\\\"))
 			{
-				MessageBox.Show("Network path must start with \\\\ (UNC format).\n\nExample: \\\\server\\share",
-					"Validation Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning("Network path must start with \\\\ (UNC format).\n\nExample: \\\\server\\share",
+					"Validation Error");
 				return;
 			}
 
@@ -61,26 +62,38 @@ namespace SecureServerBackup.WinForms
 			{
 				if (!Directory.Exists(path))
 				{
-					var result = MessageBox.Show(
+					CustomDialogResult result = CustomDialogService.ShowQuestion(this,
 						$"Cannot access network path:\n{path}\n\nThe path may not exist or you may not have permissions.\n\nAdd anyway?",
-						"Network Path Not Accessible",
-						MessageBoxButtons.YesNo,
-						MessageBoxIcon.Warning);
+						"Network Path Not Accessible");
 
-					if (result != DialogResult.Yes)
+					if (result != CustomDialogResult.Yes)
+					{
 						return;
+					}
+					else
+					{
+						DialogResult = DialogResult.Cancel;
+						Close();
+					}
 				}
 			}
 			catch (Exception ex)
 			{
-				var result = MessageBox.Show(
+				CustomDialogResult result = CustomDialogService.Show(this,
 					$"Error checking network path:\n{ex.Message}\n\nAdd anyway?",
 					"Network Path Error",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Warning);
+					DialogButtons.YesNo,
+					DialogIcon.Warning);
 
-				if (result != DialogResult.Yes)
+				if (result != CustomDialogResult.Yes)
+				{
 					return;
+				}
+				else
+				{
+					DialogResult = DialogResult.Cancel;
+					Close();
+				}
 			}
 
 			NetworkPath = path;

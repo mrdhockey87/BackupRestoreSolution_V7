@@ -1,12 +1,13 @@
+using SecureServerBackup.Helpers;
+using SecureServerBackup.Models;
+using SecureServerBackup.Services;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-
-using SecureServerBackup.Helpers;
-using SecureServerBackup.Models;
 #nullable enable
 namespace SecureServerBackup.WinForms
 {
@@ -56,7 +57,7 @@ namespace SecureServerBackup.WinForms
 		{
 			if (restorePointsListBox.SelectedItem is not RestorePoint selectedRestorePoint)
 			{
-				MessageBox.Show(this, "Please select a restore point to continue.", "Restore Point Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please select a restore point to continue.", "Restore Point Required");
 				return;
 			}
 

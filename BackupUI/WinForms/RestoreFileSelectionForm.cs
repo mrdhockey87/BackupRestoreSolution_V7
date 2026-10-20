@@ -114,7 +114,7 @@ namespace SecureServerBackup.WinForms
 			string destinationPath = destinationTextBox.Text.Trim();
 			if (!IsValidRestoreTargetPath(destinationPath))
 			{
-				MessageBox.Show(this, "Please enter a valid target path. Local and network paths are supported.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				CustomDialogService.ShowWarning(this, "Please enter a valid target path. Local and network paths are supported.", "Validation Error");
 				return;
 			}
 
@@ -124,19 +124,19 @@ namespace SecureServerBackup.WinForms
 				string systemRoot = Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\') ?? string.Empty;
 				if (!string.IsNullOrWhiteSpace(destinationRoot) && string.Equals(destinationRoot, systemRoot, StringComparison.OrdinalIgnoreCase))
 				{
-					MessageBox.Show(this, "Please select a restore destination that is not on the currently booted drive.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					CustomDialogService.ShowWarning(this, "Please select a restore destination that is not on the currently booted drive.", "Validation Error");
 					return;
 				}
 			}
 
 			if (overwriteCheckBox.Checked)
 			{
-				DialogResult overwriteDecision = MessageBox.Show(this,
+				CustomDialogResult overwriteDecision = CustomDialogService.Show(this,
 					"WARNING: Existing files in the target location may be overwritten when the restore starts.\n\nDo you want to continue?",
 					"Confirm File Restore",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Warning);
-				if (overwriteDecision != DialogResult.Yes)
+					DialogButtons.YesNo,
+					DialogIcon.Warning);	
+				if (overwriteDecision != CustomDialogResult.Yes)
 				{
 					return;
 				}
