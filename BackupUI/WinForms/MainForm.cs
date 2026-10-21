@@ -1138,10 +1138,13 @@ namespace SecureServerBackup.WinForms
 			OpenRestoreWorkflow(backup);
 		}
 
-		private void OpenRestoreWorkflow(AvailableBackupInfo backup)
+		private async void OpenRestoreWorkflow(AvailableBackupInfo backup)
 		{
 			try
 			{
+				CheckBackupServiceHelper cbsh = new(this);
+				bool serviceOk = await cbsh.CheckBackupServiceAsync();
+				if (!serviceOk)  return;
 				bool requireAlternateDestination = false;
 				if (IsBootRelatedBackup(backup))
 				{

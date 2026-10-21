@@ -1,3 +1,12 @@
+using SecureServerBackup.Enums;
+using SecureServerBackup.Helpers;
+using SecureServerBackup.Models;
+using SecureServerBackup.Services;
+
+using SecureServerBackupCommon;
+
+using Svg;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,12 +17,6 @@ using System.Linq;
 using System.Management;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Svg;
-using SecureServerBackup.Services;
-using SecureServerBackup.Models;
-using SecureServerBackup.Enums;
-
-using SecureServerBackupCommon;
 
 namespace SecureServerBackup.WinForms
 {
@@ -3210,7 +3213,9 @@ namespace SecureServerBackup.WinForms
 				UseWaitCursor = true;
 
 				BackupJob job = SaveOrUpdateNativeJob(showSuccessMessage: false);
-				bool serviceOk = await CheckBackupServiceAsync();
+
+				CheckBackupServiceHelper cbsh = new(this);
+				bool serviceOk = await cbsh.CheckBackupServiceAsync();
 				if (!serviceOk)
 				{
 					return;
@@ -3364,50 +3369,6 @@ namespace SecureServerBackup.WinForms
 			LoadNativeUserExclusions(currentJob);
 			UpdateAdvancedStateSummary();
 			return currentJob;
-		}
-
-		private async Task<bool> CheckBackupServiceAsync()
-		{
-			try
-			{
-				if (!ServiceInstaller.IsServiceInstalled())
-				{
-					BackupLogger.LogServiceInfo("Secure Server Backup Service not installed - installing automatically...");
-					(bool success, string message) = await ServiceInstaller.InstallAndStartServiceAsync();
-					if (!success)
-					{
-						BackupLogger.LogServiceError($"Failed to install service: {message}");
-						CustomDialogService.ShowError(this, $"Failed to install service:\n\n{message}\n\nPlease ensure the application has Administrator privileges.", "Installation Failed");
-						return false;
-					}
-
-					BackupLogger.LogServiceInfo("Secure Server Backup Service installed and started successfully");
-					return true;
-				}
-
-				System.ServiceProcess.ServiceControllerStatus? status = ServiceInstaller.GetServiceStatus();
-				if (status != System.ServiceProcess.ServiceControllerStatus.Running)
-				{
-					BackupLogger.LogServiceInfo($"Secure Server Backup Service not running (Status: {status}) - starting automatically...");
-					(bool success, string message) = await ServiceInstaller.StartServiceAsync();
-					if (!success)
-					{
-						BackupLogger.LogServiceError($"Failed to start service: {message}");
-						CustomDialogService.ShowError(this, $"Failed to start service:\n\n{message}", "Start Failed");
-						return false;
-					}
-
-					BackupLogger.LogServiceInfo("Secure Server Backup Service started successfully");
-				}
-
-				return true;
-			}
-			catch (Exception ex)
-			{
-				BackupLogger.LogServiceError($"Error checking service status: {ex.Message}");
-				CustomDialogService.ShowError(this, $"Error checking service status:\n\n{ex.Message}", "Service Check Error");
-				return false;
-			}
 		}
 
 		private bool ValidateNativeInputs()

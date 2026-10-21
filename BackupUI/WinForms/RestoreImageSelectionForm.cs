@@ -39,13 +39,14 @@ namespace SecureServerBackup.WinForms
 		private VolumeInfo? selectedRestoreVolume;
 		private IReadOnlyList<VolumeInfo>? selectedRestoreDiskGroup;
 
-		public RestoreImageSelectionForm()
-			: this(CreateDesignTimeRestoreSelection())
+		public RestoreImageSelectionForm() : this(CreateDesignTimeRestoreSelection())
 		{
+			System.Diagnostics.Debug.WriteLine("RestoreImageSelectionForm initialized CreateDesignTimeRestoreSelection");
 		}
 
 		public RestoreImageSelectionForm(RestoreSelectionContext restoreSelection)
 		{
+			System.Diagnostics.Debug.WriteLine("RestoreImageSelectionForm initialized RestoreSelectionContext");
 			ArgumentNullException.ThrowIfNull(restoreSelection);
 			ArgumentNullException.ThrowIfNull(restoreSelection.Backup);
 			ArgumentNullException.ThrowIfNull(restoreSelection.RestorePoint);

@@ -18,13 +18,14 @@ namespace SecureServerBackup.WinForms
 		private readonly RestoreSelectionContext restoreSelection;
 		private readonly bool requireAlternateDestination;
 
-		public RestoreFileSelectionForm()
-			: this(CreateDesignTimeRestoreSelection())
+		public RestoreFileSelectionForm() : this(CreateDesignTimeRestoreSelection())
 		{
+			System.Diagnostics.Debug.WriteLine("RestoreFileSelectionForm initialized CreateDesignTimeRestoreSelection");
 		}
 
 		public RestoreFileSelectionForm(RestoreSelectionContext restoreSelection)
 		{
+			System.Diagnostics.Debug.WriteLine("RestoreFileSelectionForm initialized RestoreSelectionContext");
 			ArgumentNullException.ThrowIfNull(restoreSelection);
 			ArgumentNullException.ThrowIfNull(restoreSelection.Backup);
 			ArgumentNullException.ThrowIfNull(restoreSelection.RestorePoint);

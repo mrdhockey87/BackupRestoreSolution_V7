@@ -68,6 +68,12 @@ namespace SecureServerBackup
 
 /*
  *
+ *  Version 7.4.9.97 Made the CheckBackupServiceHelper class to check and install the backup service if it is not installed
+ *                   or running, and to check for updates to the service and install them if needed. just create the class
+ *                   like this: CheckBackupServiceHelper cbsh = new(this); then do bool serviceOk = await cbsh.CheckBackupServiceAsync();
+ *                   then if (!serviceOk) { return; }. If it fails to load exit the current method as it would fail without the service.
+ *                   note that a custom dialog with an error will display if there is a problem with the service.
+ *                   Added debugging line to the Restore forms. mdail 10/20/2026
  *  Version 7.4.9.96 Replace all MessageBox calls in the Whole Solution with CustomDialogService calls so all dialogs
  *                   are themed and consistent. mdail 10/20/2026
  *  Version 7.4.9.95 Replaced all MessageBox calls in the MainForm with CustomDialogService calls so all dialogs are 

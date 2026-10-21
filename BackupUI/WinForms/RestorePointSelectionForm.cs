@@ -15,13 +15,14 @@ namespace SecureServerBackup.WinForms
 	{
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 
-		public RestorePointSelectionForm()
-			: this(CreateDesignTimeBackup())
+		public RestorePointSelectionForm() : this(CreateDesignTimeBackup())
 		{
+			System.Diagnostics.Debug.WriteLine("RestorePointSelectionForm initialized CreateDesignTimeBackup");
 		}
 
 		public RestorePointSelectionForm(AvailableBackupInfo backup)
 		{
+			System.Diagnostics.Debug.WriteLine("RestorePointSelectionForm initialized AvailableBackupInfo");
 			ArgumentNullException.ThrowIfNull(backup);
 
 			Backup = backup;
