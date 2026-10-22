@@ -13,7 +13,28 @@ namespace SecureServerBackup.Helpers
 
 	public sealed record HyperVVirtualDiskInfo(string VirtualMachineName, string VirtualMachineDisplayName, string VirtualDiskPath);
 	public static class HyperVBackupTreeHelper
-	{
+	{	
+		/// <summary>
+		/// Selects the HyperVSystem tree node whose normalized VirtualMachineName matches the saved name.
+		/// Returns true if a match was found and selected.
+		/// </summary>
+		public static bool PreSelectHyperVSystemByName(string savedVmName, List<DriveTreeItem> driveItems)
+		{
+			string normalizedSavedVmName = NormalizeSavedHyperVSystemName(savedVmName);
+			if (string.IsNullOrWhiteSpace(normalizedSavedVmName))
+				return false;
+
+			DriveTreeItem? match = driveItems.FirstOrDefault(item =>
+				item.ItemType == DriveTreeItemType.HyperVSystem &&
+				(string.Equals(NormalizeSavedHyperVSystemName(item.VirtualMachineName), normalizedSavedVmName, StringComparison.OrdinalIgnoreCase) ||
+				 string.Equals(NormalizeSavedHyperVSystemName(item.FullPath), normalizedSavedVmName, StringComparison.OrdinalIgnoreCase)));
+
+			if (match == null)
+				return false;
+
+			match.IsChecked = true;
+			return true;
+		}
 		public static string NormalizeSavedHyperVSystemName(string? value)
 		{
 			if (string.IsNullOrWhiteSpace(value))
@@ -147,60 +168,6 @@ namespace SecureServerBackup.Helpers
 			}
 
 			return selectedPath;
-		}
-
-		public static bool ShouldScheduleSetupCl(bool renameHyperVSystem, string? renameHyperVSystemName, BackupTarget target, IEnumerable<string>? sourcePaths, IEnumerable<int>? protectedDiskIndexes = null)
-		{
-			bool renamedClone = renameHyperVSystem && !string.IsNullOrWhiteSpace(renameHyperVSystemName);
-			HashSet<int> protectedDisks = protectedDiskIndexes?
-				.Where(index => index >= 0)
-				.ToHashSet() ?? new HashSet<int>();
-
-			bool clonedFromSystemDisk = target == BackupTarget.Disk && (sourcePaths?.Any(path =>
-				TryGetPhysicalDriveNumber(path, out int diskNumber) && protectedDisks.Contains(diskNumber)) ?? false);
-
-			return renamedClone || clonedFromSystemDisk;
-		}
-
-		private static bool TryGetPhysicalDriveNumber(string? path, out int diskNumber)
-		{
-			diskNumber = -1;
-			if (string.IsNullOrWhiteSpace(path))
-			{
-				return false;
-			}
-
-			const string physicalDrivePrefix = "PHYSICALDRIVE";
-			int prefixIndex = path.LastIndexOf(physicalDrivePrefix, StringComparison.OrdinalIgnoreCase);
-			if (prefixIndex < 0)
-			{
-				return false;
-			}
-
-			string suffix = path[(prefixIndex + physicalDrivePrefix.Length)..].Trim();
-			return int.TryParse(suffix, out diskNumber);
-		}
-
-		/// <summary>
-		/// Selects the HyperVSystem tree node whose normalized VirtualMachineName matches the saved name.
-		/// Returns true if a match was found and selected.
-		/// </summary>
-		public static bool PreSelectHyperVSystemByName(string savedVmName, List<DriveTreeItem> driveItems)
-		{
-			string normalizedSavedVmName = NormalizeSavedHyperVSystemName(savedVmName);
-			if (string.IsNullOrWhiteSpace(normalizedSavedVmName))
-				return false;
-
-			DriveTreeItem? match = driveItems.FirstOrDefault(item =>
-				item.ItemType == DriveTreeItemType.HyperVSystem &&
-				(string.Equals(NormalizeSavedHyperVSystemName(item.VirtualMachineName), normalizedSavedVmName, StringComparison.OrdinalIgnoreCase) ||
-				 string.Equals(NormalizeSavedHyperVSystemName(item.FullPath), normalizedSavedVmName, StringComparison.OrdinalIgnoreCase)));
-
-			if (match == null)
-				return false;
-
-			match.IsChecked = true;
-			return true;
 		}
 	}
 }

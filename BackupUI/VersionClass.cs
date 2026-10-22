@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.9.96";
+        private static readonly string version_fallback_number = "7.4.9.98";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,9 @@ namespace SecureServerBackup
 
 /*
  *
+ *  Version 7.4.9.98 Fixed the Schedule Management form opening the BacupNewForm instead of the BackupNewEditForm when 
+ *                   edit is clicked on a backup job in schedule form. Also removed ShouldScheduleSetupCl from the helpers 
+ *                   in the BackupUI as it already existed in the SecureServerBackupCommon project mdail 10/22/2026
  *  Version 7.4.9.97 Made the CheckBackupServiceHelper class to check and install the backup service if it is not installed
  *                   or running, and to check for updates to the service and install them if needed. just create the class
  *                   like this: CheckBackupServiceHelper cbsh = new(this); then do bool serviceOk = await cbsh.CheckBackupServiceAsync();

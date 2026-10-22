@@ -34,7 +34,7 @@ namespace SecureServerBackup.Services
 		{
 			// Always reload from file to get latest changes
 			LoadJobs();
-			return jobs.ToList();
+			return [.. jobs];
 		}
 
 		public BackupJob? GetJob(Guid id)

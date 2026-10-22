@@ -3330,16 +3330,16 @@ namespace SecureServerBackup.WinForms
 				job.Id = currentJob.Id;
 				if (!nativeSourceSelectionSupported)
 				{
-					job.SourcePaths = currentJob.SourcePaths.ToList();
-					job.SelectedFilesSourceRoots = currentJob.SelectedFilesSourceRoots.ToList();
-					job.HyperVMachines = currentJob.HyperVMachines.ToList();
+					job.SourcePaths = [.. currentJob.SourcePaths];
+					job.SelectedFilesSourceRoots = [.. currentJob.SelectedFilesSourceRoots];
+					job.HyperVMachines = [.. currentJob.HyperVMachines];
 					job.Target = currentJob.Target;
 					job.IsHyperVBackup = currentJob.IsHyperVBackup;
 				}
 
 				job.RenameHyperVSystem = currentJob.RenameHyperVSystem;
 				job.RenameHyperVSystemName = currentJob.RenameHyperVSystemName;
-				job.UserExclusions = new List<string>(nativeUserExclusions);
+				job.UserExclusions = [.. nativeUserExclusions];
 				jobManager.UpdateJob(job);
 				PersistSelectedFileList(previousJobName, job);
 

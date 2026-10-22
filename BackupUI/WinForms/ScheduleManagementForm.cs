@@ -198,7 +198,7 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			using var form = new BackupNewForm(job);
+			using var form = new BackupNewEditForm(job);
 			if (form.ShowDialog(this) == DialogResult.OK)
 			{
 				LoadJobs();
