@@ -3,19 +3,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SecureServerBackup.Helpers
 {
 	public static class PersistenceHelpers
 	{
+		private static bool IsSelectedFilesBackup(BackupJob job)
+		{
+			ArgumentNullException.ThrowIfNull(job);
+			return job.Type == BackupType.SelectedFilesAndFolders;
+		}
+
 		public static void PersistSelectedFileList(string? previousJobName, BackupJob job)
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			bool isFileSelectionJob = job.Target == BackupTarget.FilesAndFolders || job.Type == BackupType.SelectedFilesAndFolders;
-			if (!isFileSelectionJob)
+			if (!IsSelectedFilesBackup(job))
 			{
 				if (!string.IsNullOrWhiteSpace(previousJobName))
 				{
@@ -39,30 +42,50 @@ namespace SecureServerBackup.Helpers
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			if ((job.Type == BackupType.CloneHyperVSystem ||
-				 job.Type == BackupType.ExportHyperVSystem ||
-				 job.Target == BackupTarget.HyperV ||
-				 job.IsHyperVBackup) &&
-				job.HyperVMachines.Count > 0)
+			if (IsSelectedFilesBackup(job))
 			{
-				return job.HyperVMachines
-					.Where(name => !string.IsNullOrWhiteSpace(name))
-					.Select(HyperVHelpers.NormalizeHyperVDisplayName)
-					.Where(name => !string.IsNullOrWhiteSpace(name))
-					.Distinct(StringComparer.OrdinalIgnoreCase)
-					.ToArray();
+				return GetSelectedFilesReplayPaths(job);
 			}
 
-			return job.SourcePaths
-				.Where(path => !string.IsNullOrWhiteSpace(path))
-				.Distinct(StringComparer.OrdinalIgnoreCase)
-				.ToArray();
+			if (job.Type == BackupType.CloneHyperVSystem || job.Type == BackupType.ExportHyperVSystem)
+			{
+				IReadOnlyList<string> cloneHyperVPaths = job.HyperVMachines.Count > 0
+					? job.HyperVMachines
+						.Select(HyperVBackupTreeHelper.NormalizeSavedHyperVSystemName)
+						.Where(path => !string.IsNullOrWhiteSpace(path))
+						.ToList()
+					: job.SourcePaths;
+
+				return cloneHyperVPaths
+					.Where(path => !string.IsNullOrWhiteSpace(path))
+					.Distinct(StringComparer.OrdinalIgnoreCase)
+					.ToList();
+			}
+
+			if (job.Target == BackupTarget.Disk || job.Target == BackupTarget.Volume || job.Target == BackupTarget.FilesAndFolders)
+			{
+				return job.SourcePaths
+					.Where(path => !string.IsNullOrWhiteSpace(path))
+					.Distinct(StringComparer.OrdinalIgnoreCase)
+					.ToList();
+			}
+
+			if (job.IsHyperVBackup)
+			{
+				return job.HyperVMachines
+					.Where(path => !string.IsNullOrWhiteSpace(path))
+					.Distinct(StringComparer.OrdinalIgnoreCase)
+					.ToList();
+			}
+
+			return Array.Empty<string>();
 		}
+
 		public static IReadOnlyList<string> LoadSelectedFileList(BackupJob job)
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			if (job.Type != BackupType.SelectedFilesAndFolders || job.Target != BackupTarget.FilesAndFolders)
+			if (!IsSelectedFilesBackup(job))
 			{
 				return job.SourcePaths;
 			}
@@ -75,7 +98,7 @@ namespace SecureServerBackup.Helpers
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			if (job.Type != BackupType.SelectedFilesAndFolders || job.Target != BackupTarget.FilesAndFolders)
+			if (!IsSelectedFilesBackup(job))
 			{
 				return job.SourcePaths;
 			}

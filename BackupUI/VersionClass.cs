@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.9.98";
+        private static readonly string version_fallback_number = "7.4.10.00";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,9 @@ namespace SecureServerBackup
 
 /*
  *
+ *  Version 7.4.10.00 Try to fix the BackupNewEditForm so it saved the file list for file folder backups, still does not work.  mdail 10/23/2026
+ *  Version 7.4.9.99 Fixed the SelectedFilesAndFolders persistence/edit path so reopening and editing a saved selected-files 
+ *                   job no longer falls back to empty SourcePaths when the Target value is stale or unset. mdail 10/23/2026
  *  Version 7.4.9.98 Fixed the Schedule Management form opening the BacupNewForm instead of the BackupNewEditForm when 
  *                   edit is clicked on a backup job in schedule form. Also removed ShouldScheduleSetupCl from the helpers 
  *                   in the BackupUI as it already existed in the SecureServerBackupCommon project mdail 10/22/2026

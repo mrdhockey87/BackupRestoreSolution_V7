@@ -28,25 +28,27 @@ namespace SecureServerBackup.WinForms
 
 		private readonly List<DriveTreeItem> driveItems = new();
 		private readonly JobManager jobManager = new();
-		private BackupJob? existingJob;
-		private BackupJob? _editingJob;
-		private List<string>? _pathsToPreselect;
-		private List<string>? _tempUserExclusions;
-		private List<string> _missingSavedSelectionPaths = new();
+		private BackupJob? existingJob = null;
+		private BackupJob? _editingJob = null;
+		private List<string>? _pathsToPreselect = null;
+		private List<string>? _tempUserExclusions = null;
+		private List<string> _missingSavedSelectionPaths = [];
 		private HashSet<string> _pendingSelectionPaths = new(StringComparer.OrdinalIgnoreCase);
 		private bool _hasSavedEncryptionPassword;
+		//private bool _isUpdatingEncryptionPasswordDisplay;
 		private string? _decryptedEncryptionPassword;
 		private bool _isLoadingDrives;
 		private bool _reloadDrivesAfterLoad;
 		private bool _isInitializingJobData;
 		private bool _hasCompletedInitialDriveLoad;
 		private bool _syncingTree;
-		private bool _showHiddenPartitions;
+		private bool _showHiddenPartitions = false;
+		//private string? _hyperVGuestMountRoot;
 		private readonly CancellationTokenSource _shutdownCts = new();
 		private bool hasSourceSelected;
 		private bool hasTargetSelected;
 		private bool volumeConfigShown;
-
+		private readonly Dictionary<string, MountedHyperVGuestTreeDisk> _hyperVDiskMountDirectories = new(StringComparer.OrdinalIgnoreCase);
 		private CancellationToken ShutdownToken => _shutdownCts.Token;
 
 		protected override void OnFormClosed(FormClosedEventArgs e)
@@ -314,11 +316,11 @@ namespace SecureServerBackup.WinForms
 					txtEncryptionPassword.Text = "********";
 					txtVerifyEncryptionPassword.Text = string.Empty;
 				}
-
+				//UpdateCloneHyperVRenameOptions();
 				IReadOnlyList<string> replayPaths = PersistenceHelpers.GetReplayPathsForJob(job);
 				if (replayPaths.Count > 0)
 				{
-					_pathsToPreselect = new List<string>(replayPaths);
+					_pathsToPreselect = [.. replayPaths];
 				}
 
 				if (job.Schedule != null)
@@ -352,7 +354,6 @@ namespace SecureServerBackup.WinForms
 
 			UpdateDynamicPanels();
 		}
-
 		private RadioButton GetBackupTypeRadio(BackupType type) => type switch
 		{
 			BackupType.Incremental => rbIncremental,
@@ -893,13 +894,9 @@ namespace SecureServerBackup.WinForms
 				ApplySelectionRestrictionRecursive(child, hyperVSystemsOnly);
 			}
 		}
-
-		private async void treeDrives_LazyLoadPlaceholder_Unused() { }   // remove: placeholder for diff purposes
-
 		// =====================================================================
 		// Selection helpers
 		// =====================================================================
-
 		private List<DriveTreeItem> GetCheckedDriveItems()
 		{
 			var checkedItems = new List<DriveTreeItem>();
@@ -1436,9 +1433,14 @@ namespace SecureServerBackup.WinForms
 
 				if (existingJob != null)
 				{
+				    //added to try to get the job to save the file list mdail 10/23/2026
+					HashSet<string> checkedPaths = new(StringComparer.OrdinalIgnoreCase);
+					GetCheckedItemsRecursive_FullPaths(driveItems, checkedPaths);
+					job.SourcePaths = [.. checkedPaths];
+					// added to try to get the job to save the file list mdail 10/23/2026
 					job.Id = existingJob.Id;
 					jobManager.UpdateJob(job);
-				    PersistenceHelpers.PersistSelectedFileList(existingJob.Name, job);   // copied from BackupWindowNew
+				    PersistenceHelpers.PersistSelectedFileList(existingJob.Name, job);
 					ShowSuccess($"Backup job '{job.Name}' updated successfully!\n\nJob saved to:\nC:\\ProgramData\\SecureServerBackupService\\jobs.json", "Success");
 				}
 				else
