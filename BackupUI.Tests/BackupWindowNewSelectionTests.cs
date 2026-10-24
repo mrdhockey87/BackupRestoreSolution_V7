@@ -1,3 +1,4 @@
+using SecureServerBackup.Helpers;
 using SecureServerBackup.Models;
 using SecureServerBackup.WinForms;
 
@@ -8,12 +9,49 @@ using System.Collections.Generic;
 
 using Xunit;
 
-using BackupWindowNew = SecureServerBackup.WinForms.BackupNewForm;
+using BackupWindowNew = SecureServerBackup.WinForms.BackupNewEditForm;
 
 namespace SecureServerBackup.Tests;
 
 public sealed class BackupWindowNewSelectionTests
 {
+	[Fact]
+	public void IsSelectedFilesAndFoldersJob_WhenSelectedFilesTypeHasNoTargetSet_ReturnsTrue()
+	{
+		BackupJob job = new()
+		{
+			Type = BackupType.SelectedFilesAndFolders,
+			Target = 0,
+			SourcePaths = new List<string> { @"C:\Data\Alpha.txt" }
+		};
+
+		Assert.True(PersistenceHelpers.IsSelectedFilesBackup(job));
+	}
+
+	[Fact]
+	public void GetReplayPathsForJob_WhenSelectedFilesListContainsVolumeRoot_IgnoresRootAndKeepsExactFiles()
+	{
+		BackupJob job = new()
+		{
+			Name = "SelectedFilesPathReplay",
+			Type = BackupType.SelectedFilesAndFolders,
+			Target = BackupTarget.FilesAndFolders,
+			SourcePaths = new List<string>
+			{
+				@"C:\",
+				@"C:\Data\Alpha.txt",
+				@"C:\Data\Beta\File2.txt"
+			}
+		};
+
+		IReadOnlyList<string> replayPaths = PersistenceHelpers.GetReplayPathsForJob(job);
+
+		Assert.Equal(2, replayPaths.Count);
+		Assert.Contains(@"C:\Data\Alpha.txt", replayPaths, StringComparer.OrdinalIgnoreCase);
+		Assert.Contains(@"C:\Data\Beta\File2.txt", replayPaths, StringComparer.OrdinalIgnoreCase);
+		Assert.DoesNotContain(@"C:\", replayPaths, StringComparer.OrdinalIgnoreCase);
+	}
+
 	[Fact]
 	public void BuildMissingSavedSelectionsWarningMessage_WhenSelectedFilesBackup_ExplainsRemainingSelections()
 	{
@@ -123,6 +161,41 @@ public sealed class BackupWindowNewSelectionTests
 		Assert.True(item.ParticipatesInCheckState);
 	}
 
+	[Fact]
+	public void DriveTreeItem_WhenOnlySomeChildrenAreSelected_ParentIsPartiallyChecked()
+	{
+		DriveTreeItem parent = new()
+		{
+			Name = "Volume C:",
+			ItemType = DriveTreeItemType.Volume,
+			IsSelectionEnabled = true
+		};
+
+		DriveTreeItem checkedChild = new()
+		{
+			Name = "Folder A",
+			ItemType = DriveTreeItemType.Folder,
+			Parent = parent,
+			IsSelectionEnabled = true,
+			IsChecked = true
+		};
+
+		DriveTreeItem uncheckedChild = new()
+		{
+			Name = "Folder B",
+			ItemType = DriveTreeItemType.Folder,
+			Parent = parent,
+			IsSelectionEnabled = true,
+			IsChecked = false
+		};
+
+		parent.Children.Add(checkedChild);
+		parent.Children.Add(uncheckedChild);
+		parent.RefreshCheckStateFromChildren();
+
+		Assert.Null(parent.IsChecked);
+	}
+
 	[Theory]
 	[InlineData("SERVER01")]
 	[InlineData("HV-CLONE-1")]
@@ -190,7 +263,7 @@ public sealed class BackupWindowNewSelectionTests
 			SourcePaths = new List<string> { @"\\.\PHYSICALDRIVE2" }
 		};
 
-		IReadOnlyList<string> replayPaths = BackupWindowNew.GetReplayPathsForJob(job);
+		IReadOnlyList<string> replayPaths = PersistenceHelpers.GetReplayPathsForJob(job);
 
 		Assert.Single(replayPaths);
 		Assert.Equal("VmOne", replayPaths[0]);
@@ -207,7 +280,7 @@ public sealed class BackupWindowNewSelectionTests
 			SourcePaths = new List<string> { @"\\.\PHYSICALDRIVE2" }
 		};
 
-		IReadOnlyList<string> replayPaths = BackupWindowNew.GetReplayPathsForJob(job);
+		IReadOnlyList<string> replayPaths = PersistenceHelpers.GetReplayPathsForJob(job);
 
 		Assert.Single(replayPaths);
 		Assert.Equal("VmOne", replayPaths[0]);
@@ -226,7 +299,7 @@ public sealed class BackupWindowNewSelectionTests
 			HyperVMachines = new List<string> { savedVmName }
 		};
 
-		IReadOnlyList<string> replayPaths = BackupWindowNew.GetReplayPathsForJob(job);
+		IReadOnlyList<string> replayPaths = PersistenceHelpers.GetReplayPathsForJob(job);
 
 		Assert.Single(replayPaths);
 		Assert.Equal(expectedVmName, replayPaths[0]);
@@ -242,7 +315,7 @@ public sealed class BackupWindowNewSelectionTests
 			SourcePaths = new List<string> { @"\\.\PHYSICALDRIVE2" }
 		};
 
-		IReadOnlyList<string> replayPaths = BackupWindowNew.GetReplayPathsForJob(job);
+		IReadOnlyList<string> replayPaths = PersistenceHelpers.GetReplayPathsForJob(job);
 
 		Assert.Single(replayPaths);
 		Assert.Equal(@"\\.\PHYSICALDRIVE2", replayPaths[0]);
@@ -251,7 +324,7 @@ public sealed class BackupWindowNewSelectionTests
 	[Fact]
 	public void BuildMissingSavedSelectionsWarningMessage_WhenCloneHyperVSystem_ExplainsSelectionCleared()
 	{
-		string message = BackupWindowNew.BuildMissingSavedSelectionsWarningMessage(
+		string message = BackupNewForm.BuildMissingSavedSelectionsWarningMessage(
 			BackupType.CloneHyperVSystem,
 			new List<string> { "Win10OEM" });
 

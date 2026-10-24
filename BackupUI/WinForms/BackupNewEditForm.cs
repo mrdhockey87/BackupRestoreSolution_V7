@@ -66,6 +66,7 @@ namespace SecureServerBackup.WinForms
 		public BackupNewEditForm()
 		{
 			InitializeComponent();
+			BuildCheckStateImages();
 			foreach (CheckBox day in new[] { chkMonday, chkTuesday, chkWednesday, chkThursday, chkFriday, chkSaturday, chkSunday })
 			{
 				day.AutoSize = true;
@@ -739,17 +740,126 @@ namespace SecureServerBackup.WinForms
 			}
 		}
 
-		private static void SyncNodeCheckStatesCore(TreeNodeCollection nodes)
+		private void SyncNodeCheckStatesCore(TreeNodeCollection nodes)
 		{
 			foreach (TreeNode node in nodes)
 			{
 				if (node.Tag is DriveTreeItem item)
 				{
 					node.Checked = item.IsChecked == true;
+					ApplyStateImageIfAvailable(node, item.IsChecked);
 					node.ForeColor = item.IsSelectionEnabled ? SystemColors.WindowText : SystemColors.GrayText;
 				}
 
 				SyncNodeCheckStatesCore(node.Nodes);
+			}
+		}
+
+		private void UpdateTreeNodeState(TreeNode node)
+		{
+			if (node.Tag is not DriveTreeItem item)
+			{
+				return;
+			}
+
+			node.Checked = item.IsChecked == true;
+			ApplyStateImageIfAvailable(node, item.IsChecked);
+			node.ForeColor = item.IsSelectionEnabled ? SystemColors.WindowText : SystemColors.GrayText;
+		}
+
+		private void ApplyStateImageIfAvailable(TreeNode node, bool? isChecked)
+		{
+			if (imgCheckStates is null || imgCheckStates.Images.Count < 3)
+			{
+				node.StateImageIndex = -1;
+				return;
+			}
+
+			node.StateImageIndex = GetMixedStateImageIndex(isChecked);
+		}
+
+		private static void SyncTreeNodeStateImages(TreeNodeCollection nodes)
+		{
+			foreach (TreeNode node in nodes)
+			{
+				if (node.Tag is DriveTreeItem item)
+				{
+					node.StateImageIndex = item.IsChecked switch
+					{
+						true => 1,
+						false => 0,
+						null => 2,
+					};
+				}
+
+				SyncTreeNodeStateImages(node.Nodes);
+			}
+		}
+
+		private static int GetMixedStateImageIndex(bool? isChecked)
+		{
+			if (isChecked == true)
+			{
+				return 1;
+			}
+
+			if (isChecked == false)
+			{
+				return 0;
+			}
+
+			return 2;
+		}
+
+		private void UpdateTreeNodeStateImage(TreeNode node)
+		{
+			if (node.Tag is not DriveTreeItem item)
+			{
+				return;
+			}
+
+			ApplyStateImageIfAvailable(node, item.IsChecked);
+			node.ForeColor = item.IsSelectionEnabled ? SystemColors.WindowText : SystemColors.GrayText;
+		}
+
+		private void SyncTreeNodeCheckStatesRecursively(TreeNodeCollection nodes)
+		{
+			foreach (TreeNode node in nodes)
+			{
+				UpdateTreeNodeState(node);
+				SyncTreeNodeCheckStatesRecursively(node.Nodes);
+			}
+		}
+
+		private void BuildCheckStateImages()
+		{
+			if (imgCheckStates is null)
+			{
+				return;
+			}
+
+			if (imgCheckStates.Images.Count == 3)
+			{
+				return;
+			}
+
+			imgCheckStates.Images.Clear();
+			var states = new[]
+			{
+				System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal,
+				System.Windows.Forms.VisualStyles.CheckBoxState.CheckedNormal,
+				System.Windows.Forms.VisualStyles.CheckBoxState.MixedNormal
+			};
+
+			foreach (var state in states)
+			{
+				var bmp = new Bitmap(16, 16);
+				using (var g = Graphics.FromImage(bmp))
+				{
+					g.Clear(SystemColors.Window);
+					CheckBoxRenderer.DrawCheckBox(g, new Point(1, 1), state);
+				}
+				imgCheckStates.Images.Add(bmp);
 			}
 		}
 
@@ -779,6 +889,17 @@ namespace SecureServerBackup.WinForms
 			}
 
 			SyncNodeCheckStates(treeDrives.Nodes);
+			SyncTreeNodeStateImages(treeDrives.Nodes);
+
+			foreach (TreeNode node in treeDrives.Nodes)
+			{
+				UpdateTreeNodeStateImage(node);
+			}
+
+			if (imgCheckStates.Images.Count < 3)
+			{
+				BuildCheckStateImages();
+			}
 
 			if (item.ItemType is DriveTreeItemType.Volume or DriveTreeItemType.Disk)
 			{
@@ -796,6 +917,80 @@ namespace SecureServerBackup.WinForms
 			}
 		}
 
+		private void treeDrives_MouseDown(object? sender, MouseEventArgs e)
+		{
+			if (e.Button != MouseButtons.Left)
+			{
+				return;
+			}
+
+			TreeNode? node = treeDrives.GetNodeAt(e.Location);
+			if (node is null || node.Tag is not DriveTreeItem item)
+			{
+				return;
+			}
+
+			if (treeDrives.HitTest(e.Location).Location != TreeViewHitTestLocations.StateImage)
+			{
+				return;
+			}
+
+			ToggleTreeNodeSelection(node, item);
+			if (node.TreeView != null)
+			{
+				node.TreeView.SelectedNode = node;
+			}
+		}
+
+		private void treeDrives_KeyDown(object? sender, KeyEventArgs e)
+		{
+			if (e.KeyCode != Keys.Space || treeDrives.SelectedNode is null)
+			{
+				return;
+			}
+
+			if (treeDrives.SelectedNode.Tag is not DriveTreeItem item)
+			{
+				return;
+			}
+
+			ToggleTreeNodeSelection(treeDrives.SelectedNode, item);
+			e.Handled = true;
+			e.SuppressKeyPress = true;
+		}
+
+		private void ToggleTreeNodeSelection(TreeNode node, DriveTreeItem item)
+		{
+			if (item.IsLoadingPlaceholder || !item.IsSelectionEnabled ||
+				item.ItemType is DriveTreeItemType.NetworkRoot or DriveTreeItemType.NetworkBrowser)
+			{
+				return;
+			}
+
+			item.IsChecked = item.IsChecked == true ? false : true;
+			for (DriveTreeItem? parent = item.Parent; parent != null; parent = parent.Parent)
+			{
+				parent.RefreshCheckStateFromChildren();
+			}
+
+			SyncNodeCheckStates(treeDrives.Nodes);
+			UpdateSelectionStateAfterToggle(item);
+			node.EnsureVisible();
+		}
+
+		private void UpdateSelectionStateAfterToggle(DriveTreeItem item)
+		{
+			if (item.ItemType is DriveTreeItemType.Volume or DriveTreeItemType.Disk)
+			{
+				hasSourceSelected = GetCheckedDriveItems().Any(i => i.ItemType is DriveTreeItemType.Volume or DriveTreeItemType.Disk);
+				volumeConfigShown = false;
+				if (hasSourceSelected)
+				{
+					CheckAndShowVolumeConfiguration();
+				}
+			}
+		}
+
 		private void treeDrives_NodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
 		{
 			if (e.Node?.Tag is DriveTreeItem { ItemType: DriveTreeItemType.NetworkBrowser })
@@ -809,6 +1004,7 @@ namespace SecureServerBackup.WinForms
 		}
 
 		private async void treeDrives_AfterExpand(object? sender, TreeViewEventArgs e)
+
 		{
 			if (e.Node?.Tag is not DriveTreeItem item || !TreeItemHelpers.RequiresLazyLoad(item)) return;
 
@@ -1292,7 +1488,10 @@ namespace SecureServerBackup.WinForms
 		private BackupJob CreateJobFromInput()
 		{
 			BackupType backupType = GetSelectedBackupType();
-			bool renameHyperVSystem = backupType == BackupType.CloneHyperVSystem && chkRenameHyperVSystem.Checked;
+			bool renameHyperVSystem = backupType == BackupType.CloneHyperVSystem && chkRenameHyperVSystem.Checked == true;
+			string renameHyperVSystemName = renameHyperVSystem
+				? txtRenameHyperVSystemName?.Text?.Trim() ?? string.Empty
+				: string.Empty;
 
 			var job = new BackupJob
 			{
@@ -1308,17 +1507,26 @@ namespace SecureServerBackup.WinForms
 				SelectedFilesRetentionCount = int.TryParse(cmbSelectedRetention.Text, out int selRet) ? Math.Clamp(selRet, 1, MaxRetentionValue) : 7,
 				CloneRetentionCount = int.TryParse(cmbCloneRetention.Text, out int cloneRet) ? Math.Clamp(cloneRet, 1, MaxRetentionValue) : 7,
 				RenameHyperVSystem = renameHyperVSystem,
-				RenameHyperVSystemName = renameHyperVSystem ? txtRenameHyperVSystemName.Text.Trim() : string.Empty
+				RenameHyperVSystemName = string.Empty
 			};
 
-			if (backupType is BackupType.CloneHyperVSystem or BackupType.ExportHyperVSystem)
+			if (txtRenameHyperVSystemName != null) {
+				job.RenameHyperVSystemName = renameHyperVSystem ? txtRenameHyperVSystemName.Text.Trim() : string.Empty;
+			}
+
+			if (backupType == BackupType.SelectedFilesAndFolders)
+			{
+				job.Target = BackupTarget.FilesAndFolders;
+			}
+
+			if (backupType is BackupType.CloneHyperVSystem || backupType == BackupType.ExportHyperVSystem)
 			{
 				job.IsHyperVBackup = true;
-			    SelectionHelpers.CollectSelectedHyperVMachines(job, driveItems);   // copied from BackupWindowNew
+			    SelectionHelpers.CollectSelectedHyperVMachines(job, driveItems);
 			}
 			else
 			{
-				SelectionHelpers.CollectSelectedItems(job, driveItems);            // copied from BackupWindowNew
+				SelectionHelpers.CollectSelectedItems(job, driveItems);
 			}
 
 			if (backupType == BackupType.SelectedFilesAndFolders)

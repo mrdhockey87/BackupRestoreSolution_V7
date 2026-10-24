@@ -47,10 +47,13 @@ namespace SecureServerBackup.Helpers
 
 		public static void CollectSelectedItems(BackupJob job, List<DriveTreeItem> driveItems)
 		{
-			bool selectedFilesAndFoldersOnly = job.Type == BackupType.SelectedFilesAndFolders && job.Target == BackupTarget.FilesAndFolders;
+			bool selectedFilesAndFoldersOnly = (job.Type == BackupType.SelectedFilesAndFolders || job.Target == BackupTarget.FilesAndFolders)
+												&& job.Target != BackupTarget.Disk  && job.Target != BackupTarget.Volume
+												&& job.Target != BackupTarget.HyperV;
 
 			if (selectedFilesAndFoldersOnly)
 			{
+				job.Target = BackupTarget.FilesAndFolders;
 				List<DriveTreeItem> selectedFilesItems = GetEffectiveSelectedFilesAndFoldersItems(driveItems);
 				foreach (DriveTreeItem selectedItem in selectedFilesItems)
 				{
@@ -58,8 +61,6 @@ namespace SecureServerBackup.Helpers
 					{
 						continue;
 					}
-
-					job.Target = BackupTarget.FilesAndFolders;
 					job.SourcePaths.Add(selectedItem.FullPath);
 				}
 
@@ -157,7 +158,7 @@ namespace SecureServerBackup.Helpers
 
 		public static void CollectSelectedChildren(DriveTreeItem parent, BackupJob job)
 		{
-			bool selectedFilesAndFoldersOnly = job.Type == BackupType.SelectedFilesAndFolders;
+			bool selectedFilesAndFoldersOnly = job.Type == BackupType.SelectedFilesAndFolders || job.Target == BackupTarget.FilesAndFolders;
 
 			foreach (var child in parent.Children)
 			{
@@ -165,6 +166,11 @@ namespace SecureServerBackup.Helpers
 				{
 					if (selectedFilesAndFoldersOnly)
 					{
+						if (!string.IsNullOrWhiteSpace(child.FullPath))
+						{
+							job.SourcePaths.Add(child.FullPath);
+						}
+
 						continue;
 					}
 					else if (child.ItemType == DriveTreeItemType.Volume)

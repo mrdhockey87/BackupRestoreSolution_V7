@@ -2,23 +2,25 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SecureServerBackup.Helpers
 {
 	public static class PersistenceHelpers
 	{
-		private static bool IsSelectedFilesBackup(BackupJob job)
+		public static bool IsSelectedFilesBackup(BackupJob job)
 		{
 			ArgumentNullException.ThrowIfNull(job);
-			return job.Type == BackupType.SelectedFilesAndFolders;
+			return job.Type == BackupType.SelectedFilesAndFolders ||
+				   job.Target == BackupTarget.FilesAndFolders;
 		}
 
 		public static void PersistSelectedFileList(string? previousJobName, BackupJob job)
 		{
 			ArgumentNullException.ThrowIfNull(job);
-
-			if (!IsSelectedFilesBackup(job))
+			bool isFileSelectionJob = IsSelectedFilesBackup(job);
+			if (!isFileSelectionJob)
 			{
 				if (!string.IsNullOrWhiteSpace(previousJobName))
 				{
@@ -42,10 +44,7 @@ namespace SecureServerBackup.Helpers
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			if (IsSelectedFilesBackup(job))
-			{
-				return GetSelectedFilesReplayPaths(job);
-			}
+			bool selectedFilesJob = IsSelectedFilesBackup(job);
 
 			if (job.Type == BackupType.CloneHyperVSystem || job.Type == BackupType.ExportHyperVSystem)
 			{
@@ -62,13 +61,16 @@ namespace SecureServerBackup.Helpers
 					.ToList();
 			}
 
-			if (job.Target == BackupTarget.Disk || job.Target == BackupTarget.Volume || job.Target == BackupTarget.FilesAndFolders)
+			if (job.Target == BackupTarget.Disk || job.Target == BackupTarget.Volume || job.Target == BackupTarget.FilesAndFolders || selectedFilesJob)
 			{
-				return job.SourcePaths
-					.Where(path => !string.IsNullOrWhiteSpace(path))
-					.Distinct(StringComparer.OrdinalIgnoreCase)
-					.ToList();
+				return IsSelectedFilesBackup(job)
+					? GetSelectedFilesReplayPaths(job)
+					: job.SourcePaths
+						.Where(path => !string.IsNullOrWhiteSpace(path))
+						.Distinct(StringComparer.OrdinalIgnoreCase)
+						.ToList();
 			}
+
 
 			if (job.IsHyperVBackup)
 			{
@@ -85,7 +87,8 @@ namespace SecureServerBackup.Helpers
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			if (!IsSelectedFilesBackup(job))
+			bool isFileSelectionJob = IsSelectedFilesBackup(job);
+			if (!isFileSelectionJob)
 			{
 				return job.SourcePaths;
 			}
@@ -98,19 +101,67 @@ namespace SecureServerBackup.Helpers
 		{
 			ArgumentNullException.ThrowIfNull(job);
 
-			if (!IsSelectedFilesBackup(job))
+			bool isFileSelectionJob = IsSelectedFilesBackup(job);
+			if (!isFileSelectionJob)
 			{
 				return job.SourcePaths;
 			}
 
-			List<string> replayPaths = new();
-			replayPaths.AddRange(job.SelectedFilesSourceRoots.Where(path => !string.IsNullOrWhiteSpace(path)));
-			replayPaths.AddRange(LoadSelectedFileList(job));
+			List<string> replayPaths = SelectedFileListStore.Load(job.Name);
+			if (replayPaths.Count == 0)
+			{
+				replayPaths = LoadSelectedFileList(job).ToList();
+			}
 
-			return replayPaths
+			replayPaths = replayPaths
+				.Where(path => !string.IsNullOrWhiteSpace(path))
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.Select(PreSelectHelpers.NormalizeSelectionPath)
+				.Where(path => !string.IsNullOrWhiteSpace(path))
+				.ToList();
+
+			List<string> exactPaths = replayPaths
+				.Where(path => !IsSelectedFilesVolumeRoot(path, replayPaths))
+				.ToList();
+
+			if (exactPaths.Count > 0)
+			{
+				return exactPaths;
+			}
+
+			return replayPaths.Count > 0 ? replayPaths : job.SourcePaths
 				.Where(path => !string.IsNullOrWhiteSpace(path))
 				.Distinct(StringComparer.OrdinalIgnoreCase)
 				.ToList();
 		}
+
+		private static bool IsSelectedFilesVolumeRoot(string candidatePath, IReadOnlyCollection<string> allPaths)
+		{
+			if (string.IsNullOrWhiteSpace(candidatePath))
+			{
+				return false;
+			}
+
+			string normalizedCandidate = PreSelectHelpers.NormalizeSelectionPath(candidatePath);
+			if (string.IsNullOrWhiteSpace(normalizedCandidate))
+			{
+				return false;
+			}
+
+			string rootPath = Path.GetPathRoot(normalizedCandidate) ?? normalizedCandidate;
+			string candidateRoot = rootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+			string candidateWithoutTrailingSlash = normalizedCandidate.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+			bool isVolumeRoot = string.Equals(candidateRoot, candidateWithoutTrailingSlash, StringComparison.OrdinalIgnoreCase);
+			if (!isVolumeRoot)
+			{
+				return false;
+			}
+
+			return allPaths.Any(path =>
+				!string.Equals(path, candidatePath, StringComparison.OrdinalIgnoreCase) &&
+				!string.IsNullOrWhiteSpace(path) &&
+				PreSelectHelpers.NormalizeSelectionPath(path).StartsWith(rootPath, StringComparison.OrdinalIgnoreCase));
+		}
+
 	}
 }

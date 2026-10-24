@@ -9,6 +9,7 @@ namespace SecureServerBackup.WinForms
     partial class BackupNewEditForm
     {
         private System.ComponentModel.IContainer? components = null;
+        private ImageList imgCheckStates = null!;
 
         // Root layout
         private Panel pnlScrollHost = null!;
@@ -147,6 +148,7 @@ namespace SecureServerBackup.WinForms
 		private void InitializeComponent()
 		{
 			components = new System.ComponentModel.Container();
+			imgCheckStates = new ImageList(components);
 			treeContextMenu = new ContextMenuStrip(components);
 			miRemoveNetworkPath = new ToolStripMenuItem();
 			pnlScrollHost = new Panel();
@@ -400,7 +402,7 @@ namespace SecureServerBackup.WinForms
 			// 
 			// treeDrives
 			// 
-			treeDrives.CheckBoxes = true;
+			treeDrives.CheckBoxes = false;
 			treeDrives.ContextMenuStrip = treeContextMenu;
 			treeDrives.FullRowSelect = true;
 			treeDrives.HideSelection = false;
@@ -408,10 +410,13 @@ namespace SecureServerBackup.WinForms
 			treeDrives.Name = "treeDrives";
 			treeDrives.ShowNodeToolTips = true;
 			treeDrives.Size = new Size(380, 460);
+			treeDrives.StateImageList = imgCheckStates;
 			treeDrives.TabIndex = 2;
 			treeDrives.BeforeCheck += treeDrives_BeforeCheck;
 			treeDrives.AfterCheck += treeDrives_AfterCheck;
 			treeDrives.AfterExpand += treeDrives_AfterExpand;
+			treeDrives.MouseDown += treeDrives_MouseDown;
+			treeDrives.KeyDown += treeDrives_KeyDown;
 			treeDrives.NodeMouseClick += treeDrives_NodeMouseClick;
 			// 
 			// flowTreeButtons
@@ -1587,6 +1592,9 @@ namespace SecureServerBackup.WinForms
 			// 
 			// BackupNewEditForm
 			// 
+			imgCheckStates.ColorDepth = ColorDepth.Depth32Bit;
+			imgCheckStates.ImageSize = new Size(16, 16);
+			imgCheckStates.TransparentColor = Color.Transparent;
 			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
 			ClientSize = new Size(1180, 720);
