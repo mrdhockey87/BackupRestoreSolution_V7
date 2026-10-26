@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.10.01";
+        private static readonly string version_fallback_number = "7.4.10.02";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -67,7 +67,8 @@ namespace SecureServerBackup
 
 
 /*
- *
+ *  Version 7.4.10.02 Updated the DriveEnumeration class as one of the attempts to get the list of disks would always fail 
+ *                    slowing the application down. mdail 10/26/2026
  *  Version 7.4.10.01 Fixed the BackupNewEditForm tree check state so partially selected files, folders, and volumes now show a 
  *                    true partial state instead of collapsing to unchecked; added a regression test. mdail 10/24/2026
  *  Version 7.4.10.00 Try to fix the BackupNewEditForm so it saved the file list for file folder backups, still does not work.  mdail 10/23/2026

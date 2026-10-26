@@ -21,59 +21,37 @@ namespace SecureServerBackup.Helpers
 			_showHiddenPartitions = showHiddenPartitions;
 			List<DriveTreeItem> disks = await Task.Run(() =>
 			{
-				List<DriveTreeItem> discoveredDisks = new();
-
+				var discovered = new List<(int Index, DriveTreeItem Item)>();
 				try
 				{
-					System.Diagnostics.Debug.WriteLine("=== Starting LoadPhysicalDrives ===");
-
-					// Try with ORDER BY first
-					ManagementObjectSearcher searcher;
-					try
+					Debug.WriteLine("=== Starting LoadPhysicalDrives ===");
+					// Only request the columns we use; WQL has no ORDER BY, so sort in code.
+					using var searcher = new ManagementObjectSearcher(
+						"SELECT Index, Model, DeviceID, Size FROM Win32_DiskDrive")
 					{
-						searcher = new ManagementObjectSearcher("SELECT * FROM Win32_DiskDrive ORDER BY Index");
-						var testCount = searcher.Get().Count;
-						System.Diagnostics.Debug.WriteLine($"Found {testCount} disks with ORDER BY");
-					}
-					catch (Exception ex)
+						// Forward-only, no deep copies: lower memory and faster enumeration.
+						Options = new System.Management.EnumerationOptions
+						{
+							ReturnImmediately = true,
+							Rewindable = false
+						}
+					};
+					using ManagementObjectCollection results = searcher.Get();
+					foreach (ManagementObject disk in results.Cast<ManagementObject>())
 					{
-						System.Diagnostics.Debug.WriteLine($"ORDER BY failed: {ex.Message}, trying without ORDER BY");
-						searcher = new ManagementObjectSearcher("SELECT * FROM Win32_DiskDrive");
-					}
-
-					using (searcher)
-					{
-						foreach (ManagementObject disk in searcher.Get())
+						using (disk)
 						{
 							try
 							{
-								// Safely get properties with fallbacks
 								int diskIndex = 0;
-								try
-								{
-									var indexObj = disk["Index"];
-									if (indexObj != null)
-										diskIndex = Convert.ToInt32(indexObj);
-									else
-										System.Diagnostics.Debug.WriteLine("Warning: Index property is null");
-								}
-								catch (Exception ex)
-								{
-									System.Diagnostics.Debug.WriteLine($"Error getting Index: {ex.Message}, using 0");
-								}
-
-								var model = disk["Model"]?.ToString() ?? "Unknown Model";
-								var deviceId = disk["DeviceID"]?.ToString() ?? "";
-								long size = 0;
-
-								try
-								{
-									var sizeObj = disk["Size"];
-									if (sizeObj != null)
-										size = Convert.ToInt64(sizeObj);
-								}
-								catch { }
-
+								var indexObj = disk["Index"];
+								if (indexObj != null)
+									diskIndex = Convert.ToInt32(indexObj);
+								else
+									Debug.WriteLine("Warning: Index property is null");
+								string model = disk["Model"]?.ToString() ?? "Unknown Model";
+								string deviceId = disk["DeviceID"]?.ToString() ?? "";
+								long size = disk["Size"] is { } s ? Convert.ToInt64(s) : 0;
 								var diskItem = new DriveTreeItem
 								{
 									Name = $"Disk {diskIndex} - {model}",
@@ -81,14 +59,9 @@ namespace SecureServerBackup.Helpers
 									ItemType = DriveTreeItemType.Disk,
 									Size = size
 								};
-
-								System.Diagnostics.Debug.WriteLine($"=== Found Disk {diskIndex}: {model} ({deviceId}) ===");
-
-								// Get volumes on this disk using the Index property
+								Debug.WriteLine($"=== Found Disk {diskIndex}: {model} ({deviceId}) ===");
 								LoadVolumesForDisk(diskItem, diskIndex);
-
-								System.Diagnostics.Debug.WriteLine($"Disk {diskIndex}: Found {diskItem.Children.Count} volumes");
-
+								Debug.WriteLine($"Disk {diskIndex}: Found {diskItem.Children.Count} volumes");
 								if (diskItem.Children.Count == 0)
 								{
 									diskItem.Children.Add(new DriveTreeItem
@@ -98,38 +71,34 @@ namespace SecureServerBackup.Helpers
 										Parent = diskItem
 									});
 								}
-
-								discoveredDisks.Add(diskItem);
+								discovered.Add((diskIndex, diskItem));
 							}
 							catch (Exception diskEx)
 							{
-								System.Diagnostics.Debug.WriteLine($"Error processing individual disk: {diskEx.Message}");
+								Debug.WriteLine($"Error processing individual disk: {diskEx.Message}");
 								UiDispatcherHelper.Invoke(() =>
-									CustomDialogService.ShowWarning($"Error processing a disk: {diskEx.Message}\n\nContinuing with remaining disks...",
+									CustomDialogService.ShowWarning(
+										$"Error processing a disk: {diskEx.Message}\n\nContinuing with remaining disks...",
 										"Warning"));
 							}
 						}
 					}
-
-					System.Diagnostics.Debug.WriteLine($"=== Completed LoadPhysicalDrives: {discoveredDisks.Count} disks loaded ===");
+					// Sort in memory by disk index, replacing ORDER BY.
+					discovered.Sort((a, b) => a.Index.CompareTo(b.Index));
+					Debug.WriteLine($"=== Completed LoadPhysicalDrives: {discovered.Count} disks loaded ===");
 				}
 				catch (Exception ex)
 				{
-					System.Diagnostics.Debug.WriteLine($"CRITICAL ERROR in LoadPhysicalDrives: {ex.Message}\nStack: {ex.StackTrace}");
+					Debug.WriteLine($"CRITICAL ERROR in LoadPhysicalDrives: {ex.Message}\nStack: {ex.StackTrace}");
 					UiDispatcherHelper.Invoke(() =>
-						CustomDialogService.ShowError($"Error loading physical drives: {ex.Message}\n\nDetails: {ex.GetType().Name}\n\nPlease check Output window for details.",
+						CustomDialogService.ShowError(
+							$"Error loading physical drives: {ex.Message}\n\nDetails: {ex.GetType().Name}\n\nPlease check Output window for details.",
 							"Error"));
 				}
-
-				return discoveredDisks;
+				return discovered.Select(d => d.Item).ToList();
 			});
-
-			foreach (DriveTreeItem disk in disks)
-			{
-				driveItems.Add(disk);
-			}
+			driveItems.AddRange(disks);
 		}
-
 
 		public static void LoadVolumesForDisk(DriveTreeItem diskItem, int diskNum)
 		{
@@ -145,72 +114,17 @@ namespace SecureServerBackup.Helpers
 				// Try method 2: Alternative WMI query if method 1 failed
 				if (!volumesFound)
 				{
-					System.Diagnostics.Debug.WriteLine($"Method 1 failed, trying alternative WMI query for disk {diskNum}");
-					volumesFound = TryLoadVolumesViaAlternativeSSB(diskItem, diskNum);
+					System.Diagnostics.Debug.WriteLine($"All SSB methods failed for disk {diskNum}, using fallback");
+					LoadVolumesSimpleFallback(diskItem, diskNum);
 				}
 			}
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine($"Error in LoadVolumesForDisk for disk {diskNum}: {ex.Message}");
 			}
-
-			// If WMI didn't find any volumes, use fallback
-			if (!volumesFound)
-			{
-				System.Diagnostics.Debug.WriteLine($"All WMI methods failed for disk {diskNum}, using fallback");
-				LoadVolumesSimpleFallback(diskItem, diskNum);
-			}
 		}
 
 		public static bool TryLoadVolumesViaSSB(DriveTreeItem diskItem, int diskNum)
-		{
-			var volumesFound = false;
-
-			try
-			{
-				var deviceId = diskItem.FullPath.Replace("\\", "\\\\");
-				var partitionQuery = $"ASSOCIATORS OF {{Win32_DiskDrive.DeviceID='{deviceId}'}} WHERE AssocClass = Win32_DiskDriveToDiskPartition";
-
-				System.Diagnostics.Debug.WriteLine($"Query 1: {partitionQuery}");
-
-				using var partitionSearcher = new ManagementObjectSearcher(partitionQuery);
-				var partitions = partitionSearcher.Get();
-
-				System.Diagnostics.Debug.WriteLine($"Query 1 returned {partitions.Count} partitions");
-
-				foreach (ManagementObject partition in partitions)
-				{
-					var partitionDeviceId = partition["DeviceID"]?.ToString();
-					System.Diagnostics.Debug.WriteLine($"  Partition: {partitionDeviceId}");
-
-					var logicalQuery = $"ASSOCIATORS OF {{Win32_DiskPartition.DeviceID='{partitionDeviceId}'}} WHERE AssocClass = Win32_LogicalDiskToPartition";
-
-					using var logicalSearcher = new ManagementObjectSearcher(logicalQuery);
-					var logicalDisks = logicalSearcher.Get();
-
-					System.Diagnostics.Debug.WriteLine($"  Query 2 returned {logicalDisks.Count} logical disks");
-
-					foreach (ManagementObject logical in logicalDisks)
-					{
-						var driveLetter = logical["DeviceID"]?.ToString();
-						if (string.IsNullOrEmpty(driveLetter)) continue;
-
-						System.Diagnostics.Debug.WriteLine($"    Found: {driveLetter}");
-
-						if (AddVolumeToTree(diskItem, driveLetter))
-							volumesFound = true;
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"TryLoadVolumesViaSSB failed: {ex.Message}");
-			}
-
-			return volumesFound;
-		}
-
-		public static bool TryLoadVolumesViaAlternativeSSB(DriveTreeItem diskItem, int diskNum)
 		{
 			var volumesFound = false;
 
