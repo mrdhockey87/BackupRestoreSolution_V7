@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.10.02";
+        private static readonly string version_fallback_number = "7.4.10.03";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -67,6 +67,7 @@ namespace SecureServerBackup
 
 
 /*
+ *  Version 7.4.10.03 In c++ changed an output message to [SSBMount] as it was left from former convertion mdail 10/26/2026
  *  Version 7.4.10.02 Updated the DriveEnumeration class as one of the attempts to get the list of disks would always fail 
  *                    slowing the application down. mdail 10/26/2026
  *  Version 7.4.10.01 Fixed the BackupNewEditForm tree check state so partially selected files, folders, and volumes now show a 
