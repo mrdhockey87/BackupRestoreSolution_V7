@@ -13,22 +13,13 @@ namespace SecureServerBackup.WinForms
 {
 	internal sealed partial class RestorePointSelectionForm : Form
 	{
-		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
-
-		public RestorePointSelectionForm() : this(CreateDesignTimeBackup())
-		{
-			System.Diagnostics.Debug.WriteLine("RestorePointSelectionForm initialized CreateDesignTimeBackup");
-		}
-
 		public RestorePointSelectionForm(AvailableBackupInfo backup)
 		{
 			System.Diagnostics.Debug.WriteLine("RestorePointSelectionForm initialized AvailableBackupInfo");
 			ArgumentNullException.ThrowIfNull(backup);
 
 			Backup = backup;
-			RestorePoints = IsInDesignMode
-				? [CreateDesignTimeRestorePoint()]
-				: RestoreWorkflowHelper.GetRestorePointsForBackup(backup.BackupPath).ToList();
+			RestorePoints = [.. RestoreWorkflowHelper.GetRestorePointsForBackup(backup.BackupPath)];
 
 			InitializeComponent();
 			summaryLabel!.Text = $"Backup: {backup.BackupName} ({backup.BackupType}){Environment.NewLine}Source: {backup.BackupPath}";
@@ -66,28 +57,6 @@ namespace SecureServerBackup.WinForms
 			DialogResult = DialogResult.OK;
 			Close();
 		}
-
-		private static AvailableBackupInfo CreateDesignTimeBackup()
-		{
-			return new AvailableBackupInfo
-			{
-				BackupName = "Sample Backup",
-				BackupType = "Full",
-				BackupPath = @"D:\Backups\Sample.ssb"
-			};
-		}
-
-		private static RestorePoint CreateDesignTimeRestorePoint()
-		{
-			return new RestorePoint
-			{
-				DisplayName = "2026-08-15 10:30 (Full)",
-				BackupType = "Full",
-				FilePath = @"D:\Backups\Sample.ssb",
-				Timestamp = new DateTime(2026, 8, 15, 10, 30, 0)
-			};
-		}
-
 		private void RestorePointsListBox_DoubleClick(object? sender, EventArgs e)
 		{
 			ConfirmSelection();

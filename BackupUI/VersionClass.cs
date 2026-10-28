@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.10.06";
+        private static readonly string version_fallback_number = "7.4.10.07";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,7 @@ namespace SecureServerBackup
 
 /*  
  *  
+ *  Version 7.4.10.07 Removed design time code from BackupProgressForm & RestorePointSelectionForm mdail 10/28/2026
  *  Version 7.4.10.06 Updated the BackupNewEditForm so that when it sets the scheduled time if the cmbAmPm 
  *                    is blank it will set it to AM. Also fixed the alignment of the cancel button on 
  *                    the BackupNewEditForm. The Start button on the BackupNewEditForm fails so I disabled it

@@ -21,18 +21,6 @@ namespace SecureServerBackup.WinForms
 		private bool abortRequested;
 		private DateTime? waitingStartTime;
 		private readonly Form owner;
-		/*public BackupProgressForm(null, Guid.Empty, "Sample Backup")
-		{
-		}
-		
-		public BackupProgressForm(Guid jobId, string jobName)
-		{
-			this.jobId = jobId;
-			this.jobName = jobName;
-			serviceClient = new BackupServiceClient();
-			InitializeComponent();
-			Text = $"Backup Progress: {jobName}";
-		}*/
 
 		public BackupProgressForm(Form _owner, Guid jobId, string jobName)
 		{
