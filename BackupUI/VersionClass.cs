@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.10.03";
+        private static readonly string version_fallback_number = "7.4.10.04";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -66,7 +66,10 @@ namespace SecureServerBackup
 }
 
 
-/*
+/*  Version 7.4.10.04 Fixed the Selected Files & Folders restore-item discovery for current-format archives.
+ *                    The native include filter now keeps exact selected paths and descendant selections in the
+ *                    archive so restore selection lists populate instead of showing the empty "No selectable
+ *                    files or folders were found" warning. mdail 10/28/2026
  *  Version 7.4.10.03 In c++ changed an output message to [SSBMount] as it was left from former convertion mdail 10/26/2026
  *  Version 7.4.10.02 Updated the DriveEnumeration class as one of the attempts to get the list of disks would always fail 
  *                    slowing the application down. mdail 10/26/2026
