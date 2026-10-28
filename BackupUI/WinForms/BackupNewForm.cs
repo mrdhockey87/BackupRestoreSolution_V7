@@ -3234,7 +3234,7 @@ namespace SecureServerBackup.WinForms
 				}
 
 				BackupLogger.LogInfo(job.Name, "Service accepted backup request - backup is starting");
-				var progressForm = new BackupProgressForm(job.Id, job.Name);
+				var progressForm = new BackupProgressForm(this, job.Id, job.Name);
 				progressForm.Show(this);
 				DialogResult = DialogResult.OK;
 				Close();

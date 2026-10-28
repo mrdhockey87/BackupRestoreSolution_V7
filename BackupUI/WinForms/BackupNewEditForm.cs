@@ -142,6 +142,8 @@ namespace SecureServerBackup.WinForms
 			for (int i = 0; i < 60; i++) cmbMinute.Items.Add(i.ToString("D2"));
 			cmbMinute.Text = "00";
 
+			cmbAmPm.SelectedIndex = 0;
+
 			cmbDayOfMonth.Items.Clear();
 			for (int i = 1; i <= 31; i++) cmbDayOfMonth.Items.Add(i.ToString());
 			cmbDayOfMonth.SelectedIndex = 0;
@@ -1596,7 +1598,10 @@ namespace SecureServerBackup.WinForms
 
 			if (!int.TryParse(cmbHour.Text, out int hour12) || hour12 < 1 || hour12 > 12) return false;
 			if (!int.TryParse(cmbMinute.Text, out minute) || minute < 0 || minute > 59) return false;
-
+			if(string.IsNullOrWhiteSpace(cmbAmPm.Text))
+			{
+				cmbAmPm.Text = "AM";
+			}
 			bool am = cmbAmPm.Text != "PM";
 			hour24 = am ? (hour12 == 12 ? 0 : hour12) : (hour12 == 12 ? 12 : hour12 + 12);
 			cmbMinute.Text = minute.ToString("D2");
@@ -1615,7 +1620,16 @@ namespace SecureServerBackup.WinForms
 			try
 			{
 				BackupJob job = CreateJobFromInput();
-				await Task.Run(() => RunBackupJobHelper.RunBackupJobAsync(job, this));
+
+				CheckBackupServiceHelper cbsh = new(this);
+				bool serviceOk = await cbsh.CheckBackupServiceAsync();
+				if (!serviceOk)
+				{
+					CustomDialogService.ShowError("The backup service is not running or is not responding. Please ensure the service is installed and running before starting a backup.", "Service Error");
+					return;
+				}
+
+				await RunBackupJobHelper.RunBackupJobAsync(this,job);
 
 				ShowSuccess("Backup completed successfully!", "Success");
 				DialogResult = DialogResult.OK;

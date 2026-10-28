@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.10.04";
+        private static readonly string version_fallback_number = "7.4.10.06";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -66,11 +66,22 @@ namespace SecureServerBackup
 }
 
 
-/*  Version 7.4.10.04 Fixed the Selected Files & Folders restore-item discovery for current-format archives.
+/*  
+ *  
+ *  Version 7.4.10.06 Updated the BackupNewEditForm so that when it sets the scheduled time if the cmbAmPm 
+ *                    is blank it will set it to AM. Also fixed the alignment of the cancel button on 
+ *                    the BackupNewEditForm. The Start button on the BackupNewEditForm fails so I disabled it
+ *                    by setting the visibility to false, Fixed the RunBackupJobHelper to require the owner
+ *                    form sent in as an arg to the methods, fixed getting error that it was trying to run
+ *                    something on the wrong thread by removing Task.Run from around 
+ *                    RunBackupJobHelper.RunBackupJobAsync as it is async anyway. mdail 10/28/2026
+ *  Version 7.4.10.05 Changed the GetSourceSummary method to return the same source description as the WPF
+ *                    application did to use to build the card in the list on MainFrom. mdail 10/28/2026
+ *  Version 7.4.10.04 Fixed the Selected Files & Folders restore-item discovery for current-format archives.
  *                    The native include filter now keeps exact selected paths and descendant selections in the
  *                    archive so restore selection lists populate instead of showing the empty "No selectable
  *                    files or folders were found" warning. mdail 10/28/2026
- *  Version 7.4.10.03 In c++ changed an output message to [SSBMount] as it was left from former convertion mdail 10/26/2026
+ *  Version 7.4.10.03 In c++ changed an output message to [SSBMount] as it was left from former conversion mdail 10/26/2026
  *  Version 7.4.10.02 Updated the DriveEnumeration class as one of the attempts to get the list of disks would always fail 
  *                    slowing the application down. mdail 10/26/2026
  *  Version 7.4.10.01 Fixed the BackupNewEditForm tree check state so partially selected files, folders, and volumes now show a 

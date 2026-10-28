@@ -126,7 +126,7 @@ namespace SecureServerBackup.WinForms
 				Margin = new Padding(10, 18, 0, 0)
 			};
 
-			actionsPanel.Controls.Add(CreateJobActionButton("Run Now", WinFormsThemeManager.ButtonBackground, async (_, _) => await RunBackupJobHelper.RunBackupJobAsync(job, this)));
+			actionsPanel.Controls.Add(CreateJobActionButton("Run Now", WinFormsThemeManager.ButtonBackground, async (_, _) => await RunBackupJobHelper.RunBackupJobAsync(this,	job)));
 			actionsPanel.Controls.Add(CreateJobActionButton("Edit", WinFormsThemeManager.ButtonBackground, (_, _) => EditBackupJob(job)));
 			actionsPanel.Controls.Add(CreateJobActionButton("Delete", WinFormsThemeManager.DangerColor, (_, _) => DeleteBackupJob(job)));
 
@@ -977,7 +977,7 @@ namespace SecureServerBackup.WinForms
 		{
 			return job.Type switch
 			{
-				BackupType.Full => "Full",
+				BackupType.Full => "Full Backup",
 				BackupType.Incremental => "Full then Incremental",
 				BackupType.Differential => "Full then Differential",
 				BackupType.SelectedFilesAndFolders => "Selected Files & Folder",
@@ -991,7 +991,40 @@ namespace SecureServerBackup.WinForms
 
 		private static string GetSourceSummary(BackupJob job)
 		{
-			string[] hyperVNames = (job.HyperVMachines ?? new System.Collections.Generic.List<string>())
+			string SourceDescription;
+			// Source description - CHECK DISK/VOLUME FIRST before FilesAndFolders
+			// This prevents disk paths from being misidentified as file paths
+			if (job.IsHyperVBackup && job.HyperVMachines.Count > 0)
+			{
+				SourceDescription = $"Hyper-V: {string.Join(", ", job.HyperVMachines)}";
+			}
+			else if (job.Target == BackupTarget.Disk)
+			{
+				// Disk backup - show device paths
+				SourceDescription = $"Disk: {string.Join(", ", job.SourcePaths)}";
+			}
+			else if (job.Target == BackupTarget.Volume)
+			{
+				// Volume backup - show volume paths
+				SourceDescription = $"Volume: {string.Join(", ", job.SourcePaths)}";
+			}
+			else if (job.Target == BackupTarget.FilesAndFolders)
+			{
+				// Files & Folders backup - extract drive letters and add suffix
+				var volumeLetters = job.SourcePaths
+					.Select(p => System.IO.Path.GetPathRoot(p)?.TrimEnd('\\'))
+					.Distinct()
+					.Where(v => !string.IsNullOrEmpty(v));
+
+				SourceDescription = $"{string.Join(", ", volumeLetters)} - Files & Folders";
+			}
+			else
+			{
+				// Unknown/fallback - just show paths
+				SourceDescription = string.Join(", ", job.SourcePaths);
+			}
+			return string.IsNullOrWhiteSpace(SourceDescription)  ? "No Source Found!" : SourceDescription; ;
+			/*string[] hyperVNames = (job.HyperVMachines ?? new System.Collections.Generic.List<string>())
 				.Where(name => !string.IsNullOrWhiteSpace(name))
 				.Distinct(StringComparer.OrdinalIgnoreCase)
 				.ToArray();
@@ -1016,7 +1049,7 @@ namespace SecureServerBackup.WinForms
 				return sources[0];
 			}
 
-			return $"{sources[0]} (+{sources.Length - 1} more)";
+			return $"{sources[0]} (+{sources.Length - 1} more)";*/
 		}
 
 		private static string GetScheduleSummary(BackupJob job)

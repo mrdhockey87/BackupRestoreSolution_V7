@@ -6,144 +6,144 @@ using System.Windows.Forms;
 #nullable enable
 namespace SecureServerBackup.WinForms
 {
-    partial class BackupNewEditForm
-    {
-        private System.ComponentModel.IContainer? components = null;
-        private ImageList imgCheckStates = null!;
+	partial class BackupNewEditForm
+	{
+		private System.ComponentModel.IContainer? components = null;
+		private ImageList imgCheckStates = null!;
 
-        // Root layout
-        private Panel pnlScrollHost = null!;
-        private TableLayoutPanel tlpRoot = null!;
+		// Root layout
+		private Panel pnlScrollHost = null!;
+		private TableLayoutPanel tlpRoot = null!;
 
-        // What to backup
-        private GroupBox gbWhat = null!;
-        private FlowLayoutPanel flowWhat = null!;
-        private Label lblWhatHelp = null!;
-        private Label lblLoading = null!;
-        private TreeView treeDrives = null!;
-        private ContextMenuStrip treeContextMenu = null!;
-        private ToolStripMenuItem miRemoveNetworkPath = null!;
-        private FlowLayoutPanel flowTreeButtons = null!;
-        private Button btnRefresh = null!;
-        private Button btnExpandAll = null!;
-        private Button btnCollapseAll = null!;
-        private CheckBox chkShowHiddenPartitions = null!;
+		// What to backup
+		private GroupBox gbWhat = null!;
+		private FlowLayoutPanel flowWhat = null!;
+		private Label lblWhatHelp = null!;
+		private Label lblLoading = null!;
+		private TreeView treeDrives = null!;
+		private ContextMenuStrip treeContextMenu = null!;
+		private ToolStripMenuItem miRemoveNetworkPath = null!;
+		private FlowLayoutPanel flowTreeButtons = null!;
+		private Button btnRefresh = null!;
+		private Button btnExpandAll = null!;
+		private Button btnCollapseAll = null!;
+		private CheckBox chkShowHiddenPartitions = null!;
 
-        // Settings
-        private GroupBox gbSettings = null!;
-        private FlowLayoutPanel flowSettings = null!;
-        private Label lblBackupName = null!;
-        private TextBox txtBackupName = null!;
-        private Label lblBackupType = null!;
-        private FlowLayoutPanel flowBackupTypes = null!;
-        private RadioButton rbFullBackup = null!;
-        private RadioButton rbIncremental = null!;
-        private RadioButton rbDifferential = null!;
-        private RadioButton rbSelectedFiles = null!;
-        private RadioButton rbCloneDisk = null!;
-        private RadioButton rbCloneVirtual = null!;
-        private RadioButton rbCloneHyperV = null!;
-        private RadioButton rbExportHyperV = null!;
-        private TableLayoutPanel pnlCloneDestination = null!;
-        private Label lblCloneDestination = null!;
-        private TextBox txtCloneDestination = null!;
-        private Button btnBrowseClone = null!;
-        private TableLayoutPanel pnlDestination = null!;
-        private Label lblDestination = null!;
-        private TextBox txtDestination = null!;
-        private Button btnBrowseDestination = null!;
-        private CheckBox chkAutoSystemState = null!;
-        private CheckBox chkCompress = null!;
-        private CheckBox chkSplitFiles = null!;
-        private CheckBox chkVerify = null!;
-        private FlowLayoutPanel pnlRenameHyperV = null!;
-        private CheckBox chkRenameHyperVSystem = null!;
-        private FlowLayoutPanel pnlRenameHyperVName = null!;
-        private Label lblRenameHyperVName = null!;
-        private TextBox txtRenameHyperVSystemName = null!;
-        private Button btnManageExclusions = null!;
+		// Settings
+		private GroupBox gbSettings = null!;
+		private FlowLayoutPanel flowSettings = null!;
+		private Label lblBackupName = null!;
+		private TextBox txtBackupName = null!;
+		private Label lblBackupType = null!;
+		private FlowLayoutPanel flowBackupTypes = null!;
+		private RadioButton rbFullBackup = null!;
+		private RadioButton rbIncremental = null!;
+		private RadioButton rbDifferential = null!;
+		private RadioButton rbSelectedFiles = null!;
+		private RadioButton rbCloneDisk = null!;
+		private RadioButton rbCloneVirtual = null!;
+		private RadioButton rbCloneHyperV = null!;
+		private RadioButton rbExportHyperV = null!;
+		private TableLayoutPanel pnlCloneDestination = null!;
+		private Label lblCloneDestination = null!;
+		private TextBox txtCloneDestination = null!;
+		private Button btnBrowseClone = null!;
+		private TableLayoutPanel pnlDestination = null!;
+		private Label lblDestination = null!;
+		private TextBox txtDestination = null!;
+		private Button btnBrowseDestination = null!;
+		private CheckBox chkAutoSystemState = null!;
+		private CheckBox chkCompress = null!;
+		private CheckBox chkSplitFiles = null!;
+		private CheckBox chkVerify = null!;
+		private FlowLayoutPanel pnlRenameHyperV = null!;
+		private CheckBox chkRenameHyperVSystem = null!;
+		private FlowLayoutPanel pnlRenameHyperVName = null!;
+		private Label lblRenameHyperVName = null!;
+		private TextBox txtRenameHyperVSystemName = null!;
+		private Button btnManageExclusions = null!;
 
-        // Retention & encryption
-        private GroupBox gbRetention = null!;
-        private FlowLayoutPanel flowRetention = null!;
-        private FlowLayoutPanel pnlSelectedRetention = null!;
-        private Label lblSelRetHeader = null!;
-        private Label lblSelRetDesc = null!;
-        private FlowLayoutPanel flowSelRetRow = null!;
-        private Label lblSelKeepLast = null!;
-        private ComboBox cmbSelectedRetention = null!;
-        private Label lblSelRetSuffix = null!;
-        private FlowLayoutPanel pnlCloneRetention = null!;
-        private Label lblCloneRetHeader = null!;
-        private Label lblCloneRetDesc = null!;
-        private FlowLayoutPanel flowCloneRetRow = null!;
-        private Label lblCloneKeepLast = null!;
-        private ComboBox cmbCloneRetention = null!;
-        private Label lblCloneRetSuffix = null!;
-        private FlowLayoutPanel pnlFullRetention = null!;
-        private Label lblFullRetHeader = null!;
-        private Label lblFullRetDesc = null!;
-        private FlowLayoutPanel flowFullRetRow = null!;
-        private Label lblFullKeepLast = null!;
-        private TextBox txtRetainCount = null!;
-        private Label lblFullRetSuffix = null!;
-        private Label lblFullRetNote = null!;
-        private CheckBox chkEncryptBackup = null!;
-        private FlowLayoutPanel pnlEncryption = null!;
-        private Label lblPassword = null!;
-        private FlowLayoutPanel flowPasswordRow = null!;
-        private TextBox txtEncryptionPassword = null!;
-        private CheckBox chkShowEncryptionPassword = null!;
-        private FlowLayoutPanel pnlVerifyPassword = null!;
-        private Label lblVerifyPassword = null!;
-        private TextBox txtVerifyEncryptionPassword = null!;
-        private Label lblEncryptionInfo = null!;
+		// Retention & encryption
+		private GroupBox gbRetention = null!;
+		private FlowLayoutPanel flowRetention = null!;
+		private FlowLayoutPanel pnlSelectedRetention = null!;
+		private Label lblSelRetHeader = null!;
+		private Label lblSelRetDesc = null!;
+		private FlowLayoutPanel flowSelRetRow = null!;
+		private Label lblSelKeepLast = null!;
+		private ComboBox cmbSelectedRetention = null!;
+		private Label lblSelRetSuffix = null!;
+		private FlowLayoutPanel pnlCloneRetention = null!;
+		private Label lblCloneRetHeader = null!;
+		private Label lblCloneRetDesc = null!;
+		private FlowLayoutPanel flowCloneRetRow = null!;
+		private Label lblCloneKeepLast = null!;
+		private ComboBox cmbCloneRetention = null!;
+		private Label lblCloneRetSuffix = null!;
+		private FlowLayoutPanel pnlFullRetention = null!;
+		private Label lblFullRetHeader = null!;
+		private Label lblFullRetDesc = null!;
+		private FlowLayoutPanel flowFullRetRow = null!;
+		private Label lblFullKeepLast = null!;
+		private TextBox txtRetainCount = null!;
+		private Label lblFullRetSuffix = null!;
+		private Label lblFullRetNote = null!;
+		private CheckBox chkEncryptBackup = null!;
+		private FlowLayoutPanel pnlEncryption = null!;
+		private Label lblPassword = null!;
+		private FlowLayoutPanel flowPasswordRow = null!;
+		private TextBox txtEncryptionPassword = null!;
+		private CheckBox chkShowEncryptionPassword = null!;
+		private FlowLayoutPanel pnlVerifyPassword = null!;
+		private Label lblVerifyPassword = null!;
+		private TextBox txtVerifyEncryptionPassword = null!;
+		private Label lblEncryptionInfo = null!;
 
-        // Schedule
-        private GroupBox gbSchedule = null!;
-        private FlowLayoutPanel flowSchedule = null!;
-        private CheckBox chkEnableSchedule = null!;
-        private FlowLayoutPanel pnlSchedule = null!;
-        private Label lblFrequency = null!;
-        private ComboBox cmbFrequency = null!;
-        private Label lblTime = null!;
-        private FlowLayoutPanel flowTime = null!;
-        private ComboBox cmbHour = null!;
-        private Label lblTimeColon = null!;
-        private ComboBox cmbMinute = null!;
-        private ComboBox cmbAmPm = null!;
-        private FlowLayoutPanel pnlWeekly = null!;
-        private Label lblDays = null!;
-        private FlowLayoutPanel flowDays = null!;
-        private CheckBox chkMonday = null!;
-        private CheckBox chkTuesday = null!;
-        private CheckBox chkWednesday = null!;
-        private CheckBox chkThursday = null!;
-        private CheckBox chkFriday = null!;
-        private CheckBox chkSaturday = null!;
-        private CheckBox chkSunday = null!;
-        private FlowLayoutPanel pnlMonthly = null!;
-        private Label lblDayOfMonth = null!;
-        private ComboBox cmbDayOfMonth = null!;
+		// Schedule
+		private GroupBox gbSchedule = null!;
+		private FlowLayoutPanel flowSchedule = null!;
+		private CheckBox chkEnableSchedule = null!;
+		private FlowLayoutPanel pnlSchedule = null!;
+		private Label lblFrequency = null!;
+		private ComboBox cmbFrequency = null!;
+		private Label lblTime = null!;
+		private FlowLayoutPanel flowTime = null!;
+		private ComboBox cmbHour = null!;
+		private Label lblTimeColon = null!;
+		private ComboBox cmbMinute = null!;
+		private ComboBox cmbAmPm = null!;
+		private FlowLayoutPanel pnlWeekly = null!;
+		private Label lblDays = null!;
+		private FlowLayoutPanel flowDays = null!;
+		private CheckBox chkMonday = null!;
+		private CheckBox chkTuesday = null!;
+		private CheckBox chkWednesday = null!;
+		private CheckBox chkThursday = null!;
+		private CheckBox chkFriday = null!;
+		private CheckBox chkSaturday = null!;
+		private CheckBox chkSunday = null!;
+		private FlowLayoutPanel pnlMonthly = null!;
+		private Label lblDayOfMonth = null!;
+		private ComboBox cmbDayOfMonth = null!;
 
-        // Progress and actions
-        private FlowLayoutPanel pnlProgress = null!;
-        private ProgressBar progressBar = null!;
-        private Label lblProgress = null!;
-        private FlowLayoutPanel pnlButtons = null!;
-        private Button btnStartBackup = null!;
-        private Button btnSaveJob = null!;
-        private Button btnCancel = null!;
+		// Progress and actions
+		private FlowLayoutPanel pnlProgress = null!;
+		private ProgressBar progressBar = null!;
+		private Label lblProgress = null!;
+		private FlowLayoutPanel pnlButtons = null!;
+		private Button btnStartBackup = null!;
+		private Button btnSaveJob = null!;
+		private Button btnCancel = null!;
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null))
+			{
+				components.Dispose();
+			}
 
-            base.Dispose(disposing);
-        }
+			base.Dispose(disposing);
+		}
 
 		private void InitializeComponent()
 		{
@@ -296,6 +296,12 @@ namespace SecureServerBackup.WinForms
 			pnlButtons.SuspendLayout();
 			SuspendLayout();
 			// 
+			// imgCheckStates
+			// 
+			imgCheckStates.ColorDepth = ColorDepth.Depth32Bit;
+			imgCheckStates.ImageSize = new Size(16, 16);
+			imgCheckStates.TransparentColor = Color.Transparent;
+			// 
 			// treeContextMenu
 			// 
 			treeContextMenu.ImageScalingSize = new Size(18, 18);
@@ -318,7 +324,7 @@ namespace SecureServerBackup.WinForms
 			pnlScrollHost.Dock = DockStyle.Fill;
 			pnlScrollHost.Location = new Point(0, 0);
 			pnlScrollHost.Name = "pnlScrollHost";
-			pnlScrollHost.Size = new Size(1180, 720);
+			pnlScrollHost.Size = new Size(1180, 755);
 			pnlScrollHost.TabIndex = 1;
 			// 
 			// tlpRoot
@@ -343,7 +349,7 @@ namespace SecureServerBackup.WinForms
 			tlpRoot.RowStyles.Add(new RowStyle());
 			tlpRoot.RowStyles.Add(new RowStyle());
 			tlpRoot.RowStyles.Add(new RowStyle());
-			tlpRoot.Size = new Size(1953, 719);
+			tlpRoot.Size = new Size(1953, 713);
 			tlpRoot.TabIndex = 0;
 			// 
 			// gbWhat
@@ -402,7 +408,6 @@ namespace SecureServerBackup.WinForms
 			// 
 			// treeDrives
 			// 
-			treeDrives.CheckBoxes = false;
 			treeDrives.ContextMenuStrip = treeContextMenu;
 			treeDrives.FullRowSelect = true;
 			treeDrives.HideSelection = false;
@@ -415,9 +420,9 @@ namespace SecureServerBackup.WinForms
 			treeDrives.BeforeCheck += treeDrives_BeforeCheck;
 			treeDrives.AfterCheck += treeDrives_AfterCheck;
 			treeDrives.AfterExpand += treeDrives_AfterExpand;
-			treeDrives.MouseDown += treeDrives_MouseDown;
-			treeDrives.KeyDown += treeDrives_KeyDown;
 			treeDrives.NodeMouseClick += treeDrives_NodeMouseClick;
+			treeDrives.KeyDown += treeDrives_KeyDown;
+			treeDrives.MouseDown += treeDrives_MouseDown;
 			// 
 			// flowTreeButtons
 			// 
@@ -1298,7 +1303,7 @@ namespace SecureServerBackup.WinForms
 			pnlSchedule.FlowDirection = FlowDirection.TopDown;
 			pnlSchedule.Location = new Point(9, 38);
 			pnlSchedule.Name = "pnlSchedule";
-			pnlSchedule.Size = new Size(776, 243);
+			pnlSchedule.Size = new Size(776, 237);
 			pnlSchedule.TabIndex = 1;
 			pnlSchedule.WrapContents = false;
 			// 
@@ -1344,7 +1349,7 @@ namespace SecureServerBackup.WinForms
 			flowTime.Location = new Point(0, 77);
 			flowTime.Margin = new Padding(0, 0, 0, 8);
 			flowTime.Name = "flowTime";
-			flowTime.Size = new Size(218, 31);
+			flowTime.Size = new Size(212, 25);
 			flowTime.TabIndex = 3;
 			flowTime.WrapContents = false;
 			// 
@@ -1370,7 +1375,7 @@ namespace SecureServerBackup.WinForms
 			// cmbMinute
 			// 
 			cmbMinute.Location = new Point(82, 0);
-			cmbMinute.Margin = new Padding(0, 0, 10, 0);
+			cmbMinute.Margin = new Padding(0, 0, 5, 0);
 			cmbMinute.Name = "cmbMinute";
 			cmbMinute.Size = new Size(60, 25);
 			cmbMinute.TabIndex = 2;
@@ -1379,7 +1384,8 @@ namespace SecureServerBackup.WinForms
 			// 
 			cmbAmPm.DropDownStyle = ComboBoxStyle.DropDownList;
 			cmbAmPm.Items.AddRange(new object[] { "AM", "PM" });
-			cmbAmPm.Location = new Point(155, 3);
+			cmbAmPm.Location = new Point(147, 0);
+			cmbAmPm.Margin = new Padding(0, 0, 5, 0);
 			cmbAmPm.Name = "cmbAmPm";
 			cmbAmPm.Size = new Size(60, 25);
 			cmbAmPm.TabIndex = 3;
@@ -1391,7 +1397,7 @@ namespace SecureServerBackup.WinForms
 			pnlWeekly.Controls.Add(lblDays);
 			pnlWeekly.Controls.Add(flowDays);
 			pnlWeekly.FlowDirection = FlowDirection.TopDown;
-			pnlWeekly.Location = new Point(0, 116);
+			pnlWeekly.Location = new Point(0, 110);
 			pnlWeekly.Margin = new Padding(0, 0, 0, 8);
 			pnlWeekly.Name = "pnlWeekly";
 			pnlWeekly.Size = new Size(776, 58);
@@ -1487,7 +1493,7 @@ namespace SecureServerBackup.WinForms
 			pnlMonthly.Controls.Add(lblDayOfMonth);
 			pnlMonthly.Controls.Add(cmbDayOfMonth);
 			pnlMonthly.FlowDirection = FlowDirection.TopDown;
-			pnlMonthly.Location = new Point(0, 182);
+			pnlMonthly.Location = new Point(0, 176);
 			pnlMonthly.Margin = new Padding(0, 0, 0, 8);
 			pnlMonthly.Name = "pnlMonthly";
 			pnlMonthly.Size = new Size(98, 53);
@@ -1553,10 +1559,10 @@ namespace SecureServerBackup.WinForms
 			pnlButtons.Controls.Add(btnStartBackup);
 			pnlButtons.Controls.Add(btnSaveJob);
 			pnlButtons.Controls.Add(btnCancel);
-			pnlButtons.Location = new Point(1637, 683);
+			pnlButtons.Location = new Point(1638, 683);
 			pnlButtons.Margin = new Padding(0, 10, 0, 0);
 			pnlButtons.Name = "pnlButtons";
-			pnlButtons.Size = new Size(316, 36);
+			pnlButtons.Size = new Size(315, 30);
 			pnlButtons.TabIndex = 5;
 			pnlButtons.WrapContents = false;
 			// 
@@ -1569,6 +1575,7 @@ namespace SecureServerBackup.WinForms
 			btnStartBackup.TabIndex = 0;
 			btnStartBackup.Text = "Start Backup";
 			btnStartBackup.Click += btnStartBackup_Click;
+			btnStartBackup.Visible = false;
 			// 
 			// btnSaveJob
 			// 
@@ -1583,7 +1590,8 @@ namespace SecureServerBackup.WinForms
 			// btnCancel
 			// 
 			btnCancel.DialogResult = DialogResult.Cancel;
-			btnCancel.Location = new Point(213, 3);
+			btnCancel.Location = new Point(210, 0);
+			btnCancel.Margin = new Padding(0, 0, 5, 0);
 			btnCancel.Name = "btnCancel";
 			btnCancel.Size = new Size(100, 30);
 			btnCancel.TabIndex = 2;
@@ -1592,12 +1600,9 @@ namespace SecureServerBackup.WinForms
 			// 
 			// BackupNewEditForm
 			// 
-			imgCheckStates.ColorDepth = ColorDepth.Depth32Bit;
-			imgCheckStates.ImageSize = new Size(16, 16);
-			imgCheckStates.TransparentColor = Color.Transparent;
 			AutoScaleDimensions = new SizeF(7F, 17F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(1180, 720);
+			ClientSize = new Size(1180, 755);
 			Controls.Add(pnlScrollHost);
 			Font = new Font("Segoe UI", 9F);
 			MinimumSize = new Size(520, 360);

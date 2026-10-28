@@ -20,12 +20,11 @@ namespace SecureServerBackup.WinForms
 		private bool isCompleted;
 		private bool abortRequested;
 		private DateTime? waitingStartTime;
-
-		public BackupProgressForm()
-			: this(Guid.Empty, "Sample Backup")
+		private readonly Form owner;
+		/*public BackupProgressForm(null, Guid.Empty, "Sample Backup")
 		{
 		}
-
+		
 		public BackupProgressForm(Guid jobId, string jobName)
 		{
 			this.jobId = jobId;
@@ -33,8 +32,18 @@ namespace SecureServerBackup.WinForms
 			serviceClient = new BackupServiceClient();
 			InitializeComponent();
 			Text = $"Backup Progress: {jobName}";
-		}
+		}*/
 
+		public BackupProgressForm(Form _owner, Guid jobId, string jobName)
+		{
+			owner = _owner;
+			this.jobId = jobId;
+			this.jobName = jobName;
+			StartPosition = FormStartPosition.CenterParent;
+			serviceClient = new BackupServiceClient();
+			InitializeComponent();
+			Text = $"Backup Progress: {jobName}";
+		}
 		public bool WasClosedWhileBackupRunning => !isCompleted && !abortRequested;
 
 		private async Task UpdateProgressAsync()

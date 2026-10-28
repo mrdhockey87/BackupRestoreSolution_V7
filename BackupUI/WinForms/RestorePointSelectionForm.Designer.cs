@@ -26,8 +26,6 @@ namespace SecureServerBackup.WinForms
 
 		private void InitializeComponent()
 		{
-			//components = new Container(); is required for the designer to work properly, do not remove it mdail 9/18/2026
-			components = new Container();
 			summaryLabel = new Label();
 			restorePointsListBox = new ListBox();
 			helpLabel = new Label();
@@ -64,7 +62,7 @@ namespace SecureServerBackup.WinForms
 			// nextButton
 			// 
 			nextButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			nextButton.Location = new Point(472, 344);
+			nextButton.Location = new Point(472, 346);
 			nextButton.Name = "nextButton";
 			nextButton.Size = new Size(84, 27);
 			nextButton.TabIndex = 3;
@@ -76,7 +74,7 @@ namespace SecureServerBackup.WinForms
 			// 
 			cancelButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
 			cancelButton.DialogResult = DialogResult.Cancel;
-			cancelButton.Location = new Point(560, 344);
+			cancelButton.Location = new Point(560, 346);
 			cancelButton.Name = "cancelButton";
 			cancelButton.Size = new Size(84, 27);
 			cancelButton.TabIndex = 4;
@@ -90,7 +88,7 @@ namespace SecureServerBackup.WinForms
 			AutoScaleMode = AutoScaleMode.Font;
 			BackColor = Color.White;
 			CancelButton = cancelButton;
-			ClientSize = new Size(665, 385);
+			ClientSize = new Size(665, 387);
 			Controls.Add(cancelButton);
 			Controls.Add(nextButton);
 			Controls.Add(helpLabel);
