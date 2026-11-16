@@ -7,41 +7,73 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 #nullable enable
 namespace SecureServerBackup.WinForms
 {
 	internal sealed partial class RestorePointSelectionForm : Form
 	{
+		private IReadOnlyList<RestorePoint> _restorePoints = Array.Empty<RestorePoint>();
+
 		public RestorePointSelectionForm(AvailableBackupInfo backup)
 		{
 			System.Diagnostics.Debug.WriteLine("RestorePointSelectionForm initialized AvailableBackupInfo");
 			ArgumentNullException.ThrowIfNull(backup);
 
 			Backup = backup;
-			RestorePoints = [.. RestoreWorkflowHelper.GetRestorePointsForBackup(backup.BackupPath)];
 
 			InitializeComponent();
 			summaryLabel!.Text = $"Backup: {backup.BackupName} ({backup.BackupType}){Environment.NewLine}Source: {backup.BackupPath}";
-			helpLabel!.Text = RestorePoints.Count == 0
-				? "No restore points were found for the selected backup."
-				: "Select the restore point you want to open, then click Next.";
-			nextButton!.Enabled = RestorePoints.Count > 0;
+			helpLabel!.Text = "Loading restore points…";
+			nextButton!.Enabled = false;
 
-			foreach (RestorePoint restorePoint in RestorePoints)
+			this.Load += RestorePointSelectionForm_Load;
+		}
+
+		private async void RestorePointSelectionForm_Load(object? sender, EventArgs e)
+		{
+			await LoadRestorePointsAsync();
+		}
+
+		private async Task LoadRestorePointsAsync()
+		{
+			try
 			{
-				restorePointsListBox!.Items.Add(restorePoint);
+				_restorePoints = await Task.Run(() =>
+					RestoreWorkflowHelper.GetRestorePointsForBackup(Backup.BackupPath));
+
+				restorePointsListBox!.BeginUpdate();
+				restorePointsListBox.Items.Clear();
+
+				foreach (RestorePoint restorePoint in _restorePoints)
+				{
+					restorePointsListBox.Items.Add(restorePoint);
+				}
+
+				if (restorePointsListBox.Items.Count > 0)
+				{
+					restorePointsListBox.SelectedIndex = 0;
+				}
+
+				restorePointsListBox.EndUpdate();
+
+				helpLabel!.Text = _restorePoints.Count == 0
+					? "No restore points were found for the selected backup."
+					: "Select the restore point you want to open, then click Next.";
+				nextButton!.Enabled = _restorePoints.Count > 0;
 			}
-
-			if (restorePointsListBox!.Items.Count > 0)
+			catch (Exception ex)
 			{
-				restorePointsListBox.SelectedIndex = 0;
+				MessageBox.Show(this, $"Error loading restore points: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				DialogResult = DialogResult.Cancel;
+				Close();
 			}
 		}
 
 		public AvailableBackupInfo Backup { get; }
 
-		public IReadOnlyList<RestorePoint> RestorePoints { get; }
+		public IReadOnlyList<RestorePoint> RestorePoints => _restorePoints;
 
 		public RestorePoint? SelectedRestorePoint { get; private set; }
 

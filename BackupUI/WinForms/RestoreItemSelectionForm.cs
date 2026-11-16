@@ -1,4 +1,5 @@
 using SecureServerBackup.Enums;
+using SecureServerBackup.Helpers;
 using SecureServerBackup.Models;
 using SecureServerBackup.Services;
 
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SecureServerBackup.WinForms
@@ -15,17 +17,18 @@ namespace SecureServerBackup.WinForms
 	{
 		private static bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 
-		public RestoreItemSelectionForm() : this(CreateDesignTimeBackup(), CreateDesignTimeRestorePoint(), [@"Users\\Admin\\Documents", @"Users\\Admin\\Desktop\\Report.txt"])
+		public RestoreItemSelectionForm() : this(CreateDesignTimeBackup(), CreateDesignTimeRestorePoint())
 		{
+		    //, [@"Users\\Admin\\Documents", @"Users\\Admin\\Desktop\\Report.txt"]
 			System.Diagnostics.Debug.WriteLine("RestoreImageSelectionForm initialized CreateDesignTimeRestorePoint(), [@\"Users\\\\Admin\\\\Documents\", @\"Users\\\\Admin\\\\Desktop\\\\Report.txt\"])");
 		}
 
-		public RestoreItemSelectionForm(AvailableBackupInfo backup, RestorePoint restorePoint, IReadOnlyList<string> items)
+		public RestoreItemSelectionForm(AvailableBackupInfo backup, RestorePoint restorePoint) //, IReadOnlyList<string> items)
 		{
 			System.Diagnostics.Debug.WriteLine("RestoreImageSelectionForm initialized AvailableBackupInfo, RestorePoint, IReadOnlyList<string>");
 			ArgumentNullException.ThrowIfNull(backup);
 			ArgumentNullException.ThrowIfNull(restorePoint);
-			ArgumentNullException.ThrowIfNull(items);
+			//ArgumentNullException.ThrowIfNull(items);
 
 			Backup = backup;
 			RestorePoint = restorePoint;
@@ -33,13 +36,76 @@ namespace SecureServerBackup.WinForms
 			InitializeComponent();
 			summaryLabel!.Text = $"Restore point: {restorePoint.DisplayName}{Environment.NewLine}Source: {restorePoint.FilePath}";
 			helpLabel!.Text = "Select one or more files or folders to restore, then click Next.";
-
-			foreach (string item in items.Where(item => !string.IsNullOrWhiteSpace(item)))
-			{
-				itemsListBox!.Items.Add(item);
-			}
+			this.Load += RestoreItemSelectionForm_Load;
 
 			nextButton!.Enabled = itemsListBox!.Items.Count > 0;
+		}
+		private async void RestoreItemSelectionForm_Load(object? sender, EventArgs e)
+		{
+			if (pnlLoading is null)
+			{
+				return;
+			}
+
+			pnlLoading.Visible = true;
+			pnlLoading.BringToFront();
+			nextButton.Enabled = false;
+			pbLoading.Style = ProgressBarStyle.Marquee;
+			txtLoadingStatus.Text = "Loading backup contents…";
+
+			IReadOnlyList<string> items;
+			try
+			{
+				items = await Task.Run(() => RestoreWorkflowHelper.GetBackupItemsForRestorePoint(RestorePoint));
+			}
+			catch (Exception ex)
+			{
+				pnlLoading.Visible = false;
+				MessageBox.Show(this, $"Failed to load backup contents: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				DialogResult = DialogResult.Cancel;
+				Close();
+				return;
+			}
+
+			// Populate list in batches so the UI stays responsive
+			txtLoadingStatus.Text = $"Populating list ({items.Count} items)…";
+			pbLoading.Style = ProgressBarStyle.Continuous;
+			pbLoading.Minimum = 0;
+			pbLoading.Maximum = Math.Max(items.Count, 1);
+			pbLoading.Value = 0;
+
+			const int batchSize = 200;
+			int added = 0;
+			itemsListBox.BeginUpdate();
+			try
+			{
+				foreach (string item in items.Where(item => !string.IsNullOrWhiteSpace(item)))
+				{
+					itemsListBox.Items.Add(item);
+					added++;
+
+					if (added % batchSize == 0)
+					{
+						pbLoading.Value = added;
+						await Task.Yield();
+					}
+				}
+			}
+			finally
+			{
+				itemsListBox.EndUpdate();
+			}
+
+			pbLoading.Value = Math.Max(added, 0);
+			pnlLoading.Visible = false;
+			nextButton.Enabled = itemsListBox.Items.Count > 0;
+
+			if (itemsListBox.Items.Count == 0)
+			{
+				MessageBox.Show(this, "No selectable files or folders were found for the selected restore point.", "Restore Items Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				DialogResult = DialogResult.Cancel;
+				Close();
+			}
 		}
 
 		public AvailableBackupInfo Backup { get; }

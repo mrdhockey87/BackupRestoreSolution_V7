@@ -256,6 +256,7 @@ namespace SecureServerBackupCommon
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
 		public static extern int ListBackupContents(
 			string backupPath,
+			int imageIndex,
 			StringBuilder buffer,
 			int bufferSize);
 

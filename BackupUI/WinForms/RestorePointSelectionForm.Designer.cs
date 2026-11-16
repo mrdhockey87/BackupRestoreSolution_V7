@@ -8,10 +8,10 @@ namespace SecureServerBackup.WinForms
 	partial class RestorePointSelectionForm
 	{
 		private IContainer? components = null;
-		private Label summaryLabel;
-		private ListBox restorePointsListBox;
-		private Label helpLabel;
-		private Button nextButton;
+		private Label summaryLabel = null!;
+		private ListBox restorePointsListBox = null!;
+		private Label helpLabel = null!;
+		private Button nextButton = null!;
 		private Button? cancelButton;
 
 		protected override void Dispose(bool disposing)

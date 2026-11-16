@@ -1,13 +1,14 @@
-﻿using SecureServerBackup.Enums;
+﻿using SecureServerBackup.Controls;
+using SecureServerBackup.Enums;
 using SecureServerBackup.Helpers;
 using SecureServerBackup.Models;
 using SecureServerBackup.Services;
 using SecureServerBackup.WinForms;
-using SecureServerBackup.Controls;
 
 using SecureServerBackupCommon;
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -18,6 +19,7 @@ using System.Management;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Threading;
 
 using BackupEngineInterop = SecureServerBackup.Services.BackupEngineInterop;
 
@@ -32,6 +34,7 @@ namespace SecureServerBackup.WinForm
 	public partial class RestoreFormNew : Form
 	{
 		private const string RestoreLogJobName = "[Restore]";
+		private static readonly ConcurrentDictionary<string, IReadOnlyList<string>> RestoreItemCache = new(StringComparer.OrdinalIgnoreCase);
 
 		// Tag order of cmbHyperVRestoreTarget items (was ComboBoxItem.Tag in XAML)
 		private static readonly string[] HyperVRestoreModeTags = { "Files", "Volume", "Disk", "HyperVVm" };
@@ -496,23 +499,18 @@ namespace SecureServerBackup.WinForm
 				try
 				{
 					_isHyperVBackupPoint = HyperVRestorePointHelper.IsHyperVBackupPoint(backupFile);
-					var buffer = new StringBuilder(32768);
 					using var preparedBackup = EncryptedBackupFileService.PrepareForRead(this, backupFile, Path.GetFileNameWithoutExtension(backupFile));
-					int result = BackupEngineInterop.ListBackupContents(preparedBackup.WorkingPath, buffer, buffer.Capacity);
+					var items = ListBackupItems(preparedBackup.WorkingPath, imageIndex: 1, backupFile);
 
-					if (result == 0)
+					if (items.Count > 0)
 					{
-						var items = ParseListedBackupItems(buffer.ToString());
-
-						Invoke(new Action(() =>
+						this.Invoke(() =>
 						{
-							lstBackupItems.BeginUpdate();
 							lstBackupItems.Items.Clear();
 							foreach (var item in items)
 							{
 								lstBackupItems.Items.Add(item);
 							}
-							lstBackupItems.EndUpdate();
 
 							if (lstBackupItems.Items.Count > 0)
 							{
@@ -532,12 +530,65 @@ namespace SecureServerBackup.WinForm
 							UpdateHyperVRestoreMode();
 							LoadDiskRestorePlan(preparedBackup.WorkingPath);
 							UpdateSelectedRestoreTargetKind();
-						}));
+						});
 					}
 				}
 				catch { }
 			});
 		}
+		private static IReadOnlyList<string> ListBackupItems(string listingPath, int imageIndex, string? cacheKey = null)
+		{
+			const int initialBufferSize = 32768;
+			const int maxBufferSize = 1024 * 1024;
+
+			int normalizedImageIndex = imageIndex > 0 ? imageIndex : 1;
+			string normalizedCacheKey = BuildRestoreItemCacheKey(cacheKey ?? listingPath, normalizedImageIndex);
+			if (RestoreItemCache.TryGetValue(normalizedCacheKey, out IReadOnlyList<string>? cachedItems))
+			{
+				return cachedItems;
+			}
+
+			int bufferSize = initialBufferSize;
+			while (bufferSize <= maxBufferSize)
+			{
+				var buffer = new StringBuilder(bufferSize);
+				int result = BackupEngineInterop.ListBackupContents(listingPath, normalizedImageIndex, buffer, buffer.Capacity);
+
+				if (result == 0)
+				{
+					IReadOnlyList<string> items = ParseListedBackupItems(buffer.ToString());
+					RestoreItemCache[normalizedCacheKey] = items;
+					return items;
+				}
+
+				if (result == -3)
+				{
+					if (bufferSize == maxBufferSize)
+					{
+						IReadOnlyList<string> items = ParseListedBackupItems(buffer.ToString());
+						RestoreItemCache[normalizedCacheKey] = items;
+						return items;
+					}
+
+					bufferSize *= 2;
+					continue;
+				}
+
+				return Array.Empty<string>();
+			}
+
+			return Array.Empty<string>();
+		}
+		
+		private static string BuildRestoreItemCacheKey(string backupPath, int imageIndex)
+		{
+			string normalizedPath = string.IsNullOrWhiteSpace(backupPath)
+				? string.Empty
+				: Path.GetFullPath(backupPath);
+
+			return $"{normalizedPath}|{imageIndex}";
+		}
+
 
 		#endregion
 

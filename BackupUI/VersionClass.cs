@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.10.07";
+        private static readonly string version_fallback_number = "7.4.11.11";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,6 +68,21 @@ namespace SecureServerBackup
 
 /*  
  *  
+ *  Version 7.4.11.12 On large file it is working, however even the restore point selection form is taking
+ *                    a long time to load, which as there is one one on the files I am testing should be
+ *                    quicker also it isn't showing a progressbar on the select restore point. mdail 11/16/2026
+ *  Version 7.4.11.11 Convert more of the get list to the wpf code that works for restore mdail 11/16/2026
+ *  Version 7.4.11.10 Optimized restore workflow by making RestorePointSelectionForm and item/volume 
+ *                    enumeration async on background threads. UI no longer hangs when user selects restore
+ *                    on large backups; restore point form loads asynchronously with messages shown immediately,
+ *                    and volume/item queries execute on Task.Run() while user interacts with dialogs. mdail 11/16/2026
+ *  Version 7.4.11.09 Fixed the WinForms restore-item load path for selected-file/folder archives.
+ *                    Added buffer-growth retries and cached archive item lists so large backups no longer
+ *                    incorrectly report "No selectable files or folders" and repeated restore scans do not
+ *                    re-enumerate the same archive contents. mdail 11/16/2026
+ *  Version 7.4.11.08 Begin to fix the list restore items that was not working in the old version either. I 
+ *   			      added the code to the RestoreFileSelectionForm that would load in the backgropund and show
+ *   			      progressbar while loading. mdail 11/16/2026
  *  Version 7.4.10.07 Removed design time code from BackupProgressForm & RestorePointSelectionForm mdail 10/28/2026
  *  Version 7.4.10.06 Updated the BackupNewEditForm so that when it sets the scheduled time if the cmbAmPm 
  *                    is blank it will set it to AM. Also fixed the alignment of the cancel button on 

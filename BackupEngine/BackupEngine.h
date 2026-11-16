@@ -330,6 +330,7 @@ extern "C" {
 
     BACKUPENGINE_API int ListBackupContents(
         const wchar_t* backupPath,
+        int            imageIndex,
         wchar_t* buffer,
         int            bufferSize);
 

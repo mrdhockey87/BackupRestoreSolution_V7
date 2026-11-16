@@ -11,6 +11,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 
@@ -1201,7 +1202,7 @@ namespace SecureServerBackup.WinForms
 					requireAlternateDestination = true;
 				}
 
-				RestoreSelectionContext? restoreSelection = PromptForRestoreSelection(backup, requireAlternateDestination);
+				RestoreSelectionContext? restoreSelection = await PromptForRestoreSelectionAsync(backup, requireAlternateDestination);
 				if (restoreSelection == null)
 				{
 					return;
@@ -1226,6 +1227,101 @@ namespace SecureServerBackup.WinForms
 			{
 				CustomDialogService.ShowError(this, $"Error opening restore workflow: {ex.Message}", "Restore Error");
 			}
+		}
+
+		private async Task<RestoreSelectionContext?> PromptForRestoreSelectionAsync(AvailableBackupInfo backup, bool requireAlternateDestination)
+		{
+			using var restorePointForm = new RestorePointSelectionForm(backup);
+			if (restorePointForm.ShowDialog(this) != DialogResult.OK || restorePointForm.SelectedRestorePoint == null)
+			{
+				return null;
+			}
+
+			RestorePoint selectedRestorePoint = restorePointForm.SelectedRestorePoint;
+			System.Collections.Generic.IReadOnlyList<RestorePoint> restorePoints = restorePointForm.RestorePoints;
+			bool isGroupedRestore = restorePoints.Count == 1;
+			if (!isGroupedRestore)
+			{
+				return new RestoreSelectionContext
+				{
+					Backup = backup,
+					RestorePoint = selectedRestorePoint,
+					RequireAlternateDestination = requireAlternateDestination,
+					ScopeKind = RestoreScopeKind.All
+				};
+			}
+
+			CustomDialogResult restoreAllDecision = CustomDialogService.Show(this,
+				"Do you want to restore all files or volumes from the selected restore point?\n\nChoose Yes to restore everything, No to choose specific items, or Cancel to stop.",
+				"Restore Scope",
+				DialogButtons.YesNoCancel,
+				DialogIcon.Question);
+
+			if (restoreAllDecision == CustomDialogResult.Cancel)
+			{
+				return null;
+			}
+
+			if (restoreAllDecision == CustomDialogResult.Yes)
+			{
+				return new RestoreSelectionContext
+				{
+					Backup = backup,
+					RestorePoint = selectedRestorePoint,
+					RequireAlternateDestination = requireAlternateDestination,
+					ScopeKind = RestoreScopeKind.All
+				};
+			}
+
+			System.Collections.Generic.IReadOnlyList<VolumeInfo> volumes = await Task.Run(() =>
+				RestoreWorkflowHelper.GetBackupVolumesForRestorePoint(selectedRestorePoint));
+			if (volumes.Count > 1)
+			{
+				using var volumeForm = new RestoreVolumeSelectionForm(volumes, true, "Select the volume or full set of volumes to restore from this restore point.");
+				if (volumeForm.ShowDialog(this) != DialogResult.OK || !volumeForm.Confirmed)
+				{
+					return null;
+				}
+
+				System.Collections.Generic.IReadOnlyList<VolumeInfo> selectedVolumes = volumeForm.SelectedDiskGroup ??
+					(volumeForm.SelectedVolume != null ? new[] { volumeForm.SelectedVolume } : Array.Empty<VolumeInfo>());
+				if (selectedVolumes.Count == 0)
+				{
+					return null;
+				}
+
+				return new RestoreSelectionContext
+				{
+					Backup = backup,
+					RestorePoint = selectedRestorePoint,
+					RequireAlternateDestination = requireAlternateDestination,
+					ScopeKind = RestoreScopeKind.SelectedVolumes,
+					SelectedVolumes = selectedVolumes
+				};
+			}
+
+			System.Collections.Generic.IReadOnlyList<string> items = await Task.Run(() =>
+				RestoreWorkflowHelper.GetBackupItemsForRestorePoint(selectedRestorePoint));
+			if (items.Count == 0)
+			{
+				CustomDialogService.ShowWarning(this, "No selectable files or folders were found for the selected restore point.", "Restore Items Unavailable");
+				return null;
+			}
+
+			using var itemForm = new RestoreItemSelectionForm(backup, selectedRestorePoint);
+			if (itemForm.ShowDialog(this) != DialogResult.OK || itemForm.SelectedItems.Count == 0)
+			{
+				return null;
+			}
+
+			return new RestoreSelectionContext
+			{
+				Backup = backup,
+				RestorePoint = selectedRestorePoint,
+				RequireAlternateDestination = requireAlternateDestination,
+				ScopeKind = RestoreScopeKind.SelectedItems,
+				SelectedItems = itemForm.SelectedItems
+			};
 		}
 
 		private RestoreSelectionContext? PromptForRestoreSelection(AvailableBackupInfo backup, bool requireAlternateDestination)
@@ -1305,7 +1401,7 @@ namespace SecureServerBackup.WinForms
 				return null;
 			}
 
-			using var itemForm = new RestoreItemSelectionForm(backup, selectedRestorePoint, items);
+			using var itemForm = new RestoreItemSelectionForm(backup, selectedRestorePoint);
 			if (itemForm.ShowDialog(this) != DialogResult.OK || itemForm.SelectedItems.Count == 0)
 			{
 				return null;

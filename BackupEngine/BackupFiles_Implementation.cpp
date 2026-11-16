@@ -137,6 +137,32 @@ namespace {
         return path + L'\\';
     }
 
+    std::wstring NormalizeCandidatePathForComparison(const std::wstring& path, const std::wstring& captureRootPath) {
+        std::wstring normalizedPath = NormalizePathForComparison(path);
+        if (normalizedPath.empty()) {
+            return normalizedPath;
+        }
+
+        if (normalizedPath.size() >= 2 && normalizedPath[1] == L':') {
+            return normalizedPath;
+        }
+
+        if (normalizedPath.rfind(L"\\\\", 0) == 0) {
+            return normalizedPath;
+        }
+
+        std::wstring normalizedCaptureRoot = NormalizePathForComparison(captureRootPath);
+        if (normalizedCaptureRoot.empty()) {
+            return normalizedPath;
+        }
+
+        if (normalizedPath.front() == L'\\') {
+            return normalizedCaptureRoot + normalizedPath;
+        }
+
+        return EnsureTrailingSeparator(normalizedCaptureRoot) + normalizedPath;
+    }
+
     bool IsSameOrDescendantPath(const std::wstring& path, const std::wstring& ancestor) {
         if (PathsEqualInsensitive(path, ancestor)) {
             return true;
@@ -206,15 +232,9 @@ namespace {
             return true;
         }
 
-        std::wstring normalizedPath = NormalizePathForComparison(path);
+        std::wstring normalizedPath = NormalizeCandidatePathForComparison(path, context->captureRootPath);
         if (normalizedPath.empty()) {
             return false;
-        }
-
-        if (!context->captureRootPath.empty() &&
-            (PathsEqualInsensitive(normalizedPath, context->captureRootPath) ||
-             IsSameOrDescendantPath(normalizedPath, context->captureRootPath))) {
-            return true;
         }
 
         for (const FileBackupSelectionEntry& selection : context->includeSelections) {
@@ -222,14 +242,7 @@ namespace {
                 return true;
             }
 
-            if (selection.includeDescendants &&
-                (IsSameOrDescendantPath(normalizedPath, selection.normalizedPath) ||
-                 IsSameOrDescendantPath(selection.normalizedPath, normalizedPath))) {
-                return true;
-            }
-
-            if (!selection.includeDescendants &&
-                PathsEqualInsensitive(normalizedPath, selection.normalizedPath)) {
+            if (selection.includeDescendants && IsSameOrDescendantPath(normalizedPath, selection.normalizedPath)) {
                 return true;
             }
         }
@@ -242,15 +255,13 @@ namespace {
             return true;
         }
 
-        std::wstring normalizedPath = NormalizePathForComparison(path);
+        std::wstring normalizedPath = NormalizeCandidatePathForComparison(path, context->captureRootPath);
         if (normalizedPath.empty()) {
             return false;
         }
 
         for (const FileBackupSelectionEntry& selection : context->includeSelections) {
-            if (selection.includeDescendants &&
-                (IsSameOrDescendantPath(normalizedPath, selection.normalizedPath) ||
-                 IsSameOrDescendantPath(selection.normalizedPath, normalizedPath))) {
+            if (selection.includeDescendants && IsSameOrDescendantPath(selection.normalizedPath, normalizedPath)) {
                 return true;
             }
 

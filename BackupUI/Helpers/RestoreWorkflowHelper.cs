@@ -3,6 +3,7 @@ using SecureServerBackup.Models;
 using SecureServerBackup.Enums;
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,14 +14,19 @@ namespace SecureServerBackup.Helpers
 {
 	internal static class RestoreWorkflowHelper
 	{
+		private static readonly ConcurrentDictionary<string, IReadOnlyList<string>> BackupItemCache =
+			new(StringComparer.OrdinalIgnoreCase);
+		private static readonly ConcurrentDictionary<string, IReadOnlyList<RestorePointArchiveImage>> ArchiveImageCache =
+			new(StringComparer.OrdinalIgnoreCase);
+
 		internal static IReadOnlyList<RestorePoint> GetRestorePointsForBackup(string backupPath)
 		{
 			ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
 
+			bool forceSingleRestorePoint = ShouldTreatBackupAsSingleFileRestorePoint(backupPath, Array.Empty<string>());
+			string backupType = DetermineBackupTypeForArchive(backupPath, Array.Empty<string>());
 			IReadOnlyList<string> backupItems = GetBackupItemsForArchive(backupPath);
-			string backupType = DetermineBackupTypeForArchive(backupPath, backupItems);
 			IReadOnlyList<RestorePointArchiveImage> archiveImages = GetRestorePointArchiveImages(backupPath);
-			bool forceSingleRestorePoint = ShouldTreatBackupAsSingleFileRestorePoint(backupPath, backupItems);
 			DateTime timestamp = GetRestorePointTimestamp(backupPath, archiveImages);
 
 			return CreateRestorePointsForBackupFile(
@@ -42,26 +48,43 @@ namespace SecureServerBackup.Helpers
 				: DetermineBackupTypeForPath(backupPath);
 		}
 
-		internal static IReadOnlyList<string> GetBackupItemsForRestorePoint(RestorePoint restorePoint)
+		public static IReadOnlyList<string> GetBackupItemsForRestorePoint(RestorePoint restorePoint)
 		{
 			ArgumentNullException.ThrowIfNull(restorePoint);
 
+			string cacheKey = $"{restorePoint.FilePath}|{Math.Max(restorePoint.ImageIndex, 1)}";
+			return BackupItemCache.GetOrAdd(cacheKey, _ => LoadBackupItems(restorePoint.FilePath, Math.Max(restorePoint.ImageIndex, 1)));
+		}
+
+		private static IReadOnlyList<string> LoadBackupItems(string backupPath, int imageIndex)
+		{
 			try
 			{
-				using var preparedBackup = EncryptedBackupFileService.PrepareForRead(null, restorePoint.FilePath, Path.GetFileNameWithoutExtension(restorePoint.FilePath));
-				var buffer = new StringBuilder(32768);
-				int result = BackupEngineInterop.ListBackupContents(preparedBackup.WorkingPath, buffer, buffer.Capacity);
-				if (result != 0)
+				using var preparedBackup = EncryptedBackupFileService.PrepareForRead(null, backupPath, Path.GetFileNameWithoutExtension(backupPath));
+				int bufferSize = 32768;
+				for (int attempt = 0; attempt < 8; attempt++)
 				{
-					return Array.Empty<string>();
-				}
+					var buffer = new StringBuilder(bufferSize);
+					int result = BackupEngineInterop.ListBackupContents(preparedBackup.WorkingPath, imageIndex, buffer, buffer.Capacity);
+					if (result == 0)
+					{
+						return ParseListedBackupItems(buffer.ToString());
+					}
 
-				return ParseListedBackupItems(buffer.ToString());
+					if (result != -3)
+					{
+						return Array.Empty<string>();
+					}
+
+					bufferSize *= 2;
+				}
 			}
 			catch
 			{
 				return Array.Empty<string>();
 			}
+
+			return Array.Empty<string>();
 		}
 
 		internal static IReadOnlyList<VolumeInfo> GetBackupVolumesForRestorePoint(RestorePoint restorePoint)
@@ -312,26 +335,7 @@ namespace SecureServerBackup.Helpers
 				return Array.Empty<string>();
 			}
 
-			try
-			{
-				using var preparedBackup = EncryptedBackupFileService.PrepareForRead(null, backupPath, Path.GetFileNameWithoutExtension(backupPath));
-				var buffer = new StringBuilder(32768);
-				int result = BackupEngineInterop.ListBackupContents(preparedBackup.WorkingPath, buffer, buffer.Capacity);
-				if (result != 0)
-				{
-					return Array.Empty<string>();
-				}
-
-				return buffer.ToString()
-					.Split('\n', StringSplitOptions.RemoveEmptyEntries)
-					.Select(item => item.Trim())
-					.Where(item => !string.IsNullOrWhiteSpace(item))
-					.ToArray();
-			}
-			catch
-			{
-				return Array.Empty<string>();
-			}
+			return BackupItemCache.GetOrAdd($"{backupPath}|1", _ => LoadBackupItems(backupPath, 1));
 		}
 
 		private static IReadOnlyList<RestorePointArchiveImage> GetRestorePointArchiveImages(string backupPath)
@@ -341,6 +345,11 @@ namespace SecureServerBackup.Helpers
 				return Array.Empty<RestorePointArchiveImage>();
 			}
 
+			return ArchiveImageCache.GetOrAdd(backupPath, _ => LoadRestorePointArchiveImages(backupPath));
+		}
+
+		private static IReadOnlyList<RestorePointArchiveImage> LoadRestorePointArchiveImages(string backupPath)
+		{
 			try
 			{
 				var imagesWithMetadata = NativeBackupMountManager.GetImageInfoWithRestoreMetadata(backupPath);
