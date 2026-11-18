@@ -10,7 +10,7 @@ namespace SecureServerBackup
     static class VersionClass
     {
         public static string version_word = "Version:";
-        private static readonly string version_fallback_number = "7.4.11.11";
+        private static readonly string version_fallback_number = "7.4.11.18";
         public static string version_string = GetAssemblyVersion();
 
         static public string GetVersion()
@@ -68,9 +68,40 @@ namespace SecureServerBackup
 
 /*  
  *  
- *  Version 7.4.11.12 On large file it is working, however even the restore point selection form is taking
- *                    a long time to load, which as there is one one on the files I am testing should be
- *                    quicker also it isn't showing a progressbar on the select restore point. mdail 11/16/2026
+ *  Version 7.4.11.18 Added a fix for the RestoreItemSelectionForm because it was saying no items were found 
+ *                    for the restore point when there were items. They were just not added when batchItems was
+ *                    running. I checked the itemsListBox.Items.Count == 0 && allItems.Count != 0 and
+ *                    added the items to the listbox after the batchItems was done. mdail 11/18/2026
+ *  Version 7.4.11.17 Implemented true progressive/streaming item loading. LoadBackupItems now reports
+ *                    items to UI after EACH buffer parse, not just at the end. When buffer overflow (-3)
+ *                    occurs, items are immediately reported to UI via callback before growing buffer and
+ *                    retrying. This eliminates the "wait until everything is done" behavior. Users now see
+ *                    files appearing incrementally as each buffer fills and is processed. Result callback
+ *                    is invoked on each successful buffer parse, allowing real-time display updates. mdail 11/18/2026
+ *  Version 7.4.11.16 Fixed form rendering issue on RestorePointSelectionForm and RestoreItemSelectionForm.
+ *                    Changed from Load event to Shown event so loading occurs AFTER form is fully rendered.
+ *                    Loading panel now displays immediately with progress bar visible while background
+ *                    enumeration happens. Added Task.Delay(100) to ensure UI can process panel visibility
+ *                    changes before starting background work. Forms now appear instantly, not after all
+ *                    items are loaded. mdail 11/18/2026
+ *  Version 7.4.11.15 Simplified RestoreItemSelectionForm loading by removing callback complexity.
+ *                    Items now load on background thread and display all at once after enumeration completes.
+ *                    Added loading panel to RestorePointSelectionForm with immediate visual feedback (progress
+ *                    bar and status label visible right when form opens). Threading model more reliable and
+ *                    eliminates race conditions from cross-thread BeginInvoke callbacks. mdail 11/18/2026
+ *  Version 7.4.11.14 Fixed progressive loading threading issue. Replaced blocking Invoke() with safe
+ *                    BeginInvoke() for callback UI updates. Callback lambda now properly captures
+ *                    itemsReceived variable in closure. Items display correctly for both short and long
+ *                    lists with real-time progress updates as enumeration happens. mdail 11/18/2026
+ *  Version 7.4.11.13 Added progressive file loading to RestoreItemSelectionForm with real-time display.
+ *                    New GetBackupItemsForRestorePointWithProgress() callback method provides batch updates
+ *                    as items are enumerated from archive. Progress bar shows status and scrolls to end of
+ *                    list while loading continues. Users see files appearing in real-time instead of waiting
+ *                    for complete enumeration before display. mdail 11/18/2026
+ *  Version 7.4.11.12 Optimized GetRestorePointsForBackup() to use filename-pattern detection and archive
+ *                    metadata API instead of full item enumeration. Restore point selection form now appears
+ *                    immediately on large file/folder backups instead of enumerating all archive contents.
+ *                    Full item enumeration deferred until user selects specific items to restore. mdail 11/18/2026
  *  Version 7.4.11.11 Convert more of the get list to the wpf code that works for restore mdail 11/16/2026
  *  Version 7.4.11.10 Optimized restore workflow by making RestorePointSelectionForm and item/volume 
  *                    enumeration async on background threads. UI no longer hangs when user selects restore

@@ -28,11 +28,21 @@ namespace SecureServerBackup.WinForms
 			helpLabel!.Text = "Loading restore points…";
 			nextButton!.Enabled = false;
 
-			this.Load += RestorePointSelectionForm_Load;
+			// Show loading panel immediately
+			pnlLoading!.Visible = true;
+			pnlLoading.BringToFront();
+			pbLoading!.Style = ProgressBarStyle.Marquee;
+			txtLoadingStatus!.Text = "Loading restore points…";
+
+			// Hook Shown event instead of Load - fires AFTER form is fully rendered
+			this.Shown += RestorePointSelectionForm_Shown;
 		}
 
-		private async void RestorePointSelectionForm_Load(object? sender, EventArgs e)
+		private async void RestorePointSelectionForm_Shown(object? sender, EventArgs e)
 		{
+			// Unhook to prevent multiple calls
+			this.Shown -= RestorePointSelectionForm_Shown;
+
 			await LoadRestorePointsAsync();
 		}
 
@@ -56,20 +66,24 @@ namespace SecureServerBackup.WinForms
 					restorePointsListBox.SelectedIndex = 0;
 				}
 
-				restorePointsListBox.EndUpdate();
+						restorePointsListBox.EndUpdate();
 
-				helpLabel!.Text = _restorePoints.Count == 0
-					? "No restore points were found for the selected backup."
-					: "Select the restore point you want to open, then click Next.";
-				nextButton!.Enabled = _restorePoints.Count > 0;
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show(this, $"Error loading restore points: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				DialogResult = DialogResult.Cancel;
-				Close();
-			}
-		}
+						helpLabel!.Text = _restorePoints.Count == 0
+							? "No restore points were found for the selected backup."
+							: "Select the restore point you want to open, then click Next.";
+						nextButton!.Enabled = _restorePoints.Count > 0;
+
+						// Hide loading panel
+						pnlLoading!.Visible = false;
+					}
+					catch (Exception ex)
+					{
+						pnlLoading!.Visible = false;
+						MessageBox.Show(this, $"Error loading restore points: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						DialogResult = DialogResult.Cancel;
+						Close();
+					}
+				}
 
 		public AvailableBackupInfo Backup { get; }
 

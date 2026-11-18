@@ -13,6 +13,9 @@ namespace SecureServerBackup.WinForms
 		private Label helpLabel = null!;
 		private Button nextButton = null!;
 		private Button? cancelButton;
+		private Panel pnlLoading = null!;
+		private Label txtLoadingStatus = null!;
+		private ProgressBar pbLoading = null!;
 
 		protected override void Dispose(bool disposing)
 		{
@@ -31,7 +34,42 @@ namespace SecureServerBackup.WinForms
 			helpLabel = new Label();
 			nextButton = new Button();
 			cancelButton = new Button();
+			pnlLoading = new Panel();
+			txtLoadingStatus = new Label();
+			pbLoading = new ProgressBar();
+			pnlLoading.SuspendLayout();
 			SuspendLayout();
+			// 
+			// pnlLoading
+			// 
+			pnlLoading.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			pnlLoading.BackColor = Color.White;
+			pnlLoading.Controls.Add(pbLoading);
+			pnlLoading.Controls.Add(txtLoadingStatus);
+			pnlLoading.Location = new Point(14, 70);
+			pnlLoading.Name = "pnlLoading";
+			pnlLoading.Size = new Size(630, 208);
+			pnlLoading.TabIndex = 5;
+			pnlLoading.Visible = false;
+			// 
+			// txtLoadingStatus
+			// 
+			txtLoadingStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			txtLoadingStatus.Location = new Point(10, 60);
+			txtLoadingStatus.Name = "txtLoadingStatus";
+			txtLoadingStatus.Size = new Size(610, 23);
+			txtLoadingStatus.TabIndex = 0;
+			txtLoadingStatus.Text = "Loading restore points…";
+			txtLoadingStatus.TextAlign = ContentAlignment.MiddleCenter;
+			// 
+			// pbLoading
+			// 
+			pbLoading.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			pbLoading.Location = new Point(10, 90);
+			pbLoading.Name = "pbLoading";
+			pbLoading.Size = new Size(610, 23);
+			pbLoading.Style = ProgressBarStyle.Marquee;
+			pbLoading.TabIndex = 1;
 			// 
 			// summaryLabel
 			// 
@@ -89,6 +127,7 @@ namespace SecureServerBackup.WinForms
 			BackColor = Color.White;
 			CancelButton = cancelButton;
 			ClientSize = new Size(665, 387);
+			Controls.Add(pnlLoading);
 			Controls.Add(cancelButton);
 			Controls.Add(nextButton);
 			Controls.Add(helpLabel);
@@ -102,6 +141,7 @@ namespace SecureServerBackup.WinForms
 			ShowInTaskbar = false;
 			StartPosition = FormStartPosition.CenterParent;
 			Text = "Select Restore Point";
+			pnlLoading.ResumeLayout(false);
 			ResumeLayout(false);
 		}
 	}

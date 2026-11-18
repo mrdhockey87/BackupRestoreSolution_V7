@@ -23,20 +23,40 @@ namespace SecureServerBackup.Helpers
 		{
 			ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
 
-			bool forceSingleRestorePoint = ShouldTreatBackupAsSingleFileRestorePoint(backupPath, Array.Empty<string>());
-			string backupType = DetermineBackupTypeForArchive(backupPath, Array.Empty<string>());
-			IReadOnlyList<string> backupItems = GetBackupItemsForArchive(backupPath);
+			// First, check if this is a selected-files backup by filename pattern (fast path)
+			string fileName = Path.GetFileName(backupPath);
+			bool isSelectedFilesBackup = fileName.Contains("_SelectedFiles_", StringComparison.OrdinalIgnoreCase);
+
+			// Get archive images - required for all restore points (calls GetImageInfoWithRestoreMetadata)
 			IReadOnlyList<RestorePointArchiveImage> archiveImages = GetRestorePointArchiveImages(backupPath);
 			DateTime timestamp = GetRestorePointTimestamp(backupPath, archiveImages);
 
+			// If filename indicates selected files, don't enumerate items
+			if (isSelectedFilesBackup)
+			{
+				return CreateRestorePointsForBackupFile(
+					backupPath,
+					"Selected Files",
+					timestamp,
+					startingPointNumber: 1,
+					archiveImages,
+					forceSingleRestorePoint: true);
+			}
+
+			// For non-selected-files backups, we can usually determine type from filename pattern
+			// without full enumeration; only enumerate if ambiguous
+			string backupType = DetermineBackupTypeForPath(backupPath);
+
+			// Return restore points based on filename type detection (no full item enumeration)
 			return CreateRestorePointsForBackupFile(
 				backupPath,
 				backupType,
 				timestamp,
 				startingPointNumber: 1,
 				archiveImages,
-				forceSingleRestorePoint);
+				forceSingleRestorePoint: false);
 		}
+
 
 		internal static string DetermineBackupTypeForArchive(string backupPath, IReadOnlyList<string> backupItems)
 		{
@@ -53,34 +73,108 @@ namespace SecureServerBackup.Helpers
 			ArgumentNullException.ThrowIfNull(restorePoint);
 
 			string cacheKey = $"{restorePoint.FilePath}|{Math.Max(restorePoint.ImageIndex, 1)}";
-			return BackupItemCache.GetOrAdd(cacheKey, _ => LoadBackupItems(restorePoint.FilePath, Math.Max(restorePoint.ImageIndex, 1)));
+			return BackupItemCache.GetOrAdd(cacheKey, _ => LoadBackupItems(restorePoint.FilePath, Math.Max(restorePoint.ImageIndex, 1), onBatchLoaded: null));
 		}
 
-		private static IReadOnlyList<string> LoadBackupItems(string backupPath, int imageIndex)
+		public static IReadOnlyList<string> GetBackupItemsForRestorePointWithProgress(
+			RestorePoint restorePoint, 
+			Action<IReadOnlyList<string>>? onBatchLoaded = null)
+		{
+			ArgumentNullException.ThrowIfNull(restorePoint);
+
+			string cacheKey = $"{restorePoint.FilePath}|{Math.Max(restorePoint.ImageIndex, 1)}";
+
+			// If already cached, return immediately without callback
+			if (BackupItemCache.TryGetValue(cacheKey, out var cachedItems))
+			{
+				return cachedItems;
+			}
+
+			// Load with progress callback - reports items after each buffer parse
+			var items = LoadBackupItems(restorePoint.FilePath, Math.Max(restorePoint.ImageIndex, 1), onBatchLoaded);
+
+			// Cache the result
+			if (items.Count > 0)
+			{
+				BackupItemCache[cacheKey] = items;
+			}
+
+			return items;
+		}
+
+		private static IReadOnlyList<string> LoadBackupItems(string backupPath, int imageIndex, Action<IReadOnlyList<string>>? onBatchLoaded = null)
 		{
 			try
 			{
+				System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Starting for {backupPath}, imageIndex={imageIndex}");
 				using var preparedBackup = EncryptedBackupFileService.PrepareForRead(null, backupPath, Path.GetFileNameWithoutExtension(backupPath));
 				int bufferSize = 32768;
+				var allItems = new List<string>();
+
 				for (int attempt = 0; attempt < 8; attempt++)
 				{
+					System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Attempt {attempt} with bufferSize={bufferSize}");
 					var buffer = new StringBuilder(bufferSize);
 					int result = BackupEngineInterop.ListBackupContents(preparedBackup.WorkingPath, imageIndex, buffer, buffer.Capacity);
+
 					if (result == 0)
 					{
-						return ParseListedBackupItems(buffer.ToString());
+						// Successfully read all items in this buffer - parse and report them
+						var batchItems = ParseListedBackupItems(buffer.ToString());
+						System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Attempt {attempt} succeeded, parsed {batchItems.Count} items from buffer");
+						allItems.AddRange(batchItems);
+
+						// Report this batch to UI immediately
+						if (batchItems.Count > 0 && onBatchLoaded != null)
+						{
+							System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Reporting batch of {batchItems.Count} items to UI");
+							onBatchLoaded.Invoke(batchItems);
+						}
+
+						System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Completed with {allItems.Count} total items");
+						return allItems.AsReadOnly();
 					}
 
-					if (result != -3)
+					if (result == -3)
 					{
-						return Array.Empty<string>();
+						// Buffer overflow - parse current buffer, report to UI, then grow buffer and retry
+						var batchItems = ParseListedBackupItems(buffer.ToString());
+						System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Attempt {attempt} buffer overflow, parsed {batchItems.Count} items before overflow");
+						allItems.AddRange(batchItems);
+
+						// Report this batch to UI immediately so it can display them while we continue
+						if (batchItems.Count > 0 && onBatchLoaded != null)
+						{
+							System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Reporting batch of {batchItems.Count} items to UI before retry");
+							onBatchLoaded.Invoke(batchItems);
+						}
+
+						// Grow buffer and loop to get remaining items
+						bufferSize *= 2;
+						System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Growing buffer to {bufferSize} and retrying");
+						continue;
 					}
 
-					bufferSize *= 2;
+					// Error other than buffer overflow
+					System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Attempt {attempt} failed with result={result}");
+					if (allItems.Count > 0 && onBatchLoaded != null)
+					{
+						System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Reporting partial {allItems.Count} items on error");
+						onBatchLoaded.Invoke(new[] { "(Complete - error retrieving remaining items)" }.AsReadOnly());
+					}
+					return allItems.AsReadOnly();
+				}
+
+				System.Diagnostics.Debug.WriteLine($"LoadBackupItems: All 8 buffer growth attempts exhausted");
+				if (allItems.Count > 0 && onBatchLoaded != null)
+				{
+					System.Diagnostics.Debug.WriteLine($"LoadBackupItems: Reporting partial {allItems.Count} items (all attempts exhausted)");
+					onBatchLoaded.Invoke(new[] { "(Complete - max buffer attempts reached)" }.AsReadOnly());
 				}
 			}
-			catch
+			catch (Exception ex)
 			{
+				System.Diagnostics.Debug.WriteLine($"LoadBackupItems error: {ex.Message}");
 				return Array.Empty<string>();
 			}
 

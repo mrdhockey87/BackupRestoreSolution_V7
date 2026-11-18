@@ -67,14 +67,14 @@ namespace SecureServerBackup.WinForms
 			pnlLoading.Controls.Add(txtLoadingStatus);
 			pnlLoading.Location = new Point(14, 63);
 			pnlLoading.Name = "pnlLoading";
-			pnlLoading.Size = new Size(630, 246);
+			pnlLoading.Size = new Size(630, 256);
 			pnlLoading.TabIndex = 2;
 			pnlLoading.Visible = false;
 			// 
 			// pbLoading
 			// 
 			pbLoading.Anchor = AnchorStyles.None;
-			pbLoading.Location = new Point(630, 264);
+			pbLoading.Location = new Point(630, 269);
 			pbLoading.Name = "pbLoading";
 			pbLoading.Size = new Size(220, 18);
 			pbLoading.Style = ProgressBarStyle.Marquee;
@@ -83,7 +83,7 @@ namespace SecureServerBackup.WinForms
 			// txtLoadingStatus
 			// 
 			txtLoadingStatus.Anchor = AnchorStyles.None;
-			txtLoadingStatus.Location = new Point(630, 244);
+			txtLoadingStatus.Location = new Point(630, 249);
 			txtLoadingStatus.Name = "txtLoadingStatus";
 			txtLoadingStatus.Size = new Size(220, 20);
 			txtLoadingStatus.TabIndex = 0;
@@ -101,7 +101,7 @@ namespace SecureServerBackup.WinForms
 			// nextButton
 			// 
 			nextButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			nextButton.Location = new Point(472, 355);
+			nextButton.Location = new Point(472, 365);
 			nextButton.Name = "nextButton";
 			nextButton.Size = new Size(84, 27);
 			nextButton.TabIndex = 4;
@@ -113,7 +113,7 @@ namespace SecureServerBackup.WinForms
 			// 
 			cancelButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
 			cancelButton.DialogResult = DialogResult.Cancel;
-			cancelButton.Location = new Point(560, 355);
+			cancelButton.Location = new Point(560, 365);
 			cancelButton.Name = "cancelButton";
 			cancelButton.Size = new Size(84, 27);
 			cancelButton.TabIndex = 5;
@@ -127,7 +127,7 @@ namespace SecureServerBackup.WinForms
 			AutoScaleMode = AutoScaleMode.Font;
 			BackColor = Color.White;
 			CancelButton = cancelButton;
-			ClientSize = new Size(665, 390);
+			ClientSize = new Size(665, 400);
 			Controls.Add(cancelButton);
 			Controls.Add(nextButton);
 			Controls.Add(helpLabel);

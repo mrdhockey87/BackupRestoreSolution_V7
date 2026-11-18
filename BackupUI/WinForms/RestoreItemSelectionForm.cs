@@ -36,30 +36,84 @@ namespace SecureServerBackup.WinForms
 			InitializeComponent();
 			summaryLabel!.Text = $"Restore point: {restorePoint.DisplayName}{Environment.NewLine}Source: {restorePoint.FilePath}";
 			helpLabel!.Text = "Select one or more files or folders to restore, then click Next.";
-			this.Load += RestoreItemSelectionForm_Load;
+
+			// Hook Shown event instead of Load - fires AFTER form is fully rendered
+			this.Shown += RestoreItemSelectionForm_Shown;
 
 			nextButton!.Enabled = itemsListBox!.Items.Count > 0;
 		}
-		private async void RestoreItemSelectionForm_Load(object? sender, EventArgs e)
+
+		private async void RestoreItemSelectionForm_Shown(object? sender, EventArgs e)
 		{
+			// Unhook to prevent multiple calls
+			this.Shown -= RestoreItemSelectionForm_Shown;
+
 			if (pnlLoading is null)
 			{
 				return;
 			}
 
+			System.Diagnostics.Debug.WriteLine($"RestoreItemSelectionForm_Shown: Starting for {RestorePoint.DisplayName}");
 			pnlLoading.Visible = true;
 			pnlLoading.BringToFront();
 			nextButton.Enabled = false;
 			pbLoading.Style = ProgressBarStyle.Marquee;
 			txtLoadingStatus.Text = "Loading backup contents…";
 
-			IReadOnlyList<string> items;
 			try
 			{
-				items = await Task.Run(() => RestoreWorkflowHelper.GetBackupItemsForRestorePoint(RestorePoint));
+				// Give the UI a chance to render the loading panel
+				await Task.Delay(100);
+
+				// Load items on background thread WITH progress callback
+				IReadOnlyList<string> allItems = await Task.Run(() =>
+				{
+					System.Diagnostics.Debug.WriteLine($"RestoreItemSelectionForm_Shown: Task.Run starting GetBackupItemsForRestorePointWithProgress");
+					return RestoreWorkflowHelper.GetBackupItemsForRestorePointWithProgress(
+						RestorePoint,
+						batchItems =>
+						{
+							System.Diagnostics.Debug.WriteLine($"RestoreItemSelectionForm_Shown: Callback invoked with {batchItems.Count} items");
+
+							// Update UI with new items - safe thread marshaling
+							this.BeginInvoke(() => 
+							{
+								// Add batch items to list (don't clear, just append)
+								foreach (string item in batchItems.Where(item => !string.IsNullOrWhiteSpace(item)))
+								{
+									itemsListBox.Items.Add(item);
+								}
+
+								// Update progress bar and status
+								pbLoading.Style = ProgressBarStyle.Continuous;
+								pbLoading.Minimum = 0;
+								pbLoading.Maximum = 100;
+								pbLoading.Value = Math.Min(itemsListBox.Items.Count * 100 / Math.Max(itemsListBox.Items.Count + 50, 1), 95);
+								txtLoadingStatus.Text = $"Loaded {itemsListBox.Items.Count} items…";
+
+								// Move to end of list
+								if (itemsListBox.Items.Count > 0)
+								{
+									itemsListBox.TopIndex = Math.Max(0, itemsListBox.Items.Count - 1);
+								}
+							});
+						});
+				});
+				//Added because even the small file said there were not items to select, after I put this here
+				//it worked. On the large file however the items were there multiple times for each loop that
+				//LoadBackupItems looped mdail 11/18/2026
+				if (itemsListBox.Items.Count == 0 && allItems.Count != 0)
+				{
+					foreach (string item in allItems.Where(item => !string.IsNullOrWhiteSpace(item)))
+					{
+						itemsListBox.Items.Add(item);
+					}
+					System.Diagnostics.Debug.WriteLine($"RestoreItemSelectionForm_Shown: No items found for restore point {RestorePoint.DisplayName}");
+				}
 			}
 			catch (Exception ex)
 			{
+				System.Diagnostics.Debug.WriteLine($"RestoreItemSelectionForm_Shown: Exception: {ex.Message}");
 				pnlLoading.Visible = false;
 				MessageBox.Show(this, $"Failed to load backup contents: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 				DialogResult = DialogResult.Cancel;
@@ -67,38 +121,11 @@ namespace SecureServerBackup.WinForms
 				return;
 			}
 
-			// Populate list in batches so the UI stays responsive
-			txtLoadingStatus.Text = $"Populating list ({items.Count} items)…";
-			pbLoading.Style = ProgressBarStyle.Continuous;
-			pbLoading.Minimum = 0;
-			pbLoading.Maximum = Math.Max(items.Count, 1);
-			pbLoading.Value = 0;
-
-			const int batchSize = 200;
-			int added = 0;
-			itemsListBox.BeginUpdate();
-			try
-			{
-				foreach (string item in items.Where(item => !string.IsNullOrWhiteSpace(item)))
-				{
-					itemsListBox.Items.Add(item);
-					added++;
-
-					if (added % batchSize == 0)
-					{
-						pbLoading.Value = added;
-						await Task.Yield();
-					}
-				}
-			}
-			finally
-			{
-				itemsListBox.EndUpdate();
-			}
-
-			pbLoading.Value = Math.Max(added, 0);
+			// Hide loading panel
 			pnlLoading.Visible = false;
-			nextButton.Enabled = itemsListBox.Items.Count > 0;
+			nextButton.Enabled = itemsListBox!.Items.Count > 0;
+
+			System.Diagnostics.Debug.WriteLine($"RestoreItemSelectionForm_Shown: Final state - itemsListBox.Items.Count={itemsListBox.Items.Count}");
 
 			if (itemsListBox.Items.Count == 0)
 			{
